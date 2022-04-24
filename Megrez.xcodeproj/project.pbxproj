@@ -7,19 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		5B7B55222813B1E5007AD17C /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B7B55212813B1E5007AD17C /* main.swift */; };
-		5B7B55292813B217007AD17C /* Megrez.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B7B55282813B217007AD17C /* Megrez.swift */; };
-		5B7B552B2813B2F3007AD17C /* KeyValuePair.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B7B552A2813B2F3007AD17C /* KeyValuePair.swift */; };
-		5B7B553E2813FA97007AD17C /* Unigram.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B7B552C2813B421007AD17C /* Unigram.swift */; };
-		5B7B553F2813FAA1007AD17C /* Bigram.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B7B55372813D707007AD17C /* Bigram.swift */; };
-		5B7B55402813FB86007AD17C /* LanguageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B7B55332813D2E3007AD17C /* LanguageModel.swift */; };
-		5B7B55412813FB91007AD17C /* Node.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B7B55352813D5B9007AD17C /* Node.swift */; };
-		5B7B554328140F22007AD17C /* NodeAnchor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B7B554228140F22007AD17C /* NodeAnchor.swift */; };
-		5B7B5545281413EA007AD17C /* Span.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B7B5544281413EA007AD17C /* Span.swift */; };
-		5B7B554828143719007AD17C /* OrderedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = 5B7B554728143719007AD17C /* OrderedCollections */; };
-		5B7B554A2814462A007AD17C /* Grid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B7B55492814462A007AD17C /* Grid.swift */; };
-		5B7B554C2814F62D007AD17C /* Walker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B7B554B2814F62D007AD17C /* Walker.swift */; };
-		5B7B554E2814FFCB007AD17C /* BlockReadingBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B7B554D2814FFCB007AD17C /* BlockReadingBuilder.swift */; };
+		5B7766822815B7900098C46B /* Megrez in Frameworks */ = {isa = PBXBuildFile; productRef = 5B7766812815B7900098C46B /* Megrez */; };
+		5B7766832815B8920098C46B /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B77667C2815B6730098C46B /* main.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -35,21 +24,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		5B7B551E2813B1E5007AD17C /* Megrez */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Megrez; sourceTree = BUILT_PRODUCTS_DIR; };
-		5B7B55212813B1E5007AD17C /* main.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
-		5B7B55282813B217007AD17C /* Megrez.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Megrez.swift; sourceTree = "<group>"; };
-		5B7B552A2813B2F3007AD17C /* KeyValuePair.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = KeyValuePair.swift; sourceTree = "<group>"; };
-		5B7B552C2813B421007AD17C /* Unigram.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Unigram.swift; sourceTree = "<group>"; };
+		5B77667C2815B6730098C46B /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		5B77667F2815B7490098C46B /*  */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = ""; sourceTree = "<group>"; };
+		5B7B551E2813B1E5007AD17C /* MegrezSample */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = MegrezSample; sourceTree = BUILT_PRODUCTS_DIR; };
 		5B7B552F2813BE49007AD17C /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		5B7B55302813BF8A007AD17C /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
-		5B7B55332813D2E3007AD17C /* LanguageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageModel.swift; sourceTree = "<group>"; };
-		5B7B55352813D5B9007AD17C /* Node.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Node.swift; sourceTree = "<group>"; };
-		5B7B55372813D707007AD17C /* Bigram.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bigram.swift; sourceTree = "<group>"; };
-		5B7B554228140F22007AD17C /* NodeAnchor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NodeAnchor.swift; sourceTree = "<group>"; };
-		5B7B5544281413EA007AD17C /* Span.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Span.swift; sourceTree = "<group>"; };
-		5B7B55492814462A007AD17C /* Grid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Grid.swift; sourceTree = "<group>"; };
-		5B7B554B2814F62D007AD17C /* Walker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Walker.swift; sourceTree = "<group>"; };
-		5B7B554D2814FFCB007AD17C /* BlockReadingBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockReadingBuilder.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,56 +36,54 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5B7B554828143719007AD17C /* OrderedCollections in Frameworks */,
+				5B7766822815B7900098C46B /* Megrez in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		5B77667E2815B7490098C46B /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				5B77667F2815B7490098C46B /*  */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		5B7766802815B7900098C46B /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		5B7B55152813B1E5007AD17C = {
 			isa = PBXGroup;
 			children = (
+				5B77667E2815B7490098C46B /* Packages */,
+				5B77667C2815B6730098C46B /* main.swift */,
 				5B7B552F2813BE49007AD17C /* README.md */,
 				5B7B55302813BF8A007AD17C /* LICENSE */,
-				5B7B55202813B1E5007AD17C /* Megrez */,
 				5B7B551F2813B1E5007AD17C /* Products */,
+				5B7766802815B7900098C46B /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
 		5B7B551F2813B1E5007AD17C /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				5B7B551E2813B1E5007AD17C /* Megrez */,
+				5B7B551E2813B1E5007AD17C /* MegrezSample */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		5B7B55202813B1E5007AD17C /* Megrez */ = {
-			isa = PBXGroup;
-			children = (
-				5B7B55282813B217007AD17C /* Megrez.swift */,
-				5B7B552A2813B2F3007AD17C /* KeyValuePair.swift */,
-				5B7B552C2813B421007AD17C /* Unigram.swift */,
-				5B7B55372813D707007AD17C /* Bigram.swift */,
-				5B7B55332813D2E3007AD17C /* LanguageModel.swift */,
-				5B7B55352813D5B9007AD17C /* Node.swift */,
-				5B7B554228140F22007AD17C /* NodeAnchor.swift */,
-				5B7B5544281413EA007AD17C /* Span.swift */,
-				5B7B55492814462A007AD17C /* Grid.swift */,
-				5B7B554B2814F62D007AD17C /* Walker.swift */,
-				5B7B554D2814FFCB007AD17C /* BlockReadingBuilder.swift */,
-				5B7B55212813B1E5007AD17C /* main.swift */,
-			);
-			path = Megrez;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		5B7B551D2813B1E5007AD17C /* Megrez */ = {
+		5B7B551D2813B1E5007AD17C /* MegrezSample */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5B7B55252813B1E5007AD17C /* Build configuration list for PBXNativeTarget "Megrez" */;
+			buildConfigurationList = 5B7B55252813B1E5007AD17C /* Build configuration list for PBXNativeTarget "MegrezSample" */;
 			buildPhases = (
 				5B7B551A2813B1E5007AD17C /* Sources */,
 				5B7B551B2813B1E5007AD17C /* Frameworks */,
@@ -116,12 +93,12 @@
 			);
 			dependencies = (
 			);
-			name = Megrez;
+			name = MegrezSample;
 			packageProductDependencies = (
-				5B7B554728143719007AD17C /* OrderedCollections */,
+				5B7766812815B7900098C46B /* Megrez */,
 			);
 			productName = Megrez;
-			productReference = 5B7B551E2813B1E5007AD17C /* Megrez */;
+			productReference = 5B7B551E2813B1E5007AD17C /* MegrezSample */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -149,13 +126,12 @@
 			);
 			mainGroup = 5B7B55152813B1E5007AD17C;
 			packageReferences = (
-				5B7B554628143719007AD17C /* XCRemoteSwiftPackageReference "swift-collections" */,
 			);
 			productRefGroup = 5B7B551F2813B1E5007AD17C /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				5B7B551D2813B1E5007AD17C /* Megrez */,
+				5B7B551D2813B1E5007AD17C /* MegrezSample */,
 			);
 		};
 /* End PBXProject section */
@@ -165,18 +141,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5B7B553F2813FAA1007AD17C /* Bigram.swift in Sources */,
-				5B7B55402813FB86007AD17C /* LanguageModel.swift in Sources */,
-				5B7B554C2814F62D007AD17C /* Walker.swift in Sources */,
-				5B7B55292813B217007AD17C /* Megrez.swift in Sources */,
-				5B7B554328140F22007AD17C /* NodeAnchor.swift in Sources */,
-				5B7B554E2814FFCB007AD17C /* BlockReadingBuilder.swift in Sources */,
-				5B7B5545281413EA007AD17C /* Span.swift in Sources */,
-				5B7B55222813B1E5007AD17C /* main.swift in Sources */,
-				5B7B552B2813B2F3007AD17C /* KeyValuePair.swift in Sources */,
-				5B7B554A2814462A007AD17C /* Grid.swift in Sources */,
-				5B7B553E2813FA97007AD17C /* Unigram.swift in Sources */,
-				5B7B55412813FB91007AD17C /* Node.swift in Sources */,
+				5B7766832815B8920098C46B /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -334,7 +299,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		5B7B55252813B1E5007AD17C /* Build configuration list for PBXNativeTarget "Megrez" */ = {
+		5B7B55252813B1E5007AD17C /* Build configuration list for PBXNativeTarget "MegrezSample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5B7B55262813B1E5007AD17C /* Debug */,
@@ -345,22 +310,10 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		5B7B554628143719007AD17C /* XCRemoteSwiftPackageReference "swift-collections" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://gitee.com/mirrors_apple/swift-collections";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
 /* Begin XCSwiftPackageProductDependency section */
-		5B7B554728143719007AD17C /* OrderedCollections */ = {
+		5B7766812815B7900098C46B /* Megrez */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 5B7B554628143719007AD17C /* XCRemoteSwiftPackageReference "swift-collections" */;
-			productName = OrderedCollections;
+			productName = Megrez;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

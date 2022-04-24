@@ -22,8 +22,8 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-
 import Foundation
+import Megrez
 import OrderedCollections
 
 // MARK: - 用以測試的詞頻數據
@@ -118,6 +118,7 @@ class SimpleLM: Megrez.LanguageModel {
 	var mutDatabase: OrderedDictionary<String, [Megrez.Unigram]> = [:]
 
 	init(input: String, swapKeyValue: Bool = false) {
+		super.init()
 		let sstream = input.components(separatedBy: "\n")
 		for line in sstream {
 			if line.isEmpty || line.hasPrefix("#") {
@@ -144,7 +145,7 @@ class SimpleLM: Megrez.LanguageModel {
 		}
 	}
 
-	override func unigramsForKey(key: String) -> [Megrez.Unigram] {
+	override func unigramsFor(key: String) -> [Megrez.Unigram] {
 		if let f = mutDatabase[key] {
 			return f
 		} else {
@@ -152,7 +153,7 @@ class SimpleLM: Megrez.LanguageModel {
 		}
 	}
 
-	func hasUnigramsForKey(_ key: String) -> Bool {
+	override func hasUnigramsFor(key: String) -> Bool {
 		mutDatabase.keys.contains(key)
 	}
 }

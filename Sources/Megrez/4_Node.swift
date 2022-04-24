@@ -22,11 +22,10 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-
 import OrderedCollections
 
 extension Megrez {
-	class Node {
+	public class Node {
 		let mutLM: LanguageModel
 		var mutKey: String
 		var mutScore: Double = 0
@@ -38,7 +37,7 @@ extension Megrez {
 		var mutCandidateFixed: Bool = false
 		var mutSelectedUnigramIndex: Int = 0
 
-		init(key: String, unigrams: [Megrez.Unigram], bigrams: [Megrez.Bigram] = []) {
+		public init(key: String, unigrams: [Megrez.Unigram], bigrams: [Megrez.Bigram] = []) {
 			mutLM = LanguageModel()
 
 			mutKey = key
@@ -59,7 +58,7 @@ extension Megrez {
 			}
 		}
 
-		func node(key: String, unigrams: [Megrez.Unigram], bigrams: [Megrez.Bigram] = []) {
+		public func node(key: String, unigrams: [Megrez.Unigram], bigrams: [Megrez.Bigram] = []) {
 			mutKey = key
 			var unigrams = unigrams
 			unigrams.sort {
@@ -82,7 +81,7 @@ extension Megrez {
 			}
 		}
 
-		func primeNodeWithPreceedingKeyValues(keyValues: [KeyValuePair]) {
+		public func primeNodeWithPreceedingKeyValues(keyValues: [KeyValuePair]) {
 			// TODO: primeNodeWithPreceedingKeyValues
 			// Please check the same function in C++ version of Gramambumlar for references.
 			var newIndex = mutSelectedUnigramIndex
@@ -111,15 +110,15 @@ extension Megrez {
 			}
 		}
 
-		func isCandidateFixed() -> Bool {
+		public func isCandidateFixed() -> Bool {
 			mutCandidateFixed
 		}
 
-		func candidates() -> [KeyValuePair] {
+		public func candidates() -> [KeyValuePair] {
 			mutCandidates
 		}
 
-		func selectCandidateAtIndex(index: Int = 0, fix: Bool = true) {
+		public func selectCandidateAtIndex(index: Int = 0, fix: Bool = true) {
 			if index >= mutUnigrams.count {
 				mutSelectedUnigramIndex = 0
 			} else {
@@ -129,7 +128,7 @@ extension Megrez {
 			mutScore = 99
 		}
 
-		func resetCandidate() {
+		public func resetCandidate() {
 			mutSelectedUnigramIndex = 0
 			mutCandidateFixed = false
 			if !mutUnigrams.isEmpty {
@@ -137,7 +136,7 @@ extension Megrez {
 			}
 		}
 
-		func selectFloatingCandidateAtIndex(index: Int, score: Double) {
+		public func selectFloatingCandidateAtIndex(index: Int, score: Double) {
 			if index >= mutUnigrams.count {
 				mutSelectedUnigramIndex = 0
 			} else {
@@ -147,15 +146,15 @@ extension Megrez {
 			mutScore = score
 		}
 
-		func key() -> String {
+		public func key() -> String {
 			mutKey
 		}
 
-		func score() -> Double {
+		public func score() -> Double {
 			mutScore
 		}
 
-		func scoreForCandidate(candidate: String) -> Double {
+		public func scoreForCandidate(candidate: String) -> Double {
 			for unigram in mutUnigrams {
 				if unigram.keyValue.value == candidate {
 					return unigram.score
@@ -164,15 +163,15 @@ extension Megrez {
 			return 0.0
 		}
 
-		func currentKeyValue() -> KeyValuePair {
+		public func currentKeyValue() -> KeyValuePair {
 			mutSelectedUnigramIndex >= mutUnigrams.count ? KeyValuePair() : mutCandidates[mutSelectedUnigramIndex]
 		}
 
-		func highestUnigramScore() -> Double {
+		public func highestUnigramScore() -> Double {
 			mutUnigrams.isEmpty ? 0.0 : mutUnigrams[0].score
 		}
 
-		static func == (lhs: Node, rhs: Node) -> Bool {
+		public static func == (lhs: Node, rhs: Node) -> Bool {
 			lhs.mutUnigrams == rhs.mutUnigrams && lhs.mutCandidates == rhs.mutCandidates
 				&& lhs.mutValueUnigramIndexMap == rhs.mutValueUnigramIndexMap
 				&& lhs.mutPreceedingGramBigramMap == rhs.mutPreceedingGramBigramMap

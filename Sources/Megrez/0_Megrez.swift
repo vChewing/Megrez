@@ -22,53 +22,5 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-
-import OrderedCollections
-
-extension Megrez {
-	struct Span {
-		private var mutLengthNodeMap: OrderedDictionary<Int, Megrez.Node>
-		private var mutMaximumLength: Int
-		var maximumLength: Int {
-			mutMaximumLength
-		}
-
-		init() {
-			mutLengthNodeMap = [:]
-			mutMaximumLength = 0
-		}
-
-		mutating func clear() {
-			mutLengthNodeMap.removeAll()
-			mutMaximumLength = 0
-		}
-
-		mutating func insertNodeOfLength(_ node: Node, length: Int) {
-			mutLengthNodeMap[length] = node
-			if length > mutMaximumLength {
-				mutMaximumLength = length
-			}
-		}
-
-		mutating func removeNodeOfLengthGreaterThan(_ length: Int) {
-			if length > mutMaximumLength { return }
-			var max = 0
-			var removalList: [Int] = []
-			for map in mutLengthNodeMap {
-				if map.0 > length {
-					removalList.append(contentsOf: [map.0])
-				} else if map.0 > max {
-					max = map.0
-				}
-			}
-			for key in removalList {
-				mutLengthNodeMap.removeValue(forKey: key)
-			}
-			mutMaximumLength = max
-		}
-
-		func nodeOfLength(_ length: Int) -> Node? {
-			mutLengthNodeMap[length]
-		}
-	}
-}
+/// The namespace for this package.
+public enum Megrez {}

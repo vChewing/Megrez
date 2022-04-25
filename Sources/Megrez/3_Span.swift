@@ -42,7 +42,7 @@ extension Megrez {
 			mutMaximumLength = 0
 		}
 
-		mutating func insertNodeOfLength(_ node: Node, length: Int) {
+		mutating func insert(node: Node, length: Int) {
 			mutLengthNodeMap[length] = node
 			if length > mutMaximumLength {
 				mutMaximumLength = length
@@ -66,7 +66,7 @@ extension Megrez {
 			mutMaximumLength = max
 		}
 
-		public func nodeOfLength(_ length: Int) -> Node? {
+		public func node(length: Int) -> Node? {
 			mutLengthNodeMap[length]
 		}
 	}

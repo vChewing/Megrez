@@ -41,7 +41,7 @@ extension Megrez {
 					mutSpans.append(Span())
 				}
 			}
-			mutSpans[location].insertNodeOfLength(node, length: spanningLength)
+			mutSpans[location].insert(node: node, length: spanningLength)
 		}
 
 		public func hasMatchedNode(location: Int, spanningLength: Int, key: String) -> Bool {
@@ -49,7 +49,7 @@ extension Megrez {
 				return false
 			}
 
-			let n = mutSpans[location].nodeOfLength(spanningLength)
+			let n = mutSpans[location].node(length: spanningLength)
 			return n == nil ? false : key == n?.key()
 		}
 
@@ -87,7 +87,7 @@ extension Megrez {
 				for i in 0..<location {
 					let span = mutSpans[i]
 					if i + span.maximumLength >= location {
-						if let np = span.nodeOfLength(location - i) {
+						if let np = span.node(length: location - i) {
 							var na = NodeAnchor()
 							na.node = np
 							na.location = i
@@ -110,7 +110,7 @@ extension Megrez {
 							if i + j < location {
 								continue
 							}
-							if let np = span.nodeOfLength(j) {
+							if let np = span.node(length: j) {
 								var na = NodeAnchor()
 								na.node = np
 								na.location = i
@@ -134,7 +134,7 @@ extension Megrez {
 
 					for i in 0..<candidates.count {
 						if candidates[i].value == value {
-							nodeAnchor.node?.selectCandidateAtIndex(index: i)
+							nodeAnchor.node?.selectCandidateAt(index: i)
 							node = nodeAnchor
 							break
 						}
@@ -153,7 +153,7 @@ extension Megrez {
 
 					for (i, candidate) in candidates.enumerated() {
 						if candidate.value == value {
-							nodeAnchor.node?.selectFloatingCandidateAtIndex(index: i, score: Double(overridingScore))
+							nodeAnchor.node?.selectFloatingCandidateAt(index: i, score: Double(overridingScore))
 							break
 						}
 					}

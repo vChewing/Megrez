@@ -25,20 +25,20 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 extension Megrez {
 	public class Bigram: Equatable {
 		public var keyValue: KeyValuePair
-		public var preceedingKeyValue: KeyValuePair
+		public var precedingKeyValue: KeyValuePair
 		public var score: Double
 		// var paired: String
 
-		public init(preceedingKeyValue: KeyValuePair, keyValue: KeyValuePair, score: Double) {
+		public init(precedingKeyValue: KeyValuePair, keyValue: KeyValuePair, score: Double) {
 			self.keyValue = keyValue
-			self.preceedingKeyValue = preceedingKeyValue
+			self.precedingKeyValue = precedingKeyValue
 			self.score = score
-			// paired = "(" + keyValue.paired + "|" + preceedingKeyValue.paired + "," + String(score) + ")"
+			// paired = "(" + keyValue.paired + "|" + precedingKeyValue.paired + "," + String(score) + ")"
 		}
 
 		public func hash(into hasher: inout Hasher) {
 			hasher.combine(keyValue)
-			hasher.combine(preceedingKeyValue)
+			hasher.combine(precedingKeyValue)
 			hasher.combine(score)
 			// hasher.combine(paired)
 		}
@@ -54,11 +54,11 @@ extension Megrez {
 		//		}
 
 		public static func == (lhs: Bigram, rhs: Bigram) -> Bool {
-			lhs.preceedingKeyValue == rhs.preceedingKeyValue && lhs.keyValue == rhs.keyValue && lhs.score == rhs.score
+			lhs.precedingKeyValue == rhs.precedingKeyValue && lhs.keyValue == rhs.keyValue && lhs.score == rhs.score
 		}
 
 		public static func < (lhs: Bigram, rhs: Bigram) -> Bool {
-			lhs.preceedingKeyValue < rhs.preceedingKeyValue
+			lhs.precedingKeyValue < rhs.precedingKeyValue
 				|| (lhs.keyValue < rhs.keyValue || (lhs.keyValue == rhs.keyValue && lhs.keyValue < rhs.keyValue))
 		}
 

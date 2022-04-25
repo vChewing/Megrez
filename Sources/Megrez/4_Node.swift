@@ -32,7 +32,7 @@ extension Megrez {
 		var mutUnigrams: [Unigram]
 		var mutCandidates: [KeyValuePair]
 		var mutValueUnigramIndexMap: OrderedDictionary<String, Int>
-		var mutPreceedingGramBigramMap: OrderedDictionary<KeyValuePair, [Megrez.Bigram]>
+		var mutPrecedingBigramMap: OrderedDictionary<KeyValuePair, [Megrez.Bigram]>
 
 		var mutCandidateFixed: Bool = false
 		var mutSelectedUnigramIndex: Int = 0
@@ -46,7 +46,7 @@ extension Megrez {
 			mutUnigrams = unigrams
 			mutCandidates = []
 			mutValueUnigramIndexMap = [:]
-			mutPreceedingGramBigramMap = [:]
+			mutPrecedingBigramMap = [:]
 
 			mutCandidateFixed = false
 			mutSelectedUnigramIndex = 0
@@ -77,19 +77,19 @@ extension Megrez {
 			}
 
 			for gram in bigrams {
-				mutPreceedingGramBigramMap[gram.preceedingKeyValue]?.append(contentsOf: [gram])
+				mutPrecedingBigramMap[gram.precedingKeyValue]?.append(contentsOf: [gram])
 			}
 		}
 
-		public func primeNodeWith(preceedingKeyValues: [KeyValuePair]) {
-			// TODO: primeNodeWithPreceedingKeyValues
+		public func primeNodeWith(precedingKeyValues: [KeyValuePair]) {
+			// TODO: primeNodeWithPrecedingKeyValues
 			// Please check the same function in C++ version of Gramambumlar for references.
 			var newIndex = mutSelectedUnigramIndex
 			var max = mutScore
 
 			if !isCandidateFixed() {
-				for (index, _) in preceedingKeyValues.enumerated() {
-					let bigrams = mutPreceedingGramBigramMap.elements[index].1
+				for (index, _) in precedingKeyValues.enumerated() {
+					let bigrams = mutPrecedingBigramMap.elements[index].1
 					for (_, bigram) in bigrams.enumerated() {
 						if bigram.score > max {
 							if let valRetrieved = mutValueUnigramIndexMap[bigram.keyValue.value] {
@@ -174,7 +174,7 @@ extension Megrez {
 		public static func == (lhs: Node, rhs: Node) -> Bool {
 			lhs.mutUnigrams == rhs.mutUnigrams && lhs.mutCandidates == rhs.mutCandidates
 				&& lhs.mutValueUnigramIndexMap == rhs.mutValueUnigramIndexMap
-				&& lhs.mutPreceedingGramBigramMap == rhs.mutPreceedingGramBigramMap
+				&& lhs.mutPrecedingBigramMap == rhs.mutPrecedingBigramMap
 				&& lhs.mutCandidateFixed == rhs.mutCandidateFixed
 				&& lhs.mutSelectedUnigramIndex == rhs.mutSelectedUnigramIndex
 		}

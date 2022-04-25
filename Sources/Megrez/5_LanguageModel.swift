@@ -32,8 +32,8 @@ extension Megrez {
 			key.isEmpty ? [Megrez.Unigram]() : [Megrez.Unigram]()
 		}
 
-		open func bigramsForKeys(preceedingKey: String, key: String) -> [Megrez.Bigram] {
-			preceedingKey == key ? [Megrez.Bigram]() : [Megrez.Bigram]()
+		open func bigramsForKeys(precedingKey: String, key: String) -> [Megrez.Bigram] {
+			precedingKey == key ? [Megrez.Bigram]() : [Megrez.Bigram]()
 		}
 
 		open func hasUnigramsFor(key: String) -> Bool {

@@ -22,39 +22,38 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-
 extension Megrez {
-	class Grid {
+	public class Grid {
 		var mutSpans: [Megrez.Span]
 
-		init() {
+		public init() {
 			mutSpans = [Megrez.Span]()
 		}
 
-		func clear() {
+		public func clear() {
 			mutSpans = [Megrez.Span]()
 		}
 
-		func insertNode(node: Node, location: Int, spanningLength: Int) {
+		public func insertNode(node: Node, location: Int, spanningLength: Int) {
 			if mutSpans.count <= location {
 				let diff = location - mutSpans.count + 1
 				for _ in 0..<diff {
 					mutSpans.append(Span())
 				}
 			}
-			mutSpans[location].insertNodeOfLength(node, length: spanningLength)
+			mutSpans[location].insert(node: node, length: spanningLength)
 		}
 
-		func hasMatchedNode(location: Int, spanningLength: Int, key: String) -> Bool {
+		public func hasMatchedNode(location: Int, spanningLength: Int, key: String) -> Bool {
 			if location > mutSpans.count {
 				return false
 			}
 
-			let n = mutSpans[location].nodeOfLength(spanningLength)
+			let n = mutSpans[location].node(length: spanningLength)
 			return n == nil ? false : key == n?.key()
 		}
 
-		func expandGridByOneAt(location: Int) {
+		public func expandGridByOneAt(location: Int) {
 			if location != 0 || location == mutSpans.count {
 				mutSpans.insert(Span(), at: location)
 			} else {
@@ -66,7 +65,7 @@ extension Megrez {
 			}
 		}
 
-		func shrinkGridByOneAt(location: Int) {
+		public func shrinkGridByOneAt(location: Int) {
 			if location >= mutSpans.count {
 				return
 			}
@@ -78,17 +77,17 @@ extension Megrez {
 			}
 		}
 
-		func width() -> Int {
+		public func width() -> Int {
 			mutSpans.count
 		}
 
-		func nodesEndingAt(location: Int) -> [NodeAnchor] {
+		public func nodesEndingAt(location: Int) -> [NodeAnchor] {
 			var results: [NodeAnchor] = []
 			if !mutSpans.isEmpty, location <= mutSpans.count {
 				for i in 0..<location {
 					let span = mutSpans[i]
 					if i + span.maximumLength >= location {
-						if let np = span.nodeOfLength(location - i) {
+						if let np = span.node(length: location - i) {
 							var na = NodeAnchor()
 							na.node = np
 							na.location = i
@@ -101,7 +100,7 @@ extension Megrez {
 			return results
 		}
 
-		func nodesCrossingOrEndingAt(location: Int) -> [NodeAnchor] {
+		public func nodesCrossingOrEndingAt(location: Int) -> [NodeAnchor] {
 			var results: [NodeAnchor] = []
 			if !mutSpans.isEmpty, location <= mutSpans.count {
 				for i in 0..<location {
@@ -111,7 +110,7 @@ extension Megrez {
 							if i + j < location {
 								continue
 							}
-							if let np = span.nodeOfLength(j) {
+							if let np = span.node(length: j) {
 								var na = NodeAnchor()
 								na.node = np
 								na.location = i
@@ -125,7 +124,7 @@ extension Megrez {
 			return results
 		}
 
-		func fixNodeSelectedCandidate(location: Int, value: String) -> NodeAnchor {
+		public func fixNodeSelectedCandidate(location: Int, value: String) -> NodeAnchor {
 			let nodes = nodesCrossingOrEndingAt(location: location)
 			var node = NodeAnchor()
 			for nodeAnchor in nodes {
@@ -135,7 +134,7 @@ extension Megrez {
 
 					for i in 0..<candidates.count {
 						if candidates[i].value == value {
-							nodeAnchor.node?.selectCandidateAtIndex(index: i)
+							nodeAnchor.node?.selectCandidateAt(index: i)
 							node = nodeAnchor
 							break
 						}
@@ -145,7 +144,7 @@ extension Megrez {
 			return node
 		}
 
-		func overrideNodeScoreForSelectedCandidate(location: Int, value: String, overridingScore: Float) {
+		public func overrideNodeScoreForSelectedCandidate(location: Int, value: String, overridingScore: Float) {
 			let nodes = nodesCrossingOrEndingAt(location: location)
 			for nodeAnchor in nodes {
 				if let candidates = nodeAnchor.node?.candidates() {
@@ -154,7 +153,7 @@ extension Megrez {
 
 					for (i, candidate) in candidates.enumerated() {
 						if candidate.value == value {
-							nodeAnchor.node?.selectFloatingCandidateAtIndex(index: i, score: Double(overridingScore))
+							nodeAnchor.node?.selectFloatingCandidateAt(index: i, score: Double(overridingScore))
 							break
 						}
 					}

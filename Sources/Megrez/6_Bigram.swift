@@ -22,51 +22,52 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-
 extension Megrez {
-	class KeyValuePair: Equatable, Hashable, Comparable {
-		var key: String
-		var value: String
+	public class Bigram: Equatable {
+		public var keyValue: KeyValuePair
+		public var preceedingKeyValue: KeyValuePair
+		public var score: Double
 		// var paired: String
 
-		init(key: String = "", value: String = "") {
-			self.key = key
-			self.value = value
-			// paired = "(" + key + "," + value + ")"
+		public init(preceedingKeyValue: KeyValuePair, keyValue: KeyValuePair, score: Double) {
+			self.keyValue = keyValue
+			self.preceedingKeyValue = preceedingKeyValue
+			self.score = score
+			// paired = "(" + keyValue.paired + "|" + preceedingKeyValue.paired + "," + String(score) + ")"
 		}
 
-		func hash(into hasher: inout Hasher) {
-			hasher.combine(key)
-			hasher.combine(value)
+		public func hash(into hasher: inout Hasher) {
+			hasher.combine(keyValue)
+			hasher.combine(preceedingKeyValue)
+			hasher.combine(score)
 			// hasher.combine(paired)
 		}
 
-		static func == (lhs: KeyValuePair, rhs: KeyValuePair) -> Bool {
-			lhs.key.count == rhs.key.count && lhs.value == rhs.value
+		//		static func getPairedBigrams(grams: [Bigram]) -> String {
+		//			var arrOutputContent = [""]
+		//			var index = 0
+		//			for gram in grams {
+		//				arrOutputContent.append(contentsOf: [String(index) + "=>" + gram.paired])
+		//				index += 1
+		//			}
+		//			return "[" + String(grams.count) + "]=>{" + arrOutputContent.joined(separator: ",") + "}"
+		//		}
+
+		public static func == (lhs: Bigram, rhs: Bigram) -> Bool {
+			lhs.preceedingKeyValue == rhs.preceedingKeyValue && lhs.keyValue == rhs.keyValue && lhs.score == rhs.score
 		}
 
-		static func < (lhs: KeyValuePair, rhs: KeyValuePair) -> Bool {
-			(lhs.key.count < rhs.key.count) || (lhs.key.count == rhs.key.count && lhs.value < rhs.value)
-		}
-
-		static func > (lhs: KeyValuePair, rhs: KeyValuePair) -> Bool {
-			(lhs.key.count > rhs.key.count) || (lhs.key.count == rhs.key.count && lhs.value > rhs.value)
-		}
-
-		static func <= (lhs: KeyValuePair, rhs: KeyValuePair) -> Bool {
-			(lhs.key.count <= rhs.key.count) || (lhs.key.count == rhs.key.count && lhs.value <= rhs.value)
-		}
-
-		static func >= (lhs: KeyValuePair, rhs: KeyValuePair) -> Bool {
-			(lhs.key.count >= rhs.key.count) || (lhs.key.count == rhs.key.count && lhs.value >= rhs.value)
+		public static func < (lhs: Bigram, rhs: Bigram) -> Bool {
+			lhs.preceedingKeyValue < rhs.preceedingKeyValue
+				|| (lhs.keyValue < rhs.keyValue || (lhs.keyValue == rhs.keyValue && lhs.keyValue < rhs.keyValue))
 		}
 
 		var description: String {
-			"(\(key), \(value))"
+			"\(keyValue):\(score)"
 		}
 
 		var debugDescription: String {
-			"KeyValuePair(key: \(key), value: \(value))"
+			"Bigram(keyValue: \(keyValue), score: \(score))"
 		}
 	}
 }

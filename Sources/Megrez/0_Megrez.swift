@@ -22,12 +22,5 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-
-extension Megrez {
-	struct NodeAnchor {
-		var node: Node?
-		var location: Int = 0
-		var spanningLength: Int = 0
-		var accumulatedScore: Double = 0.0
-	}
-}
+/// The namespace for this package.
+public enum Megrez {}

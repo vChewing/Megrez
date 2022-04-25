@@ -22,9 +22,8 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-
 extension Megrez {
-	class BlockReadingBuilder {
+	public class BlockReadingBuilder {
 		let kMaximumBuildSpanLength = 10  // 規定最多可以組成的詞的字數上限為 10
 		var mutCursorIndex: Int = 0
 		var mutReadings: [String] = []
@@ -32,40 +31,40 @@ extension Megrez {
 		var mutLM: LanguageModel
 		var mutJoinSeparator: String = ""
 
-		init(lm: LanguageModel) {
+		public init(lm: LanguageModel) {
 			mutLM = lm
 		}
 
-		func clear() {
+		public func clear() {
 			mutCursorIndex = 0
 			mutReadings.removeAll()
 			mutGrid.clear()
 		}
 
-		func length() -> Int {
+		public func length() -> Int {
 			mutReadings.count
 		}
 
-		func cursorIndex() -> Int {
+		public func cursorIndex() -> Int {
 			mutCursorIndex
 		}
 
-		func setCursorIndex(newIndex: Int) {
+		public func setCursorIndex(newIndex: Int) {
 			mutCursorIndex = min(newIndex, mutReadings.count)
 		}
 
-		func insertReadingAtCursor(reading: String) {
+		public func insertReadingAtCursor(reading: String) {
 			mutReadings.insert(reading, at: mutCursorIndex)
 			mutGrid.expandGridByOneAt(location: mutCursorIndex)
 			build()
 			mutCursorIndex += 1
 		}
 
-		func readings() -> [String] {
+		public func readings() -> [String] {
 			mutReadings
 		}
 
-		func deleteReadingBeforeCursor() -> Bool {
+		public func deleteReadingBeforeCursor() -> Bool {
 			if mutCursorIndex == 0 {
 				return false
 			}
@@ -77,7 +76,7 @@ extension Megrez {
 			return true
 		}
 
-		@discardableResult func deleteReadingAfterCursor() -> Bool {
+		@discardableResult public func deleteReadingAfterCursor() -> Bool {
 			if mutCursorIndex == mutReadings.count {
 				return false
 			}
@@ -88,7 +87,7 @@ extension Megrez {
 			return true
 		}
 
-		func removeHeadReadings(count: Int) -> Bool {
+		public func removeHeadReadings(count: Int) -> Bool {
 			if count > length() {
 				return false
 			}
@@ -105,19 +104,19 @@ extension Megrez {
 			return true
 		}
 
-		func setJoinSeparator(separator: String) {
+		public func setJoinSeparator(separator: String) {
 			mutJoinSeparator = separator
 		}
 
-		func joinSeparator() -> String {
+		public func joinSeparator() -> String {
 			mutJoinSeparator
 		}
 
-		func grid() -> Grid {
+		public func grid() -> Grid {
 			mutGrid
 		}
 
-		func build() {
+		public func build() {
 			// if (mutLM == nil) { return } // 這個出不了 nil，所以註釋掉。
 
 			let itrBegin: Int =
@@ -133,7 +132,7 @@ extension Megrez {
 					let strSlice = (p == itrEnd) ? [mutReadings[itrEnd]] : mutReadings[p..<itrEnd]
 					let combinedReading: String = join(slice: strSlice, separator: mutJoinSeparator)
 					if !mutGrid.hasMatchedNode(location: p, spanningLength: q, key: combinedReading) {
-						let unigrams: [Unigram] = mutLM.unigramsForKey(key: combinedReading)
+						let unigrams: [Unigram] = mutLM.unigramsFor(key: combinedReading)
 
 						if !unigrams.isEmpty {
 							let n = Node(key: combinedReading, unigrams: unigrams)
@@ -145,7 +144,7 @@ extension Megrez {
 			}
 		}
 
-		func join(slice strSlice: ArraySlice<String>, separator: String) -> String {
+		public func join(slice strSlice: ArraySlice<String>, separator: String) -> String {
 			var arrResult: [String] = []
 			for value in strSlice {
 				arrResult.append(value)

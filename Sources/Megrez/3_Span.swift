@@ -22,53 +22,52 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+import OrderedCollections
 
 extension Megrez {
-	class Walker {
-		var mutGrid: Grid
-
-		init(grid: Megrez.Grid = Megrez.Grid()) {
-			mutGrid = grid
+	struct Span {
+		private var mutLengthNodeMap: OrderedDictionary<Int, Megrez.Node>
+		private var mutMaximumLength: Int
+		var maximumLength: Int {
+			mutMaximumLength
 		}
 
-		func reverseWalk(at location: Int, score accumulatedScore: Double = 0.0) -> [NodeAnchor] {
-			if location == 0 || location > mutGrid.width() {
-				return [] as [NodeAnchor]
+		public init() {
+			mutLengthNodeMap = [:]
+			mutMaximumLength = 0
+		}
+
+		mutating func clear() {
+			mutLengthNodeMap.removeAll()
+			mutMaximumLength = 0
+		}
+
+		mutating func insert(node: Node, length: Int) {
+			mutLengthNodeMap[length] = node
+			if length > mutMaximumLength {
+				mutMaximumLength = length
 			}
+		}
 
-			var paths: [[NodeAnchor]] = []
-			let nodes: [NodeAnchor] = mutGrid.nodesEndingAt(location: location)
-
-			for n in nodes {
-				var n = n
-				if n.node == nil {
-					continue
-				}
-
-				n.accumulatedScore = accumulatedScore + n.node!.score()
-
-				var path: [NodeAnchor] = [n]
-				path.append(
-					contentsOf: reverseWalk(
-						at: location - n.spanningLength,
-						score: n.accumulatedScore
-					)
-				)
-
-				paths.append(path)
-			}
-
-			if !paths.isEmpty {
-				if var result = paths.first {
-					for value in paths {
-						if value.last?.accumulatedScore ?? 0 > result.last?.accumulatedScore ?? 0 {
-							result = value
-						}
-					}
-					return result
+		mutating func removeNodeOfLengthGreaterThan(_ length: Int) {
+			if length > mutMaximumLength { return }
+			var max = 0
+			var removalList: [Int] = []
+			for map in mutLengthNodeMap {
+				if map.0 > length {
+					removalList.append(contentsOf: [map.0])
+				} else if map.0 > max {
+					max = map.0
 				}
 			}
-			return [] as [NodeAnchor]
+			for key in removalList {
+				mutLengthNodeMap.removeValue(forKey: key)
+			}
+			mutMaximumLength = max
+		}
+
+		public func node(length: Int) -> Node? {
+			mutLengthNodeMap[length]
 		}
 	}
 }

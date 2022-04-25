@@ -22,29 +22,30 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-
 extension Megrez {
-	class Bigram: Equatable {
-		var keyValue: KeyValuePair
-		var preceedingKeyValue: KeyValuePair
-		var score: Double
+	public class Unigram: Equatable {
+		public var keyValue: KeyValuePair
+		public var score: Double
 		// var paired: String
 
-		init(preceedingKeyValue: KeyValuePair, keyValue: KeyValuePair, score: Double) {
+		public init(keyValue: KeyValuePair, score: Double) {
 			self.keyValue = keyValue
-			self.preceedingKeyValue = preceedingKeyValue
 			self.score = score
-			// paired = "(" + keyValue.paired + "|" + preceedingKeyValue.paired + "," + String(score) + ")"
+			// paired = "(" + keyValue.paired + "," + String(score) + ")"
 		}
 
-		func hash(into hasher: inout Hasher) {
+		public func hash(into hasher: inout Hasher) {
 			hasher.combine(keyValue)
-			hasher.combine(preceedingKeyValue)
 			hasher.combine(score)
 			// hasher.combine(paired)
 		}
 
-		//		static func getPairedBigrams(grams: [Bigram]) -> String {
+		// 這個函數不再需要了。
+		public static func compareScore(a: Unigram, b: Unigram) -> Bool {
+			a.score > b.score
+		}
+
+		//		static func getPairedUnigrams(grams: [Unigram]) -> String {
 		//			var arrOutputContent = [""]
 		//			var index = 0
 		//			for gram in grams {
@@ -54,13 +55,12 @@ extension Megrez {
 		//			return "[" + String(grams.count) + "]=>{" + arrOutputContent.joined(separator: ",") + "}"
 		//		}
 
-		static func == (lhs: Bigram, rhs: Bigram) -> Bool {
-			lhs.preceedingKeyValue == rhs.preceedingKeyValue && lhs.keyValue == rhs.keyValue && lhs.score == rhs.score
+		public static func == (lhs: Unigram, rhs: Unigram) -> Bool {
+			lhs.keyValue == rhs.keyValue && lhs.score == rhs.score
 		}
 
-		static func < (lhs: Bigram, rhs: Bigram) -> Bool {
-			lhs.preceedingKeyValue < rhs.preceedingKeyValue
-				|| (lhs.keyValue < rhs.keyValue || (lhs.keyValue == rhs.keyValue && lhs.keyValue < rhs.keyValue))
+		public static func < (lhs: Unigram, rhs: Unigram) -> Bool {
+			lhs.keyValue < rhs.keyValue || (lhs.keyValue == rhs.keyValue && lhs.keyValue < rhs.keyValue)
 		}
 
 		var description: String {
@@ -68,7 +68,7 @@ extension Megrez {
 		}
 
 		var debugDescription: String {
-			"Bigram(keyValue: \(keyValue), score: \(score))"
+			"Unigram(keyValue: \(keyValue), score: \(score))"
 		}
 	}
 }

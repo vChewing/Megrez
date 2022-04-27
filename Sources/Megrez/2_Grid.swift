@@ -88,7 +88,7 @@ extension Megrez {
 					let span = mutSpans[i]
 					if i + span.maximumLength >= location {
 						if let np = span.node(length: location - i) {
-							var na = NodeAnchor()
+							let na = NodeAnchor()
 							na.node = np
 							na.location = i
 							na.spanningLength = location - i
@@ -111,7 +111,7 @@ extension Megrez {
 								continue
 							}
 							if let np = span.node(length: j) {
-								var na = NodeAnchor()
+								let na = NodeAnchor()
 								na.node = np
 								na.location = i
 								na.spanningLength = location - i

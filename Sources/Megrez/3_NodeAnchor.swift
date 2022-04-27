@@ -23,10 +23,13 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 extension Megrez {
-	public struct NodeAnchor {
+	public class NodeAnchor {
 		public var node: Node?
 		public var location: Int = 0
 		public var spanningLength: Int = 0
 		public var accumulatedScore: Double = 0.0
+		public var keyLength: Int {
+			self.node?.key().count ?? 0
+		}
 	}
 }

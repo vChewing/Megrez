@@ -64,7 +64,7 @@ extension Megrez {
 			mutReadings
 		}
 
-		public func deleteReadingBeforeCursor() -> Bool {
+		@discardableResult public func deleteReadingBeforeCursor() -> Bool {
 			if mutCursorIndex == 0 {
 				return false
 			}

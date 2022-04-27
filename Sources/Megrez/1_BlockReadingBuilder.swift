@@ -87,7 +87,7 @@ extension Megrez {
 			return true
 		}
 
-		public func removeHeadReadings(count: Int) -> Bool {
+		@discardableResult public func removeHeadReadings(count: Int) -> Bool {
 			if count > length() {
 				return false
 			}

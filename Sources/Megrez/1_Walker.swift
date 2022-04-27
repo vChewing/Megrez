@@ -39,7 +39,7 @@ extension Megrez {
 			let nodes: [NodeAnchor] = mutGrid.nodesEndingAt(location: location)
 
 			for n in nodes {
-				var n = n
+				let n = n
 				if n.node == nil {
 					continue
 				}

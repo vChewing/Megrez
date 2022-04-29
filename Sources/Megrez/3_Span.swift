@@ -25,7 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import OrderedCollections
 
 extension Megrez {
-	struct Span {
+	@frozen public struct Span {
 		private var mutLengthNodeMap: OrderedDictionary<Int, Megrez.Node>
 		private var mutMaximumLength: Int
 		var maximumLength: Int {

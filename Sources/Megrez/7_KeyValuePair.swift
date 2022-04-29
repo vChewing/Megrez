@@ -23,7 +23,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 extension Megrez {
-	public class KeyValuePair: Equatable, Hashable, Comparable {
+	@frozen public struct KeyValuePair: Equatable, Hashable, Comparable {
 		public var key: String
 		public var value: String
 		// public var paired: String

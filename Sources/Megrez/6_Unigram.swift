@@ -23,7 +23,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 extension Megrez {
-	public class Unigram: Equatable {
+	@frozen public struct Unigram: Equatable {
 		public var keyValue: KeyValuePair
 		public var score: Double
 		// var paired: String

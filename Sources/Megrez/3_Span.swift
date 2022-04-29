@@ -52,10 +52,10 @@ extension Megrez {
 		mutating func removeNodeOfLengthGreaterThan(_ length: Int) {
 			if length > mutMaximumLength { return }
 			var max = 0
-			var removalList: [Int] = []
+			var removalList: Set<Int> = []
 			for map in mutLengthNodeMap {
 				if map.0 > length {
-					removalList.append(contentsOf: [map.0])
+					removalList.insert(map.0)
 				} else if map.0 > max {
 					max = map.0
 				}

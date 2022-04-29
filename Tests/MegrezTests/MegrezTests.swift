@@ -101,7 +101,7 @@ class SimpleLM: Megrez.LanguageModel {
 			let col1 = linestream[1]
 			let col2 = linestream[2]
 
-			let u = Megrez.Unigram(keyValue: Megrez.KeyValuePair(), score: 0)
+			var u = Megrez.Unigram(keyValue: Megrez.KeyValuePair(), score: 0)
 
 			if swapKeyValue {
 				u.keyValue.key = col1

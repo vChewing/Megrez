@@ -110,6 +110,8 @@ jiang3jin1 獎金 -10.344678
 nian2zhong1 年終 -11.668947
 nian2zhong1 年中 -11.373044
 gao1ke1ji4 高科技 -9.842421
+ni3zhe4 你這 -9.000000
+zhe4yang4 這樣 -8.000000
 """#
 
 // MARK: - 用以測試的型別
@@ -193,7 +195,7 @@ func testInput() {
 		}
 	}
 	print(composed)
-	let correctResult = ["高科技", "公司", "的", "年中", "獎金"]
+	let correctResult = ["高科技", "公司", "的", "年中", "獎金", "你", "這樣"]
 	print(" - 上述列印結果理應於下面這行一致：")
 	print(correctResult)
 }

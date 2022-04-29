@@ -132,8 +132,9 @@ extension Megrez {
 					let candidates = theNode.candidates()
 					// Reset the candidate-fixed state of every node at the location.
 					theNode.resetCandidate()
-					for i in 0..<candidates.count {
-						if candidates[i].value == value {
+
+					for (i, candidate) in candidates.enumerated() {
+						if candidate.value == value {
 							theNode.selectCandidateAt(index: i)
 							node = nodeAnchor
 							break

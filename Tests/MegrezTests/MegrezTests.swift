@@ -26,7 +26,11 @@ final class MegrezTests: XCTestCase {
 		builder.insertReadingAtCursor(reading: "zhong1")
 		builder.insertReadingAtCursor(reading: "jiang3")
 		builder.insertReadingAtCursor(reading: "jin1")
+		builder.insertReadingAtCursor(reading: "ni3")
+		builder.insertReadingAtCursor(reading: "zhe4")
+		builder.insertReadingAtCursor(reading: "yang4")
 
+		
 		let walker = Megrez.Walker(grid: builder.grid())
 
 		var walked: [Megrez.NodeAnchor] = walker.reverseWalk(at: builder.grid().width(), score: 0.0)
@@ -39,7 +43,7 @@ final class MegrezTests: XCTestCase {
 			}
 		}
 		print(composed)
-		let correctResult = ["高科技", "公司", "的", "年中", "獎金"]
+		let correctResult = ["高科技", "公司", "的", "年中", "獎金", "你", "這樣"]
 		print(" - 上述列印結果理應於下面這行一致：")
 		print(correctResult)
 
@@ -213,4 +217,6 @@ jiang3jin1 獎金 -10.344678
 nian2zhong1 年終 -11.668947
 nian2zhong1 年中 -11.373044
 gao1ke1ji4 高科技 -9.842421
+ni3zhe4 你這 -9.000000
+zhe4yang4 這樣 -8.000000
 """#

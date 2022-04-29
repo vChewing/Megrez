@@ -128,13 +128,13 @@ extension Megrez {
 			let nodes = nodesCrossingOrEndingAt(location: location)
 			var node = NodeAnchor()
 			for nodeAnchor in nodes {
-				if let candidates = nodeAnchor.node?.candidates() {
+				if let theNode = nodeAnchor.node {
+					let candidates = theNode.candidates()
 					// Reset the candidate-fixed state of every node at the location.
-					nodeAnchor.node?.resetCandidate()
-
+					theNode.resetCandidate()
 					for i in 0..<candidates.count {
 						if candidates[i].value == value {
-							nodeAnchor.node?.selectCandidateAt(index: i)
+							theNode.selectCandidateAt(index: i)
 							node = nodeAnchor
 							break
 						}
@@ -147,13 +147,14 @@ extension Megrez {
 		public func overrideNodeScoreForSelectedCandidate(location: Int, value: inout String, overridingScore: Float) {
 			let nodes = nodesCrossingOrEndingAt(location: location)
 			for nodeAnchor in nodes {
-				if let candidates = nodeAnchor.node?.candidates() {
+				if let theNode = nodeAnchor.node {
+					let candidates = theNode.candidates()
 					// Reset the candidate-fixed state of every node at the location.
-					nodeAnchor.node?.resetCandidate()
+					theNode.resetCandidate()
 
 					for (i, candidate) in candidates.enumerated() {
 						if candidate.value == value {
-							nodeAnchor.node?.selectFloatingCandidateAt(index: i, score: Double(overridingScore))
+							theNode.selectFloatingCandidateAt(index: i, score: Double(overridingScore))
 							break
 						}
 					}

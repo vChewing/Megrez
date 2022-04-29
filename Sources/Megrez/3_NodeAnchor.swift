@@ -29,7 +29,7 @@ extension Megrez {
 		public var spanningLength: Int = 0
 		public var accumulatedScore: Double = 0.0
 		public var keyLength: Int {
-			self.node?.key().count ?? 0
+			node?.key().count ?? 0
 		}
 	}
 }

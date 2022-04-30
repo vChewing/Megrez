@@ -90,7 +90,7 @@ final class MegrezTests: XCTestCase {
 // MARK: - 用以測試的型別
 
 class SimpleLM: Megrez.LanguageModel {
-	var mutDatabase: OrderedDictionary<String, [Megrez.Unigram]> = [:]
+	var mutDatabase: Dictionary<String, [Megrez.Unigram]> = [:]
 
 	init(input: String, swapKeyValue: Bool = false) {
 		super.init()

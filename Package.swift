@@ -10,15 +10,11 @@ let package = Package(
 			targets: ["Megrez"]
 		)
 	],
-	dependencies: [
-		.package(url: "https://gitee.com/mirrors_apple/swift-collections", from: "1.0.2")
-	],
+	dependencies: [],
 	targets: [
 		.target(
 			name: "Megrez",
-			dependencies: [
-				.product(name: "OrderedCollections", package: "swift-collections")
-			]
+			dependencies: []
 		),
 		.testTarget(
 			name: "MegrezTests",

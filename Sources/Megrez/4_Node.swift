@@ -31,8 +31,8 @@ extension Megrez {
 		var mutScore: Double = 0
 		var mutUnigrams: [Unigram]
 		var mutCandidates: [KeyValuePair]
-		var mutValueUnigramIndexMap: OrderedDictionary<String, Int>
-		var mutPrecedingBigramMap: OrderedDictionary<KeyValuePair, [Megrez.Bigram]>
+		var mutValueUnigramIndexMap: Dictionary<String, Int>
+		var mutPrecedingBigramMap: Dictionary<KeyValuePair, [Megrez.Bigram]>
 
 		var mutCandidateFixed: Bool = false
 		var mutSelectedUnigramIndex: Int = 0
@@ -88,8 +88,8 @@ extension Megrez {
 			var max = mutScore
 
 			if !isCandidateFixed() {
-				for (index, _) in precedingKeyValues.enumerated() {
-					let bigrams = mutPrecedingBigramMap.elements[index].value
+				for neta in precedingKeyValues {
+					let bigrams = mutPrecedingBigramMap[neta] ?? []
 					for bigram in bigrams {
 						if bigram.score > max {
 							if let valRetrieved = mutValueUnigramIndexMap[bigram.keyValue.value] {

@@ -140,6 +140,9 @@ let strSampleData = #"""
 # 下述詞頻資料取自 libTaBE 資料庫 (http://sourceforge.net/projects/libtabe/)
 # (2002 最終版). 該專案於 1999 年由 Pai-Hsiang Hsiao 發起、以 BSD 授權發行。
 #
+ni3 你 -6.000000 // Non-LibTaBE
+zhe4 這 -6.000000 // Non-LibTaBE
+yang4 樣 -6.000000 // Non-LibTaBE
 si1 絲 -9.495858
 si1 思 -9.00644
 si1 私 -99.000000
@@ -217,6 +220,6 @@ jiang3jin1 獎金 -10.344678
 nian2zhong1 年終 -11.668947
 nian2zhong1 年中 -11.373044
 gao1ke1ji4 高科技 -9.842421
-ni3zhe4 你這 -9.000000
-zhe4yang4 這樣 -8.000000
+zhe4yang4 這樣 -6.000000 // Non-LibTaBE
+ni3zhe4 你這 -9.000000 // Non-LibTaBE
 """#

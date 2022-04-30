@@ -185,6 +185,9 @@ func testInput() {
 	builder.insertReadingAtCursor(reading: "zhong1")
 	builder.insertReadingAtCursor(reading: "jiang3")
 	builder.insertReadingAtCursor(reading: "jin1")
+    builder.insertReadingAtCursor(reading: "ni3")
+    builder.insertReadingAtCursor(reading: "zhe4")
+    builder.insertReadingAtCursor(reading: "yang4")
 
 	let walker = Megrez.Walker(grid: builder.grid())
 

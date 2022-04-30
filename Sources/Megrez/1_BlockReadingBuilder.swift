@@ -125,15 +125,11 @@ extension Megrez {
 
 			for p in itrBegin..<itrEnd {
 				var q = 1
-				while q <= kMaximumBuildSpanLength {
-					if p + q > itrEnd {
-						break
-					}
-					let strSlice = (p == itrEnd) ? [mutReadings[itrEnd]] : mutReadings[p..<itrEnd]
+				while q <= kMaximumBuildSpanLength && p + q <= itrEnd {
+					let strSlice = mutReadings[p..<(p+q)]
 					let combinedReading: String = join(slice: strSlice, separator: mutJoinSeparator)
 					if !mutGrid.hasMatchedNode(location: p, spanningLength: q, key: combinedReading) {
 						let unigrams: [Unigram] = mutLM.unigramsFor(key: combinedReading)
-
 						if !unigrams.isEmpty {
 							let n = Node(key: combinedReading, unigrams: unigrams)
 							mutGrid.insertNode(node: n, location: p, spanningLength: q)

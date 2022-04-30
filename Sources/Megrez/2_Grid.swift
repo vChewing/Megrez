@@ -35,7 +35,7 @@ extension Megrez {
 		}
 
 		public func insertNode(node: Node, location: Int, spanningLength: Int) {
-			if mutSpans.count <= location {
+			if location >= mutSpans.count {
 				let diff = location - mutSpans.count + 1
 				for _ in 0..<diff {
 					mutSpans.append(Span())
@@ -54,10 +54,8 @@ extension Megrez {
 		}
 
 		public func expandGridByOneAt(location: Int) {
-			if location == 0 || location == mutSpans.count {
-				mutSpans.insert(Span(), at: location)
-			} else {
-				mutSpans.insert(Span(), at: location)
+			mutSpans.append(Span())
+			if location > 0, location < mutSpans.count {
 				for i in 0..<location {
 					// zaps overlapping spans
 					mutSpans[i].removeNodeOfLengthGreaterThan(location - i)
@@ -88,11 +86,13 @@ extension Megrez {
 					let span = mutSpans[i]
 					if i + span.maximumLength >= location {
 						if let np = span.node(length: location - i) {
-							var na = NodeAnchor()
-							na.node = np
-							na.location = i
-							na.spanningLength = location - i
-							results.append(na)
+							results.append(
+								NodeAnchor(
+									node: np,
+									location: i,
+									spanningLength: location - i
+								)
+							)
 						}
 					}
 				}
@@ -111,11 +111,13 @@ extension Megrez {
 								continue
 							}
 							if let np = span.node(length: j) {
-								var na = NodeAnchor()
-								na.node = np
-								na.location = i
-								na.spanningLength = location - i
-								results.append(na)
+								results.append(
+									NodeAnchor(
+										node: np,
+										location: i,
+										spanningLength: location - i
+									)
+								)
 							}
 						}
 					}
@@ -125,17 +127,19 @@ extension Megrez {
 		}
 
 		public func fixNodeSelectedCandidate(location: Int, value: String) -> NodeAnchor {
-			let nodes = nodesCrossingOrEndingAt(location: location)
 			var node = NodeAnchor()
-			for nodeAnchor in nodes {
+			for nodeAnchor in nodesCrossingOrEndingAt(location: location) {
+                var nodeAnchor = nodeAnchor
 				if let theNode = nodeAnchor.node {
 					let candidates = theNode.candidates()
 					// Reset the candidate-fixed state of every node at the location.
-					theNode.resetCandidate()
+                    theNode.resetCandidate()
+					nodeAnchor.node = theNode
 
 					for (i, candidate) in candidates.enumerated() {
 						if candidate.value == value {
 							theNode.selectCandidateAt(index: i)
+                            nodeAnchor.node = theNode
 							node = nodeAnchor
 							break
 						}
@@ -146,16 +150,18 @@ extension Megrez {
 		}
 
 		public func overrideNodeScoreForSelectedCandidate(location: Int, value: inout String, overridingScore: Float) {
-			let nodes = nodesCrossingOrEndingAt(location: location)
-			for nodeAnchor in nodes {
+			for nodeAnchor in nodesCrossingOrEndingAt(location: location) {
+                var nodeAnchor = nodeAnchor
 				if let theNode = nodeAnchor.node {
 					let candidates = theNode.candidates()
 					// Reset the candidate-fixed state of every node at the location.
-					theNode.resetCandidate()
+                    theNode.resetCandidate()
+					nodeAnchor.node = theNode
 
 					for (i, candidate) in candidates.enumerated() {
 						if candidate.value == value {
 							theNode.selectFloatingCandidateAt(index: i, score: Double(overridingScore))
+                            nodeAnchor.node = theNode
 							break
 						}
 					}

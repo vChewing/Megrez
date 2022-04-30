@@ -72,12 +72,12 @@ extension Megrez {
 			var index = 0
 			for gram in unigrams {
 				mutValueUnigramIndexMap[gram.keyValue.value] = index
-				mutCandidates.append(contentsOf: [gram.keyValue])
+				mutCandidates.append(gram.keyValue)
 				index += 1
 			}
 
 			for gram in bigrams {
-				mutPrecedingBigramMap[gram.precedingKeyValue]?.append(contentsOf: [gram])
+				mutPrecedingBigramMap[gram.precedingKeyValue]?.append(gram)
 			}
 		}
 
@@ -89,8 +89,8 @@ extension Megrez {
 
 			if !isCandidateFixed() {
 				for (index, _) in precedingKeyValues.enumerated() {
-					let bigrams = mutPrecedingBigramMap.elements[index].1
-					for (_, bigram) in bigrams.enumerated() {
+					let bigrams = mutPrecedingBigramMap.elements[index].value
+					for bigram in bigrams {
 						if bigram.score > max {
 							if let valRetrieved = mutValueUnigramIndexMap[bigram.keyValue.value] {
 								newIndex = valRetrieved as Int

@@ -117,6 +117,7 @@ extension Megrez {
 						var j = 1
 						while j < span.maximumLength {
 							if i + j < location {
+								j += 1
 								continue
 							}
 							if let np = span.node(length: j) {

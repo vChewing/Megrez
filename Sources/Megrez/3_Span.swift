@@ -25,7 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extension Megrez {
 	@frozen public struct Span {
-		private var mutLengthNodeMap: Dictionary<Int, Megrez.Node>
+		private var mutLengthNodeMap: [Int: Megrez.Node]
 		private var mutMaximumLength: Int
 		var maximumLength: Int {
 			mutMaximumLength
@@ -51,7 +51,7 @@ extension Megrez {
 		mutating func removeNodeOfLengthGreaterThan(_ length: Int) {
 			if length > mutMaximumLength { return }
 			var max = 0
-			var removalList: Dictionary<Int, Megrez.Node> = [:]
+			var removalList: [Int: Megrez.Node] = [:]
 			for key in mutLengthNodeMap.keys {
 				if key > length {
 					removalList[key] = mutLengthNodeMap[key]

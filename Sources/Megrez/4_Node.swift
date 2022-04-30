@@ -30,8 +30,8 @@ extension Megrez {
 		var mutScore: Double = 0
 		var mutUnigrams: [Unigram]
 		var mutCandidates: [KeyValuePair]
-		var mutValueUnigramIndexMap: Dictionary<String, Int>
-		var mutPrecedingBigramMap: Dictionary<KeyValuePair, [Megrez.Bigram]>
+		var mutValueUnigramIndexMap: [String: Int]
+		var mutPrecedingBigramMap: [KeyValuePair: [Megrez.Bigram]]
 
 		var mutCandidateFixed: Bool = false
 		var mutSelectedUnigramIndex: Int = 0
@@ -59,6 +59,7 @@ extension Megrez {
 
 		public func node(key: String, unigrams: [Megrez.Unigram], bigrams: [Megrez.Bigram] = []) {
 			var unigrams = unigrams
+			mutKey = key
 			unigrams.sort {
 				$0.score > $1.score
 			}

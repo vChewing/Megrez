@@ -120,7 +120,7 @@ ni3zhe4 你這 -9.000000 // Non-LibTaBE
 // MARK: - 用以測試的型別
 
 class SimpleLM: Megrez.LanguageModel {
-	var mutDatabase: Dictionary<String, [Megrez.Unigram]> = [:]
+	var mutDatabase: [String: [Megrez.Unigram]] = [:]
 
 	init(input: String, swapKeyValue: Bool = false) {
 		super.init()

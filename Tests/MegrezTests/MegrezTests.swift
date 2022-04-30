@@ -55,7 +55,6 @@ final class MegrezTests: XCTestCase {
 		builder.insertReadingAtCursor(reading: "zhe4")
 		builder.insertReadingAtCursor(reading: "yang4")
 
-		
 		let walker = Megrez.Walker(grid: builder.grid())
 
 		var walked: [Megrez.NodeAnchor] = walker.reverseWalk(at: builder.grid().width(), score: 0.0)
@@ -115,7 +114,7 @@ final class MegrezTests: XCTestCase {
 // MARK: - 用以測試的型別
 
 class SimpleLM: Megrez.LanguageModel {
-	var mutDatabase: Dictionary<String, [Megrez.Unigram]> = [:]
+	var mutDatabase: [String: [Megrez.Unigram]] = [:]
 
 	init(input: String, swapKeyValue: Bool = false) {
 		super.init()

@@ -37,8 +37,10 @@ extension Megrez {
 		public func insertNode(node: Node, location: Int, spanningLength: Int) {
 			if location >= mutSpans.count {
 				let diff = location - mutSpans.count + 1
-				for _ in 0..<diff {
+				var i = 0
+				while i < diff {
 					mutSpans.append(Span())
+					i += 1
 				}
 			}
 			mutSpans[location].insert(node: node, length: spanningLength)
@@ -56,9 +58,11 @@ extension Megrez {
 		public func expandGridByOneAt(location: Int) {
 			mutSpans.append(Span())
 			if location > 0, location < mutSpans.count {
-				for i in 0..<location {
+				var i = 0
+				while i < location {
 					// zaps overlapping spans
 					mutSpans[i].removeNodeOfLengthGreaterThan(location - i)
+					i += 1
 				}
 			}
 		}
@@ -69,20 +73,21 @@ extension Megrez {
 			}
 
 			mutSpans.remove(at: location)
-			for i in 0..<location {
+			var i = 0
+			while i < location {
 				// zaps overlapping spans
 				mutSpans[i].removeNodeOfLengthGreaterThan(location - i)
+				i += 1
 			}
 		}
 
-		public func width() -> Int {
-			mutSpans.count
-		}
+		public func width() -> Int { mutSpans.count }
 
 		public func nodesEndingAt(location: Int) -> [NodeAnchor] {
 			var results: [NodeAnchor] = []
 			if !mutSpans.isEmpty, location <= mutSpans.count {
-				for i in 0..<location {
+				var i = 0
+				while i < location {
 					let span = mutSpans[i]
 					if i + span.maximumLength >= location {
 						if let np = span.node(length: location - i) {
@@ -95,6 +100,7 @@ extension Megrez {
 							)
 						}
 					}
+					i += 1
 				}
 			}
 			return results
@@ -103,10 +109,12 @@ extension Megrez {
 		public func nodesCrossingOrEndingAt(location: Int) -> [NodeAnchor] {
 			var results: [NodeAnchor] = []
 			if !mutSpans.isEmpty, location <= mutSpans.count {
-				for i in 0..<location {
+				var i = 0
+				while i < location {
 					let span = mutSpans[i]
 					if i + span.maximumLength >= location {
-						for j in 1..<span.maximumLength {
+						var j = 1
+						while j < span.maximumLength {
 							if i + j < location {
 								continue
 							}
@@ -119,8 +127,10 @@ extension Megrez {
 									)
 								)
 							}
+							j += 1
 						}
 					}
+					i += 1
 				}
 			}
 			return results
@@ -149,7 +159,7 @@ extension Megrez {
 			return node
 		}
 
-		public func overrideNodeScoreForSelectedCandidate(location: Int, value: inout String, overridingScore: Float) {
+		public func overrideNodeScoreForSelectedCandidate(location: Int, value: inout String, overridingScore: Double) {
 			for nodeAnchor in nodesCrossingOrEndingAt(location: location) {
 				var nodeAnchor = nodeAnchor
 				if let theNode = nodeAnchor.node {
@@ -160,7 +170,7 @@ extension Megrez {
 
 					for (i, candidate) in candidates.enumerated() {
 						if candidate.value == value {
-							theNode.selectFloatingCandidateAt(index: i, score: Double(overridingScore))
+							theNode.selectFloatingCandidateAt(index: i, score: overridingScore)
 							nodeAnchor.node = theNode
 							break
 						}

@@ -22,11 +22,10 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-import OrderedCollections
 
 extension Megrez {
 	@frozen public struct Span {
-		private var mutLengthNodeMap: OrderedDictionary<Int, Megrez.Node>
+		private var mutLengthNodeMap: [Int: Megrez.Node]
 		private var mutMaximumLength: Int
 		var maximumLength: Int {
 			mutMaximumLength
@@ -52,7 +51,7 @@ extension Megrez {
 		mutating func removeNodeOfLengthGreaterThan(_ length: Int) {
 			if length > mutMaximumLength { return }
 			var max = 0
-			var removalList: OrderedDictionary<Int, Megrez.Node> = [:]
+			var removalList: [Int: Megrez.Node] = [:]
 			for key in mutLengthNodeMap.keys {
 				if key > length {
 					removalList[key] = mutLengthNodeMap[key]

@@ -22,7 +22,6 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-import OrderedCollections
 
 extension Megrez {
 	public class Node {
@@ -31,8 +30,8 @@ extension Megrez {
 		var mutScore: Double = 0
 		var mutUnigrams: [Unigram]
 		var mutCandidates: [KeyValuePair]
-		var mutValueUnigramIndexMap: OrderedDictionary<String, Int>
-		var mutPrecedingBigramMap: OrderedDictionary<KeyValuePair, [Megrez.Bigram]>
+		var mutValueUnigramIndexMap: [String: Int]
+		var mutPrecedingBigramMap: [KeyValuePair: [Megrez.Bigram]]
 
 		var mutCandidateFixed: Bool = false
 		var mutSelectedUnigramIndex: Int = 0
@@ -59,8 +58,8 @@ extension Megrez {
 		}
 
 		public func node(key: String, unigrams: [Megrez.Unigram], bigrams: [Megrez.Bigram] = []) {
-			mutKey = key
 			var unigrams = unigrams
+			mutKey = key
 			unigrams.sort {
 				$0.score > $1.score
 			}
@@ -69,11 +68,9 @@ extension Megrez {
 				mutScore = mutUnigrams[0].score
 			}
 
-			var index = 0
-			for gram in unigrams {
-				mutValueUnigramIndexMap[gram.keyValue.value] = index
-				mutCandidates.append(gram.keyValue)
-				index += 1
+			for (i, theGram) in unigrams.enumerated() {
+				mutValueUnigramIndexMap[theGram.keyValue.value] = i
+				mutCandidates.append(theGram.keyValue)
 			}
 
 			for gram in bigrams {
@@ -82,14 +79,12 @@ extension Megrez {
 		}
 
 		public func primeNodeWith(precedingKeyValues: [KeyValuePair]) {
-			// TODO: primeNodeWithPrecedingKeyValues
-			// Please check the same function in C++ version of Gramambumlar for references.
 			var newIndex = mutSelectedUnigramIndex
 			var max = mutScore
 
 			if !isCandidateFixed() {
-				for (index, _) in precedingKeyValues.enumerated() {
-					let bigrams = mutPrecedingBigramMap.elements[index].value
+				for neta in precedingKeyValues {
+					let bigrams = mutPrecedingBigramMap[neta] ?? []
 					for bigram in bigrams {
 						if bigram.score > max {
 							if let valRetrieved = mutValueUnigramIndexMap[bigram.keyValue.value] {
@@ -110,13 +105,9 @@ extension Megrez {
 			}
 		}
 
-		public func isCandidateFixed() -> Bool {
-			mutCandidateFixed
-		}
+		public func isCandidateFixed() -> Bool { mutCandidateFixed }
 
-		public func candidates() -> [KeyValuePair] {
-			mutCandidates
-		}
+		public func candidates() -> [KeyValuePair] { mutCandidates }
 
 		public func selectCandidateAt(index: Int = 0, fix: Bool = true) {
 			if index >= mutUnigrams.count {
@@ -146,13 +137,9 @@ extension Megrez {
 			mutScore = score
 		}
 
-		public func key() -> String {
-			mutKey
-		}
+		public func key() -> String { mutKey }
 
-		public func score() -> Double {
-			mutScore
-		}
+		public func score() -> Double { mutScore }
 
 		public func scoreFor(candidate: String) -> Double {
 			for unigram in mutUnigrams {

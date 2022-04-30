@@ -8,5 +8,3 @@ Megrez Engine is a module made for processing lingual data of an input method. T
 	- Swift programmer: Shiki Suen
 	- C++ migration review: Hiraku Wong
 - Rebranded from (c) Lukhnos Liu's C++ library "Gramambular" (MIT License).
-
-該專案依賴於 Apple 官方的 swift-collections 擴展當中的 OrderedCollections 套件。

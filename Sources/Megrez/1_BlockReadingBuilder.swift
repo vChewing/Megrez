@@ -22,6 +22,7 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
 extension Megrez {
 	public class BlockReadingBuilder {
 		let kMaximumBuildSpanLength = 10  // 規定最多可以組成的詞的字數上限為 10
@@ -41,13 +42,9 @@ extension Megrez {
 			mutGrid.clear()
 		}
 
-		public func length() -> Int {
-			mutReadings.count
-		}
+		public func length() -> Int { mutReadings.count }
 
-		public func cursorIndex() -> Int {
-			mutCursorIndex
-		}
+		public func cursorIndex() -> Int { mutCursorIndex }
 
 		public func setCursorIndex(newIndex: Int) {
 			mutCursorIndex = min(newIndex, mutReadings.count)
@@ -60,9 +57,7 @@ extension Megrez {
 			mutCursorIndex += 1
 		}
 
-		public func readings() -> [String] {
-			mutReadings
-		}
+		public func readings() -> [String] { mutReadings }
 
 		@discardableResult public func deleteReadingBeforeCursor() -> Bool {
 			if mutCursorIndex == 0 {
@@ -92,13 +87,15 @@ extension Megrez {
 				return false
 			}
 
-			for _ in 0..<count {
+			var i = 0
+			while i < count {
 				if mutCursorIndex != 0 {
 					mutCursorIndex -= 1
 				}
 				mutReadings.removeFirst()
 				mutGrid.shrinkGridByOneAt(location: 0)
 				build()
+				i += 1
 			}
 
 			return true
@@ -108,13 +105,9 @@ extension Megrez {
 			mutJoinSeparator = separator
 		}
 
-		public func joinSeparator() -> String {
-			mutJoinSeparator
-		}
+		public func joinSeparator() -> String { mutJoinSeparator }
 
-		public func grid() -> Grid {
-			mutGrid
-		}
+		public func grid() -> Grid { mutGrid }
 
 		public func build() {
 			// if (mutLM == nil) { return } // 這個出不了 nil，所以註釋掉。
@@ -123,7 +116,8 @@ extension Megrez {
 				(mutCursorIndex < kMaximumBuildSpanLength) ? 0 : mutCursorIndex - kMaximumBuildSpanLength
 			let itrEnd: Int = min(mutCursorIndex + kMaximumBuildSpanLength, mutReadings.count)
 
-			for p in itrBegin..<itrEnd {
+			var p = itrBegin
+			while p < itrEnd {
 				var q = 1
 				while q <= kMaximumBuildSpanLength, p + q <= itrEnd {
 					let strSlice = mutReadings[p..<(p + q)]
@@ -137,6 +131,7 @@ extension Megrez {
 					}
 					q += 1
 				}
+				p += 1
 			}
 		}
 

@@ -22,6 +22,7 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
 extension Megrez {
 	public class Walker {
 		var mutGrid: Grid
@@ -46,13 +47,11 @@ extension Megrez {
 
 				n.accumulatedScore = accumulatedScore + n.node!.score()
 
-				var path: [NodeAnchor] = [n]
-				path.append(
-					contentsOf: reverseWalk(
-						at: location - n.spanningLength,
-						score: n.accumulatedScore
-					)
+				var path: [NodeAnchor] = reverseWalk(
+					at: location - n.spanningLength,
+					score: n.accumulatedScore
 				)
+				path.insert(n, at: 0)
 
 				paths.append(path)
 			}
@@ -60,8 +59,10 @@ extension Megrez {
 			if !paths.isEmpty {
 				if var result = paths.first {
 					for value in paths {
-						if value.last?.accumulatedScore ?? 0 > result.last?.accumulatedScore ?? 0 {
-							result = value
+						if let vLast = value.last, let rLast = result.last {
+							if vLast.accumulatedScore > rLast.accumulatedScore {
+								result = value
+							}
 						}
 					}
 					return result

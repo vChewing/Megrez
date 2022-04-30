@@ -54,7 +54,7 @@ extension Megrez {
 		}
 
 		public func expandGridByOneAt(location: Int) {
-			if location != 0 || location == mutSpans.count {
+			if location == 0 || location == mutSpans.count {
 				mutSpans.insert(Span(), at: location)
 			} else {
 				mutSpans.insert(Span(), at: location)

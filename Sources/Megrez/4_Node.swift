@@ -59,7 +59,6 @@ extension Megrez {
 		}
 
 		public func node(key: String, unigrams: [Megrez.Unigram], bigrams: [Megrez.Bigram] = []) {
-			mutKey = key
 			var unigrams = unigrams
 			unigrams.sort {
 				$0.score > $1.score
@@ -69,11 +68,9 @@ extension Megrez {
 				mutScore = mutUnigrams[0].score
 			}
 
-			var index = 0
-			for gram in unigrams {
-				mutValueUnigramIndexMap[gram.keyValue.value] = index
-				mutCandidates.append(gram.keyValue)
-				index += 1
+			for (i, theGram) in unigrams.enumerated() {
+				mutValueUnigramIndexMap[theGram.keyValue.value] = i
+				mutCandidates.append(theGram.keyValue)
 			}
 
 			for gram in bigrams {
@@ -82,8 +79,6 @@ extension Megrez {
 		}
 
 		public func primeNodeWith(precedingKeyValues: [KeyValuePair]) {
-			// TODO: primeNodeWithPrecedingKeyValues
-			// Please check the same function in C++ version of Gramambumlar for references.
 			var newIndex = mutSelectedUnigramIndex
 			var max = mutScore
 
@@ -110,13 +105,9 @@ extension Megrez {
 			}
 		}
 
-		public func isCandidateFixed() -> Bool {
-			mutCandidateFixed
-		}
+		public func isCandidateFixed() -> Bool { mutCandidateFixed }
 
-		public func candidates() -> [KeyValuePair] {
-			mutCandidates
-		}
+		public func candidates() -> [KeyValuePair] { mutCandidates }
 
 		public func selectCandidateAt(index: Int = 0, fix: Bool = true) {
 			if index >= mutUnigrams.count {
@@ -146,13 +137,9 @@ extension Megrez {
 			mutScore = score
 		}
 
-		public func key() -> String {
-			mutKey
-		}
+		public func key() -> String { mutKey }
 
-		public func score() -> Double {
-			mutScore
-		}
+		public func score() -> Double { mutScore }
 
 		public func scoreFor(candidate: String) -> Double {
 			for unigram in mutUnigrams {

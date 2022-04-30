@@ -183,6 +183,7 @@ func testInput() {
 	builder.insertReadingAtCursor(reading: "de5")
 	builder.insertReadingAtCursor(reading: "nian2")
 	builder.insertReadingAtCursor(reading: "zhong1")
+	_ = builder.grid().fixNodeSelectedCandidate(location: 7, value: "年終")
 	builder.insertReadingAtCursor(reading: "jiang3")
 	builder.insertReadingAtCursor(reading: "jin1")
 	builder.insertReadingAtCursor(reading: "ni3")
@@ -201,7 +202,7 @@ func testInput() {
 		}
 	}
 	print(composed)
-	let correctResult = ["高科技", "公司", "的", "年中", "獎金", "你", "這樣"]
+	let correctResult = ["高科技", "公司", "的", "年終", "獎金", "你", "這樣"]
 	print(" - 上述列印結果理應於下面這行一致：")
 	print(correctResult)
 }

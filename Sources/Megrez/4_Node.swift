@@ -109,7 +109,7 @@ extension Megrez {
 
 		public func candidates() -> [KeyValuePair] { mutCandidates }
 
-		public func selectCandidateAt(index: Int = 0, fix: Bool = true) {
+		public func selectCandidateAt(index: Int = 0, fix: Bool = false) {
 			if index >= mutUnigrams.count {
 				mutSelectedUnigramIndex = 0
 			} else {

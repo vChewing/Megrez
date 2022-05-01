@@ -115,7 +115,7 @@ extension Megrez {
 					let span = mutSpans[i]
 					if i + span.maximumLength >= location {
 						var j = 1
-						while j < span.maximumLength {
+						while j <= span.maximumLength {
 							if i + j < location {
 								j += 1
 								continue
@@ -140,21 +140,17 @@ extension Megrez {
 
 		public func fixNodeSelectedCandidate(location: Int, value: String) -> NodeAnchor {
 			var node = NodeAnchor()
-			for nodeAnchor in nodesCrossingOrEndingAt(location: location) {
-				var nodeAnchor = nodeAnchor
-				if let theNode = nodeAnchor.node {
-					let candidates = theNode.candidates()
-					// Reset the candidate-fixed state of every node at the location.
-					theNode.resetCandidate()
-					nodeAnchor.node = theNode
+			let nodes = nodesCrossingOrEndingAt(location: location)
+			for nodeAnchor in nodes {
+				// Reset the candidate-fixed state of every node at the location.
+				let candidates = nodeAnchor.node?.candidates() ?? []
+				nodeAnchor.node?.resetCandidate()
 
-					for (i, candidate) in candidates.enumerated() {
-						if candidate.value == value {
-							theNode.selectCandidateAt(index: i)
-							nodeAnchor.node = theNode
-							node = nodeAnchor
-							break
-						}
+				for (i, candidate) in candidates.enumerated() {
+					if candidate.value == value {
+						nodeAnchor.node?.selectCandidateAt(index: i)
+						node = nodeAnchor
+						break
 					}
 				}
 			}

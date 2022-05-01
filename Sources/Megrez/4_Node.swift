@@ -109,12 +109,8 @@ extension Megrez {
 
 		public func candidates() -> [KeyValuePair] { mutCandidates }
 
-		public func selectCandidateAt(index: Int = 0, fix: Bool = true) {
-			if index >= mutUnigrams.count {
-				mutSelectedUnigramIndex = 0
-			} else {
-				mutSelectedUnigramIndex = index
-			}
+		public func selectCandidateAt(index: Int = 0, fix: Bool = false) {
+			mutSelectedUnigramIndex = index >= mutUnigrams.count ? 0 : index
 			mutCandidateFixed = fix
 			mutScore = 99
 		}
@@ -128,11 +124,7 @@ extension Megrez {
 		}
 
 		public func selectFloatingCandidateAt(index: Int, score: Double) {
-			if index >= mutUnigrams.count {
-				mutSelectedUnigramIndex = 0
-			} else {
-				mutSelectedUnigramIndex = index
-			}
+			mutSelectedUnigramIndex = index >= mutUnigrams.count ? 0 : index
 			mutCandidateFixed = false
 			mutScore = score
 		}

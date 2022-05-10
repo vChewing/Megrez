@@ -24,18 +24,19 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 extension Megrez {
-	@frozen public struct NodeAnchor {
-		public var node: Node?
-		public var location: Int = 0
-		public var spanningLength: Int = 0
-		public var accumulatedScore: Double = 0.0
-		public var keyLength: Int {
-			node?.key().count ?? 0
-		}
-		public var balancedScore: Double {
-			let weightedScore: Double = (Double(spanningLength) - 1) * 2
-			let nodeScore: Double = node?.score() ?? 0
-			return weightedScore + nodeScore
-		}
-	}
+  @frozen public struct NodeAnchor {
+    public var node: Node?
+    public var location: Int = 0
+    public var spanningLength: Int = 0
+    public var accumulatedScore: Double = 0.0
+    public var keyLength: Int {
+      node?.key().count ?? 0
+    }
+
+    public var balancedScore: Double {
+      let weightedScore: Double = (Double(spanningLength) - 1) * 2
+      let nodeScore: Double = node?.score() ?? 0
+      return weightedScore + nodeScore
+    }
+  }
 }

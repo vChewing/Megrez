@@ -28,133 +28,133 @@ import XCTest
 @testable import Megrez
 
 final class MegrezTests: XCTestCase {
-	// MARK: - Input Test
+  // MARK: - Input Test
 
-	func testInput() throws {
-		print("// 開始測試語言文字輸入處理")
-		let lmTestInput = SimpleLM(input: strSampleData)
-		let builder = Megrez.BlockReadingBuilder(lm: lmTestInput)
+  func testInput() throws {
+    print("// 開始測試語言文字輸入處理")
+    let lmTestInput = SimpleLM(input: strSampleData)
+    let builder = Megrez.BlockReadingBuilder(lm: lmTestInput)
 
-		builder.insertReadingAtCursor(reading: "gao1")
-		builder.insertReadingAtCursor(reading: "ji4")
-		builder.setCursorIndex(newIndex: 1)
-		builder.insertReadingAtCursor(reading: "ke1")
-		builder.setCursorIndex(newIndex: 0)
-		builder.deleteReadingAfterCursor()
-		builder.insertReadingAtCursor(reading: "gao1")
-		builder.setCursorIndex(newIndex: builder.length())
-		builder.insertReadingAtCursor(reading: "gong1")
-		builder.insertReadingAtCursor(reading: "si1")
-		builder.insertReadingAtCursor(reading: "de5")
-		builder.insertReadingAtCursor(reading: "nian2")
-		builder.insertReadingAtCursor(reading: "zhong1")
-		_ = builder.grid().fixNodeSelectedCandidate(location: 7, value: "年終")
-		builder.insertReadingAtCursor(reading: "jiang3")
-		builder.insertReadingAtCursor(reading: "jin1")
-		builder.insertReadingAtCursor(reading: "ni3")
-		builder.insertReadingAtCursor(reading: "zhe4")
-		builder.insertReadingAtCursor(reading: "yang4")
+    builder.insertReadingAtCursor(reading: "gao1")
+    builder.insertReadingAtCursor(reading: "ji4")
+    builder.setCursorIndex(newIndex: 1)
+    builder.insertReadingAtCursor(reading: "ke1")
+    builder.setCursorIndex(newIndex: 0)
+    builder.deleteReadingAfterCursor()
+    builder.insertReadingAtCursor(reading: "gao1")
+    builder.setCursorIndex(newIndex: builder.length())
+    builder.insertReadingAtCursor(reading: "gong1")
+    builder.insertReadingAtCursor(reading: "si1")
+    builder.insertReadingAtCursor(reading: "de5")
+    builder.insertReadingAtCursor(reading: "nian2")
+    builder.insertReadingAtCursor(reading: "zhong1")
+    _ = builder.grid().fixNodeSelectedCandidate(location: 7, value: "年終")
+    builder.insertReadingAtCursor(reading: "jiang3")
+    builder.insertReadingAtCursor(reading: "jin1")
+    builder.insertReadingAtCursor(reading: "ni3")
+    builder.insertReadingAtCursor(reading: "zhe4")
+    builder.insertReadingAtCursor(reading: "yang4")
 
-		let walker = Megrez.Walker(grid: builder.grid())
+    let walker = Megrez.Walker(grid: builder.grid())
 
-		var walked: [Megrez.NodeAnchor] = walker.partialReverseWalk(at: builder.grid().width(), score: 0.0)
-		walked = walked.reversed()
+    var walked: [Megrez.NodeAnchor] = walker.partialReverseWalk(at: builder.grid().width(), score: 0.0)
+    walked = walked.reversed()
 
-		var composed: [String] = []
-		for phrase in walked {
-			if let value = phrase.node?.currentKeyValue().value {
-				composed.append(value)
-			}
-		}
-		print(composed)
-		let correctResult = ["高科技", "公司", "的", "年終", "獎金", "你", "這樣"]
-		print(" - 上述列印結果理應於下面這行一致：")
-		print(correctResult)
+    var composed: [String] = []
+    for phrase in walked {
+      if let value = phrase.node?.currentKeyValue().value {
+        composed.append(value)
+      }
+    }
+    print(composed)
+    let correctResult = ["高科技", "公司", "的", "年終", "獎金", "你", "這樣"]
+    print(" - 上述列印結果理應於下面這行一致：")
+    print(correctResult)
 
-		XCTAssertEqual(composed, correctResult)
-	}
+    XCTAssertEqual(composed, correctResult)
+  }
 
-	// MARK: - Test Word Segmentation
+  // MARK: - Test Word Segmentation
 
-	func testWordSegmentation() throws {
-		print("// 開始測試語句分節處理")
-		let lmTestSegmentation = SimpleLM(input: strSampleData, swapKeyValue: true)
-		let builder = Megrez.BlockReadingBuilder(lm: lmTestSegmentation)
+  func testWordSegmentation() throws {
+    print("// 開始測試語句分節處理")
+    let lmTestSegmentation = SimpleLM(input: strSampleData, swapKeyValue: true)
+    let builder = Megrez.BlockReadingBuilder(lm: lmTestSegmentation)
 
-		builder.insertReadingAtCursor(reading: "高")
-		builder.insertReadingAtCursor(reading: "科")
-		builder.insertReadingAtCursor(reading: "技")
-		builder.insertReadingAtCursor(reading: "公")
-		builder.insertReadingAtCursor(reading: "司")
-		builder.insertReadingAtCursor(reading: "的")
-		builder.insertReadingAtCursor(reading: "年")
-		builder.insertReadingAtCursor(reading: "終")
-		builder.insertReadingAtCursor(reading: "獎")
-		builder.insertReadingAtCursor(reading: "金")
+    builder.insertReadingAtCursor(reading: "高")
+    builder.insertReadingAtCursor(reading: "科")
+    builder.insertReadingAtCursor(reading: "技")
+    builder.insertReadingAtCursor(reading: "公")
+    builder.insertReadingAtCursor(reading: "司")
+    builder.insertReadingAtCursor(reading: "的")
+    builder.insertReadingAtCursor(reading: "年")
+    builder.insertReadingAtCursor(reading: "終")
+    builder.insertReadingAtCursor(reading: "獎")
+    builder.insertReadingAtCursor(reading: "金")
 
-		let walker = Megrez.Walker(grid: builder.grid())
-		var walked: [Megrez.NodeAnchor] = walker.partialReverseWalk(at: builder.grid().width(), score: 0.0)
-		walked = walked.reversed()
+    let walker = Megrez.Walker(grid: builder.grid())
+    var walked: [Megrez.NodeAnchor] = walker.partialReverseWalk(at: builder.grid().width(), score: 0.0)
+    walked = walked.reversed()
 
-		var segmented: [String] = []
-		for phrase in walked {
-			if let key = phrase.node?.currentKeyValue().key {
-				segmented.append(key)
-			}
-		}
-		print(segmented)
-		let correctResult = ["高科技", "公司", "的", "年終", "獎金"]
-		print(" - 上述列印結果理應於下面這行一致：")
-		print(correctResult)
+    var segmented: [String] = []
+    for phrase in walked {
+      if let key = phrase.node?.currentKeyValue().key {
+        segmented.append(key)
+      }
+    }
+    print(segmented)
+    let correctResult = ["高科技", "公司", "的", "年終", "獎金"]
+    print(" - 上述列印結果理應於下面這行一致：")
+    print(correctResult)
 
-		XCTAssertEqual(segmented, correctResult)
-	}
+    XCTAssertEqual(segmented, correctResult)
+  }
 }
 
 // MARK: - 用以測試的型別
 
 class SimpleLM: Megrez.LanguageModel {
-	var mutDatabase: [String: [Megrez.Unigram]] = [:]
+  var mutDatabase: [String: [Megrez.Unigram]] = [:]
 
-	init(input: String, swapKeyValue: Bool = false) {
-		super.init()
-		let sstream = input.components(separatedBy: "\n")
-		for line in sstream {
-			if line.isEmpty || line.hasPrefix("#") {
-				continue
-			}
+  init(input: String, swapKeyValue: Bool = false) {
+    super.init()
+    let sstream = input.components(separatedBy: "\n")
+    for line in sstream {
+      if line.isEmpty || line.hasPrefix("#") {
+        continue
+      }
 
-			let linestream = line.components(separatedBy: " ")
-			let col0 = linestream[0]
-			let col1 = linestream[1]
-			let col2 = linestream[2]
+      let linestream = line.components(separatedBy: " ")
+      let col0 = linestream[0]
+      let col1 = linestream[1]
+      let col2 = linestream[2]
 
-			var u = Megrez.Unigram(keyValue: Megrez.KeyValuePair(), score: 0)
+      var u = Megrez.Unigram(keyValue: Megrez.KeyValuePair(), score: 0)
 
-			if swapKeyValue {
-				u.keyValue.key = col1
-				u.keyValue.value = col0
-			} else {
-				u.keyValue.key = col0
-				u.keyValue.value = col1
-			}
+      if swapKeyValue {
+        u.keyValue.key = col1
+        u.keyValue.value = col0
+      } else {
+        u.keyValue.key = col0
+        u.keyValue.value = col1
+      }
 
-			u.score = Double(col2)!
-			mutDatabase[u.keyValue.key, default: []].append(u)
-		}
-	}
+      u.score = Double(col2)!
+      mutDatabase[u.keyValue.key, default: []].append(u)
+    }
+  }
 
-	override func unigramsFor(key: String) -> [Megrez.Unigram] {
-		if let f = mutDatabase[key] {
-			return f
-		} else {
-			return [Megrez.Unigram]()
-		}
-	}
+  override func unigramsFor(key: String) -> [Megrez.Unigram] {
+    if let f = mutDatabase[key] {
+      return f
+    } else {
+      return [Megrez.Unigram]()
+    }
+  }
 
-	override func hasUnigramsFor(key: String) -> Bool {
-		mutDatabase.keys.contains(key)
-	}
+  override func hasUnigramsFor(key: String) -> Bool {
+    mutDatabase.keys.contains(key)
+  }
 }
 
 // MARK: - 用以測試的詞頻數據

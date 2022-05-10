@@ -31,49 +31,9 @@ extension Megrez {
       mutGrid = grid
     }
 
-    public func reverseWalk(at location: Int, score accumulatedScore: Double = 0.0) -> [NodeAnchor] {
-      if location == 0 || location > mutGrid.width() {
-        return [] as [NodeAnchor]
-      }
-
-      var paths: [[NodeAnchor]] = []
-      let nodes: [NodeAnchor] = mutGrid.nodesEndingAt(location: location)
-
-      for n in nodes {
-        var n = n
-        guard let nNode = n.node else {
-          continue
-        }
-
-        n.accumulatedScore = accumulatedScore + nNode.score()
-
-        var path: [NodeAnchor] = reverseWalk(
-          at: location - n.spanningLength,
-          score: n.accumulatedScore
-        )
-        path.insert(n, at: 0)
-
-        paths.append(path)
-      }
-
-      if !paths.isEmpty {
-        if var result = paths.first {
-          for value in paths {
-            if let vLast = value.last, let rLast = result.last {
-              if vLast.accumulatedScore > rLast.accumulatedScore {
-                result = value
-              }
-            }
-          }
-          return result
-        }
-      }
-      return [] as [NodeAnchor]
-    }
-
-    // MARK: - Section: Partial Reverse Walk
-
-    func partialReverseWalk(at location: Int, score accumulatedScore: Double = 0.0) -> [NodeAnchor] {
+    public func reverseWalk(at location: Int, score accumulatedScore: Double = 0.0, nodesLimit: Int? = nil)
+      -> [NodeAnchor]
+    {
       if location == 0 || location > mutGrid.width() {
         return [] as [NodeAnchor]
       }
@@ -85,8 +45,13 @@ extension Megrez {
         $0.balancedScore > $1.balancedScore  // 排序規則已經在 NodeAnchor 內定義了。
       }
 
-      // 只檢查前三個 NodeAnchor 是否有 node。
-      for n in nodes[0..<min(nodes.count, 2)] {
+      // 只檢查前 X 個 NodeAnchor 是否有 node。
+      var border: Int = nodes.count
+      if let nodesLimitValue: Int = nodesLimit {
+        border = min(nodes.count, nodesLimitValue)
+      }
+
+      for n in nodes[0..<border] {
         var n = n
         guard let nNode = n.node else {
           continue
@@ -97,7 +62,7 @@ extension Megrez {
         let weightedScore: Double = (Double(n.spanningLength) - 1) * 2
         n.accumulatedScore = accumulatedScore + nNode.score() + weightedScore
 
-        var path: [NodeAnchor] = partialReverseWalk(
+        var path: [NodeAnchor] = reverseWalk(
           at: location - n.spanningLength,
           score: n.accumulatedScore
         )

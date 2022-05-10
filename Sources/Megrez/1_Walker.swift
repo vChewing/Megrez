@@ -24,106 +24,106 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 extension Megrez {
-	public class Walker {
-		var mutGrid: Grid
+  public class Walker {
+    var mutGrid: Grid
 
-		public init(grid: Megrez.Grid = Megrez.Grid()) {
-			mutGrid = grid
-		}
+    public init(grid: Megrez.Grid = Megrez.Grid()) {
+      mutGrid = grid
+    }
 
-		public func reverseWalk(at location: Int, score accumulatedScore: Double = 0.0) -> [NodeAnchor] {
-			if location == 0 || location > mutGrid.width() {
-				return [] as [NodeAnchor]
-			}
+    public func reverseWalk(at location: Int, score accumulatedScore: Double = 0.0) -> [NodeAnchor] {
+      if location == 0 || location > mutGrid.width() {
+        return [] as [NodeAnchor]
+      }
 
-			var paths: [[NodeAnchor]] = []
-			let nodes: [NodeAnchor] = mutGrid.nodesEndingAt(location: location)
+      var paths: [[NodeAnchor]] = []
+      let nodes: [NodeAnchor] = mutGrid.nodesEndingAt(location: location)
 
-			for n in nodes {
-				var n = n
-				guard let nNode = n.node else {
-					continue
-				}
+      for n in nodes {
+        var n = n
+        guard let nNode = n.node else {
+          continue
+        }
 
-				n.accumulatedScore = accumulatedScore + nNode.score()
+        n.accumulatedScore = accumulatedScore + nNode.score()
 
-				var path: [NodeAnchor] = reverseWalk(
-					at: location - n.spanningLength,
-					score: n.accumulatedScore
-				)
-				path.insert(n, at: 0)
+        var path: [NodeAnchor] = reverseWalk(
+          at: location - n.spanningLength,
+          score: n.accumulatedScore
+        )
+        path.insert(n, at: 0)
 
-				paths.append(path)
-			}
+        paths.append(path)
+      }
 
-			if !paths.isEmpty {
-				if var result = paths.first {
-					for value in paths {
-						if let vLast = value.last, let rLast = result.last {
-							if vLast.accumulatedScore > rLast.accumulatedScore {
-								result = value
-							}
-						}
-					}
-					return result
-				}
-			}
-			return [] as [NodeAnchor]
-		}
+      if !paths.isEmpty {
+        if var result = paths.first {
+          for value in paths {
+            if let vLast = value.last, let rLast = result.last {
+              if vLast.accumulatedScore > rLast.accumulatedScore {
+                result = value
+              }
+            }
+          }
+          return result
+        }
+      }
+      return [] as [NodeAnchor]
+    }
 
-		// MARK: - Section: Partial Reverse Walk
+    // MARK: - Section: Partial Reverse Walk
 
-		func partialReverseWalk(at location: Int, score accumulatedScore: Double = 0.0) -> [NodeAnchor] {
-			if location == 0 || location > mutGrid.width() {
-				return [] as [NodeAnchor]
-			}
+    func partialReverseWalk(at location: Int, score accumulatedScore: Double = 0.0) -> [NodeAnchor] {
+      if location == 0 || location > mutGrid.width() {
+        return [] as [NodeAnchor]
+      }
 
-			var paths: [[NodeAnchor]] = []
-			var nodes: [NodeAnchor] = mutGrid.nodesEndingAt(location: location)
+      var paths: [[NodeAnchor]] = []
+      var nodes: [NodeAnchor] = mutGrid.nodesEndingAt(location: location)
 
-			nodes.sort {
-				$0.balancedScore > $1.balancedScore  // 排序規則已經在 NodeAnchor 內定義了。
-			}
+      nodes.sort {
+        $0.balancedScore > $1.balancedScore  // 排序規則已經在 NodeAnchor 內定義了。
+      }
 
-			// 只檢查前三個 NodeAnchor 是否有 node。
-			for n in nodes[0..<min(nodes.count, 2)] {
-				var n = n
-				guard let nNode = n.node else {
-					continue
-				}
+      // 只檢查前三個 NodeAnchor 是否有 node。
+      for n in nodes[0..<min(nodes.count, 2)] {
+        var n = n
+        guard let nNode = n.node else {
+          continue
+        }
 
-				// 利用 Spanning Length 來決定權重。
-				// 這樣一來，例：「再見」比「在」與「見」的權重更高。
-				let weightedScore: Double = (Double(n.spanningLength) - 1) * 2
-				n.accumulatedScore = accumulatedScore + nNode.score() + weightedScore
+        // 利用 Spanning Length 來決定權重。
+        // 這樣一來，例：「再見」比「在」與「見」的權重更高。
+        let weightedScore: Double = (Double(n.spanningLength) - 1) * 2
+        n.accumulatedScore = accumulatedScore + nNode.score() + weightedScore
 
-				var path: [NodeAnchor] = partialReverseWalk(
-					at: location - n.spanningLength,
-					score: n.accumulatedScore
-				)
-				path.insert(n, at: 0)
+        var path: [NodeAnchor] = partialReverseWalk(
+          at: location - n.spanningLength,
+          score: n.accumulatedScore
+        )
+        path.insert(n, at: 0)
 
-				paths.append(path)
+        paths.append(path)
 
-				// 始終使用固定的候選字
-				if nNode.score() >= 0 {
-					break
-				}
-			}
+        // 始終使用固定的候選字
+        if nNode.score() >= 0 {
+          break
+        }
+      }
 
-			if !paths.isEmpty {
-				if var result = paths.first {
-					for value in paths {
-						if let vLast = value.last, let rLast = result.last {
-							if vLast.accumulatedScore > rLast.accumulatedScore {
-								result = value
-							}
-						}
-					}
-					return result
-				}
-			}
-			return [] as [NodeAnchor]
-		}
-	}
+      if !paths.isEmpty {
+        if var result = paths.first {
+          for value in paths {
+            if let vLast = value.last, let rLast = result.last {
+              if vLast.accumulatedScore > rLast.accumulatedScore {
+                result = value
+              }
+            }
+          }
+          return result
+        }
+      }
+      return [] as [NodeAnchor]
+    }
+  }
 }

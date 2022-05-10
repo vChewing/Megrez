@@ -192,7 +192,7 @@ func testInput() {
 
   let walker = Megrez.Walker(grid: builder.grid())
 
-  var walked: [Megrez.NodeAnchor] = walker.partialReverseWalk(at: builder.grid().width(), score: 0.0)
+  var walked: [Megrez.NodeAnchor] = walker.reverseWalk(at: builder.grid().width(), score: 0.0)
   walked = walked.reversed()
 
   var composed: [String] = []
@@ -226,7 +226,7 @@ func testWordSegmentation() {
   builder.insertReadingAtCursor(reading: "金")
 
   let walker = Megrez.Walker(grid: builder.grid())
-  var walked: [Megrez.NodeAnchor] = walker.partialReverseWalk(at: builder.grid().width(), score: 0.0)
+  var walked: [Megrez.NodeAnchor] = walker.reverseWalk(at: builder.grid().width(), score: 0.0)
   walked = walked.reversed()
 
   var segmented: [String] = []

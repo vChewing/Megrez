@@ -31,7 +31,7 @@ extension Megrez {
       mutGrid = grid
     }
 
-    public func reverseWalk(at location: Int, score accumulatedScore: Double = 0.0, nodesLimit: Int? = nil)
+    public func reverseWalk(at location: Int, score accumulatedScore: Double = 0.0, nodesLimit: Int = 0)
       -> [NodeAnchor]
     {
       if location == 0 || location > mutGrid.width() {
@@ -46,9 +46,10 @@ extension Megrez {
       }
 
       // 只檢查前 X 個 NodeAnchor 是否有 node。
+      // 這裡有 abs 是為了防止有白癡填負數。
       var border: Int = nodes.count
-      if let nodesLimitValue: Int = nodesLimit {
-        border = min(nodes.count, nodesLimitValue)
+      if nodesLimit > 0 {
+        border = min(nodes.count, abs(nodesLimit))
       }
 
       for n in nodes[0..<border] {

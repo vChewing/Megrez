@@ -40,7 +40,7 @@ final class MegrezTests: XCTestCase {
     builder.setCursorIndex(newIndex: 1)
     builder.insertReadingAtCursor(reading: "ke1")
     builder.setCursorIndex(newIndex: 0)
-    builder.deleteReadingAfterCursor()
+    builder.deleteReadingToTheFrontOfCursor()
     builder.insertReadingAtCursor(reading: "gao1")
     builder.setCursorIndex(newIndex: builder.length())
     builder.insertReadingAtCursor(reading: "gong1")

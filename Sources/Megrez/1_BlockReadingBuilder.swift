@@ -88,15 +88,13 @@ extension Megrez {
         return false
       }
 
-      var i = 0
-      while i < count {
-        if mutCursorIndex != 0 {
+      for _ in 0..<count {
+        if mutCursorIndex > 0 {
           mutCursorIndex -= 1
         }
         mutReadings.removeFirst()
         mutGrid.shrinkGridByOneAt(location: 0)
         build()
-        i += 1
       }
 
       return true
@@ -117,12 +115,14 @@ extension Megrez {
         (mutCursorIndex < mutMaximumBuildSpanLength) ? 0 : mutCursorIndex - mutMaximumBuildSpanLength
       let itrEnd: Int = min(mutCursorIndex + mutMaximumBuildSpanLength, mutReadings.count)
 
-      var p = itrBegin
-      while p < itrEnd {
-        var q = 1
-        while q <= mutMaximumBuildSpanLength, p + q <= itrEnd {
+      for p in itrBegin..<itrEnd {
+        for q in 1..<mutMaximumBuildSpanLength {
+          if p + q > itrEnd {
+            break
+          }
           let strSlice = mutReadings[p..<(p + q)]
           let combinedReading: String = join(slice: strSlice, separator: mutJoinSeparator)
+
           if !mutGrid.hasMatchedNode(location: p, spanningLength: q, key: combinedReading) {
             let unigrams: [Unigram] = mutLM.unigramsFor(key: combinedReading)
             if !unigrams.isEmpty {
@@ -130,9 +130,7 @@ extension Megrez {
               mutGrid.insertNode(node: n, location: p, spanningLength: q)
             }
           }
-          q += 1
         }
-        p += 1
       }
     }
 

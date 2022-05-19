@@ -48,6 +48,10 @@ extension Megrez {
     private var mutSelectedUnigramIndex: Int = 0
     /// 用來登記要施加給「『被標記為選中狀態』的候選字詞」的複寫權重的數值。
     private let kSelectedCandidateScore: Double = 99
+    /// 將當前節點列印成一個字串。
+    public var printed: String {
+      "(node,key:\(mutKey),fixed:\(mutCandidateFixed ? "true" : "false"),selected:\(mutSelectedUnigramIndex),\(mutUnigrams.printed))"
+    }
 
     /// 公開：候選字詞陣列（唯讀），以鍵值陣列的形式存在。
     var candidates: [KeyValuePair] { mutCandidates }

@@ -73,3 +73,16 @@ extension Megrez {
     }
   }
 }
+
+// MARK: - DumpDOT-related functions.
+
+extension Array where Element == Megrez.Bigram {
+  /// 將雙元圖陣列列印成一個字串。
+  public var printed: String {
+    var arrOutputContent = [""]
+    for (index, gram) in enumerated() {
+      arrOutputContent.append(contentsOf: [String(index) + "=>" + gram.printed])
+    }
+    return "[" + String(count) + "]=>{" + arrOutputContent.joined(separator: ",") + "}"
+  }
+}

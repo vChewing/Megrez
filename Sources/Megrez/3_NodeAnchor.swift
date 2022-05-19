@@ -39,11 +39,37 @@ extension Megrez {
       node?.key.count ?? 0
     }
 
+    /// 將當前節點節锚成一個字串。
+    public var printed: String {
+      var stream = ""
+      stream += "{@(" + String(location) + "," + String(spanningLength) + "),"
+      if let node = node {
+        stream += node.printed
+      } else {
+        stream += "null"
+      }
+      stream += "}"
+      return stream
+    }
+
     /// 獲取平衡權重。
     public var balancedScore: Double {
       let weightedScore: Double = (Double(spanningLength) - 1) * 2
       let nodeScore: Double = node?.score ?? 0
       return weightedScore + nodeScore
     }
+  }
+}
+
+// MARK: - DumpDOT-related functions.
+
+extension Array where Element == Megrez.NodeAnchor {
+  /// 將節锚陣列列印成一個字串。
+  public var printed: String {
+    var arrOutputContent = [""]
+    for anchor in self {
+      arrOutputContent.append(anchor.printed)
+    }
+    return arrOutputContent.joined(separator: "<-")
   }
 }

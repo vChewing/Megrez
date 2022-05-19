@@ -24,21 +24,29 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 extension Megrez {
+  /// 鍵值配對。
   @frozen public struct KeyValuePair: Equatable, Hashable, Comparable {
+    /// 鍵。一般情況下用來放置讀音等可以用來作為索引的內容。
     public var key: String
+    /// 資料值。
     public var value: String
-    // public var paired: String
+    /// 將當前鍵值列印成一個字串。
+    public var printed: String {
+      "(" + key + "," + value + ")"
+    }
 
+    /// 初期化一組鍵值配對
+    /// - Parameters:
+    ///   - key: 鍵。一般情況下用來放置讀音等可以用來作為索引的內容。
+    ///   - value: 資料值。
     public init(key: String = "", value: String = "") {
       self.key = key
       self.value = value
-      // paired = "(" + key + "," + value + ")"
     }
 
     public func hash(into hasher: inout Hasher) {
       hasher.combine(key)
       hasher.combine(value)
-      // hasher.combine(paired)
     }
 
     public static func == (lhs: KeyValuePair, rhs: KeyValuePair) -> Bool {

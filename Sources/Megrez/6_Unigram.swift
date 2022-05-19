@@ -24,37 +24,35 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 extension Megrez {
+  /// 單元圖。
   @frozen public struct Unigram: Equatable {
+    /// 鍵值。
     public var keyValue: KeyValuePair
+    /// 權重。
     public var score: Double
-    // var paired: String
+    /// 將當前單元圖列印成一個字串。
+    public var printed: String {
+      "(" + keyValue.printed + "," + String(score) + ")"
+    }
 
+    /// 初期化一筆「單元圖」。一筆單元圖由一組鍵值配對與一筆權重數值組成。
+    /// - Parameters:
+    ///   - keyValue: 鍵值。
+    ///   - score: 權重（雙精度小數）。
     public init(keyValue: KeyValuePair, score: Double) {
       self.keyValue = keyValue
       self.score = score
-      // paired = "(" + keyValue.paired + "," + String(score) + ")"
     }
 
     public func hash(into hasher: inout Hasher) {
       hasher.combine(keyValue)
       hasher.combine(score)
-      // hasher.combine(paired)
     }
 
     // 這個函數不再需要了。
     public static func compareScore(a: Unigram, b: Unigram) -> Bool {
       a.score > b.score
     }
-
-    //    static func getPairedUnigrams(grams: [Unigram]) -> String {
-    //      var arrOutputContent = [""]
-    //      var index = 0
-    //      for gram in grams {
-    //        arrOutputContent.append(contentsOf: [String(index) + "=>" + gram.paired])
-    //        index += 1
-    //      }
-    //      return "[" + String(grams.count) + "]=>{" + arrOutputContent.joined(separator: ",") + "}"
-    //    }
 
     public static func == (lhs: Unigram, rhs: Unigram) -> Bool {
       lhs.keyValue == rhs.keyValue && lhs.score == rhs.score

@@ -87,8 +87,16 @@ final class MegrezTests: XCTestCase {
     let correctResult = ["高科技", "公司", "的", "年終", "獎金", "你", "這樣"]
     print(" - 上述列印結果理應於下面這行一致：")
     print(correctResult)
-
     XCTAssertEqual(composed, correctResult)
+
+    // 測試 DumpDOT
+    builder.cursorIndex = builder.length
+    builder.deleteReadingAtTheRearOfCursor()
+    builder.deleteReadingAtTheRearOfCursor()
+    builder.deleteReadingAtTheRearOfCursor()
+    let expectedDumpDOT =
+      "digraph {\ngraph [ rankdir=LR ];\nBOS;\nBOS -> 高;\n高;\n高 -> 科;\n高 -> 科技;\nBOS -> 高科技;\n高科技;\n高科技 -> 工;\n高科技 -> 公司;\n科;\n科 -> 際;\n科 -> 濟公;\n科技;\n科技 -> 工;\n科技 -> 公司;\n際;\n際 -> 工;\n際 -> 公司;\n濟公;\n濟公 -> 斯;\n工;\n工 -> 斯;\n公司;\n公司 -> 的;\n斯;\n斯 -> 的;\n的;\n的 -> 年;\n的 -> 年終;\n年;\n年 -> 中;\n年終;\n年終 -> 獎;\n年終 -> 獎金;\n中;\n中 -> 獎;\n中 -> 獎金;\n獎;\n獎 -> 金;\n獎金;\n獎金 -> EOS;\n金;\n金 -> EOS;\nEOS;\n}\n"
+    XCTAssertEqual(builder.grid.dumpDOT, expectedDumpDOT)
   }
 
   // MARK: - Test Word Segmentation
@@ -163,7 +171,7 @@ class SimpleLM: Megrez.LanguageModel {
     if let f = mutDatabase[key] {
       return f
     } else {
-      return [Megrez.Unigram]()
+      return [Megrez.Unigram]().sorted { $0.score > $1.score }
     }
   }
 
@@ -175,90 +183,90 @@ class SimpleLM: Megrez.LanguageModel {
 // MARK: - 用以測試的詞頻數據
 
 private let strSampleData = #"""
-  #
-  # 下述詞頻資料取自 libTaBE 資料庫 (http://sourceforge.net/projects/libtabe/)
-  # (2002 最終版). 該專案於 1999 年由 Pai-Hsiang Hsiao 發起、以 BSD 授權發行。
-  #
-  ni3 你 -6.000000 // Non-LibTaBE
-  zhe4 這 -6.000000 // Non-LibTaBE
-  yang4 樣 -6.000000 // Non-LibTaBE
-  si1 絲 -9.495858
-  si1 思 -9.00644
-  si1 私 -99.000000
-  si1 斯 -8.091803
-  si1 司 -99.000000
-  si1 嘶 -3.53987
-  si1 撕 -2.259095
-  gao1 高 -7.17551
-  ke1 顆 -10.574273
-  ke1 棵 -11.504072
-  ke1 刻 -10.450457
-  ke1 科 -7.171052
-  ke1 柯 -99.000000
-  gao1 膏 -11.928720
-  gao1 篙 -3.624335
-  gao1 糕 -2.390804
-  de5 的 -3.516024
-  di2 的 -3.516024
-  di4 的 -3.516024
-  zhong1 中 -5.809297
-  de5 得 -7.427179
-  gong1 共 -8.381971
-  gong1 供 -8.50463
-  ji4 既 -99.000000
-  jin1 今 -8.034095
-  gong1 紅 -8.858181
-  ji4 際 -7.608341
-  ji4 季 -99.000000
-  jin1 金 -7.290109
-  ji4 騎 -10.939895
-  zhong1 終 -99.000000
-  ji4 記 -99.000000
-  ji4 寄 -99.000000
-  jin1 斤 -99.000000
-  ji4 繼 -9.75317
-  ji4 計 -7.926683
-  ji4 暨 -8.373022
-  zhong1 鐘 -9.877580
-  jin1 禁 -10.711079
-  gong1 公 -7.877973
-  gong1 工 -7.822167
-  gong1 攻 -99.000000
-  gong1 功 -99.000000
-  gong1 宮 -99.000000
-  zhong1 鍾 -9.685671
-  ji4 繫 -10.425662
-  gong1 弓 -99.000000
-  gong1 恭 -99.000000
-  ji4 劑 -8.888722
-  ji4 祭 -10.204425
-  jin1 浸 -11.378321
-  zhong1 盅 -99.000000
-  ji4 忌 -99.000000
-  ji4 技 -8.450826
-  jin1 筋 -11.074890
-  gong1 躬 -99.000000
-  ji4 冀 -2.045357
-  zhong1 忠 -99.000000
-  ji4 妓 -99.000000
-  ji4 濟 -9.517568
-  ji4 薊 -2.02587
-  jin1 巾 -99.000000
-  jin1 襟 -2.784206
-  nian2 年 -6.08655
-  jiang3 講 -9.164384
-  jiang3 獎 -8.690941
-  jiang3 蔣 -10.27828
-  nian2 黏 -11.336864
-  nian2 粘 -11.285740
-  jiang3 槳 -2.492933
-  gong1si1 公司 -6.299461
-  ke1ji4 科技 -6.73663
-  ji4gong1 濟公 -3.336653
-  jiang3jin1 獎金 -10.344678
-  nian2zhong1 年終 -11.668947
-  nian2zhong1 年中 -11.373044
-  gao1ke1ji4 高科技 -9.842421
-  zhe4yang4 這樣 -6.000000 // Non-LibTaBE
-  ni3zhe4 你這 -9.000000 // Non-LibTaBE
-  """#
+#
+# 下述詞頻資料取自 libTaBE 資料庫 (http://sourceforge.net/projects/libtabe/)
+# (2002 最終版). 該專案於 1999 年由 Pai-Hsiang Hsiao 發起、以 BSD 授權發行。
+#
+ni3 你 -6.000000 // Non-LibTaBE
+zhe4 這 -6.000000 // Non-LibTaBE
+yang4 樣 -6.000000 // Non-LibTaBE
+si1 絲 -9.495858
+si1 思 -9.006414
+si1 私 -99.000000
+si1 斯 -8.091803
+si1 司 -99.000000
+si1 嘶 -13.513987
+si1 撕 -12.259095
+gao1 高 -7.171551
+ke1 顆 -10.574273
+ke1 棵 -11.504072
+ke1 刻 -10.450457
+ke1 科 -7.171052
+ke1 柯 -99.000000
+gao1 膏 -11.928720
+gao1 篙 -13.624335
+gao1 糕 -12.390804
+de5 的 -3.516024
+di2 的 -3.516024
+di4 的 -3.516024
+zhong1 中 -5.809297
+de5 得 -7.427179
+gong1 共 -8.381971
+gong1 供 -8.501463
+ji4 既 -99.000000
+jin1 今 -8.034095
+gong1 紅 -8.858181
+ji4 際 -7.608341
+ji4 季 -99.000000
+jin1 金 -7.290109
+ji4 騎 -10.939895
+zhong1 終 -99.000000
+ji4 記 -99.000000
+ji4 寄 -99.000000
+jin1 斤 -99.000000
+ji4 繼 -9.715317
+ji4 計 -7.926683
+ji4 暨 -8.373022
+zhong1 鐘 -9.877580
+jin1 禁 -10.711079
+gong1 公 -7.877973
+gong1 工 -7.822167
+gong1 攻 -99.000000
+gong1 功 -99.000000
+gong1 宮 -99.000000
+zhong1 鍾 -9.685671
+ji4 繫 -10.425662
+gong1 弓 -99.000000
+gong1 恭 -99.000000
+ji4 劑 -8.888722
+ji4 祭 -10.204425
+jin1 浸 -11.378321
+zhong1 盅 -99.000000
+ji4 忌 -99.000000
+ji4 技 -8.450826
+jin1 筋 -11.074890
+gong1 躬 -99.000000
+ji4 冀 -12.045357
+zhong1 忠 -99.000000
+ji4 妓 -99.000000
+ji4 濟 -9.517568
+ji4 薊 -12.021587
+jin1 巾 -99.000000
+jin1 襟 -12.784206
+nian2 年 -6.086515
+jiang3 講 -9.164384
+jiang3 獎 -8.690941
+jiang3 蔣 -10.127828
+nian2 黏 -11.336864
+nian2 粘 -11.285740
+jiang3 槳 -12.492933
+gong1si1 公司 -6.299461
+ke1ji4 科技 -6.736613
+ji4gong1 濟公 -13.336653
+jiang3jin1 獎金 -10.344678
+nian2zhong1 年終 -11.668947
+nian2zhong1 年中 -11.373044
+gao1ke1ji4 高科技 -9.842421
+zhe4yang4 這樣 -6.000000 // Non-LibTaBE
+ni3zhe4 你這 -9.000000 // Non-LibTaBE
+"""#

@@ -42,7 +42,7 @@ extension Megrez {
     /// 公開：該分節讀音槽的游標位置。
     public var cursorIndex: Int {
       get { mutCursorIndex }
-      set { mutCursorIndex = min(newValue, mutReadings.count) }
+      set { mutCursorIndex = (newValue < 0) ? 0 : min(newValue, mutReadings.count) }
     }
 
     /// 公開：該分節讀音槽的軌格（唯讀）。

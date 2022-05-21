@@ -25,7 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extension Megrez {
   /// 雙元圖。
-  @frozen public struct Bigram: Equatable {
+  @frozen public struct Bigram: Equatable, CustomStringConvertible {
     /// 當前鍵值。
     public var keyValue: KeyValuePair
     /// 前述鍵值。
@@ -33,8 +33,8 @@ extension Megrez {
     /// 權重。
     public var score: Double
     /// 將當前雙元圖列印成一個字串。
-    public var printed: String {
-      "(" + keyValue.printed + "|" + precedingKeyValue.printed + "," + String(score) + ")"
+    public var description: String {
+      "(" + keyValue.description + "|" + precedingKeyValue.description + "," + String(score) + ")"
     }
 
     /// 初期化一筆「雙元圖」。一筆雙元圖由一組前述鍵值配對、一組當前鍵值配對、與一筆權重數值組成。
@@ -63,14 +63,6 @@ extension Megrez {
       lhs.precedingKeyValue < rhs.precedingKeyValue
         || (lhs.keyValue < rhs.keyValue || (lhs.keyValue == rhs.keyValue && lhs.keyValue < rhs.keyValue))
     }
-
-    var description: String {
-      "\(keyValue):\(score)"
-    }
-
-    var debugDescription: String {
-      "Bigram(keyValue: \(keyValue), score: \(score))"
-    }
   }
 }
 
@@ -78,10 +70,10 @@ extension Megrez {
 
 extension Array where Element == Megrez.Bigram {
   /// 將雙元圖陣列列印成一個字串。
-  public var printed: String {
+  public var description: String {
     var arrOutputContent = [""]
     for (index, gram) in enumerated() {
-      arrOutputContent.append(contentsOf: [String(index) + "=>" + gram.printed])
+      arrOutputContent.append(contentsOf: [String(index) + "=>" + gram.description])
     }
     return "[" + String(count) + "]=>{" + arrOutputContent.joined(separator: ",") + "}"
   }

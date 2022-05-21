@@ -25,7 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extension Megrez {
   /// 節锚。
-  @frozen public struct NodeAnchor {
+  @frozen public struct NodeAnchor: CustomStringConvertible {
     /// 節點。一個節锚內不一定有節點。
     public var node: Node?
     /// 節锚所在的位置。
@@ -39,12 +39,12 @@ extension Megrez {
       node?.key.count ?? 0
     }
 
-    /// 將當前節點節锚成一個字串。
-    public var printed: String {
+    /// 將當前節锚列印成一個字串。
+    public var description: String {
       var stream = ""
       stream += "{@(" + String(location) + "," + String(spanningLength) + "),"
       if let node = node {
-        stream += node.printed
+        stream += node.description
       } else {
         stream += "null"
       }
@@ -65,10 +65,10 @@ extension Megrez {
 
 extension Array where Element == Megrez.NodeAnchor {
   /// 將節锚陣列列印成一個字串。
-  public var printed: String {
+  public var description: String {
     var arrOutputContent = [""]
     for anchor in self {
-      arrOutputContent.append(anchor.printed)
+      arrOutputContent.append(anchor.description)
     }
     return arrOutputContent.joined(separator: "<-")
   }

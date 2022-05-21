@@ -25,13 +25,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extension Megrez {
   /// 鍵值配對。
-  @frozen public struct KeyValuePair: Equatable, Hashable, Comparable {
+  @frozen public struct KeyValuePair: Equatable, Hashable, Comparable, CustomStringConvertible {
     /// 鍵。一般情況下用來放置讀音等可以用來作為索引的內容。
     public var key: String
     /// 資料值。
     public var value: String
     /// 將當前鍵值列印成一個字串。
-    public var printed: String {
+    public var description: String {
       "(" + key + "," + value + ")"
     }
 
@@ -67,14 +67,6 @@ extension Megrez {
 
     public static func >= (lhs: KeyValuePair, rhs: KeyValuePair) -> Bool {
       (lhs.key.count >= rhs.key.count) || (lhs.key.count == rhs.key.count && lhs.value >= rhs.value)
-    }
-
-    public var description: String {
-      "(\(key), \(value))"
-    }
-
-    public var debugDescription: String {
-      "KeyValuePair(key: \(key), value: \(value))"
     }
   }
 }

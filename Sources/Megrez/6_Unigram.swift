@@ -25,14 +25,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extension Megrez {
   /// 單元圖。
-  @frozen public struct Unigram: Equatable {
+  @frozen public struct Unigram: Equatable, CustomStringConvertible {
     /// 鍵值。
     public var keyValue: KeyValuePair
     /// 權重。
     public var score: Double
     /// 將當前單元圖列印成一個字串。
-    public var printed: String {
-      "(" + keyValue.printed + "," + String(score) + ")"
+    public var description: String {
+      "(" + keyValue.description + "," + String(score) + ")"
     }
 
     /// 初期化一筆「單元圖」。一筆單元圖由一組鍵值配對與一筆權重數值組成。
@@ -61,14 +61,6 @@ extension Megrez {
     public static func < (lhs: Unigram, rhs: Unigram) -> Bool {
       lhs.keyValue < rhs.keyValue || (lhs.keyValue == rhs.keyValue && lhs.keyValue < rhs.keyValue)
     }
-
-    var description: String {
-      "\(keyValue):\(score)"
-    }
-
-    var debugDescription: String {
-      "Unigram(keyValue: \(keyValue), score: \(score))"
-    }
   }
 }
 
@@ -76,10 +68,10 @@ extension Megrez {
 
 extension Array where Element == Megrez.Unigram {
   /// 將單元圖陣列列印成一個字串。
-  public var printed: String {
+  public var description: String {
     var arrOutputContent = [""]
     for (index, gram) in enumerated() {
-      arrOutputContent.append(contentsOf: [String(index) + "=>" + gram.printed])
+      arrOutputContent.append(contentsOf: [String(index) + "=>" + gram.description])
     }
     return "[" + String(count) + "]=>{" + arrOutputContent.joined(separator: ",") + "}"
   }

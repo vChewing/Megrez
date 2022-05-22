@@ -67,7 +67,9 @@ class ExampleLM: Megrez.LanguageModel {
 
 MegrezTests.swift 檔案內的 SimpleLM 可以作為範例。
 
-如果需要更實戰的範例的話，可以洽威注音專案的倉庫內的 LMInstantiator.swift。
+至於該檔案內的 FiniteStateMachine 則是一個「一次性讀取檔案/大字串且分析資料」的範例。
+
+如果需要更實戰的範例的話，可以洽威注音專案的倉庫內的 LMInstantiator.swift 及其關聯檔案。
 
 #### // 2. 怎樣與 builder 互動：
 

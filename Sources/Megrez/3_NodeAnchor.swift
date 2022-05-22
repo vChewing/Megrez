@@ -54,9 +54,9 @@ extension Megrez {
 
     /// 獲取平衡權重。
     public var balancedScore: Double {
-      let weightedScore: Double = (Double(spanningLength) - 1) * 2
+      let additionalWeights: Double = (Double(spanningLength) - 1) * 0.75
       let nodeScore: Double = node?.score ?? 0
-      return weightedScore + nodeScore
+      return nodeScore + additionalWeights
     }
   }
 }

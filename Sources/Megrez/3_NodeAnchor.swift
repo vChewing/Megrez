@@ -61,11 +61,6 @@ extension Megrez {
     public var balancedScore: Double {
       (node?.score ?? 0) + additionalWeights
     }
-
-    /// 獲取平衡累計權重。
-    public var balancedAccumulatedScore: Double {
-      accumulatedScore + additionalWeights
-    }
   }
 }
 

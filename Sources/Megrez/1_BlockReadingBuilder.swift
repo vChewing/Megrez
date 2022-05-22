@@ -193,7 +193,7 @@ extension Megrez {
         // 利用幅位長度來決定權重。
         // 這樣一來，例：「再見」比「在」與「見」的權重更高。
         if balanced {
-          n.accumulatedScore = n.balancedAccumulatedScore
+          n.accumulatedScore += n.additionalWeights
         }
 
         var path: [NodeAnchor] = reverseWalk(

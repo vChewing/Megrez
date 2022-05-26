@@ -59,7 +59,7 @@ extension Megrez {
     ///   - separator: 多字讀音鍵當中用以分割漢字讀音的記號，預設為空。
     public init(lm: LanguageModel, length: Int = 10, separator: String = "") {
       mutLM = lm
-      mutMaximumBuildSpanLength = length
+      mutMaximumBuildSpanLength = abs(length)  // 防呆
       joinSeparator = separator
     }
 
@@ -112,6 +112,7 @@ extension Megrez {
     /// 用於輸入法組字區長度上限處理：
     /// 將該位置要溢出的敲字內容遞交之後、再執行這個函數。
     @discardableResult public func removeHeadReadings(count: Int) -> Bool {
+      let count = abs(count)  // 防呆
       if count > length {
         return false
       }
@@ -163,6 +164,8 @@ extension Megrez {
       nodesLimit: Int = 0,
       balanced: Bool = false
     ) -> [NodeAnchor] {
+      let location = abs(location)  // 防呆
+      let nodesLimit = abs(nodesLimit)  // 防呆
       if location == 0 || location > mutGrid.width {
         return [] as [NodeAnchor]
       }
@@ -179,7 +182,7 @@ extension Megrez {
       for (i, n) in nodes.enumerated() {
         // 只檢查前 X 個 NodeAnchor 是否有 node。
         // 這裡有 abs 是為了防止有白癡填負數。
-        if abs(nodesLimit) > 0, i == abs(nodesLimit) {
+        if nodesLimit > 0, i == nodesLimit {
           break
         }
 
@@ -238,8 +241,8 @@ extension Megrez {
           if p + q > itrEnd {
             break
           }
-          let strSlice = mutReadings[p..<(p + q)]
-          let combinedReading: String = join(slice: strSlice, separator: joinSeparator)
+          let arrSlice = mutReadings[p..<(p + q)]
+          let combinedReading: String = join(slice: arrSlice, separator: joinSeparator)
 
           if !mutGrid.hasMatchedNode(location: p, spanningLength: q, key: combinedReading) {
             let unigrams: [Unigram] = mutLM.unigramsFor(key: combinedReading)
@@ -252,9 +255,9 @@ extension Megrez {
       }
     }
 
-    private func join(slice strSlice: ArraySlice<String>, separator: String) -> String {
+    private func join(slice arrSlice: ArraySlice<String>, separator: String) -> String {
       var arrResult: [String] = []
-      for value in strSlice {
+      for value in arrSlice {
         arrResult.append(value)
       }
       return arrResult.joined(separator: separator)

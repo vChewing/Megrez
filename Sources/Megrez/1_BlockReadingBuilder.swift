@@ -112,6 +112,7 @@ extension Megrez {
     /// 用於輸入法組字區長度上限處理：
     /// 將該位置要溢出的敲字內容遞交之後、再執行這個函數。
     @discardableResult public func removeHeadReadings(count: Int) -> Bool {
+      let count = abs(count)  // 防呆
       if count > length {
         return false
       }
@@ -163,6 +164,7 @@ extension Megrez {
       nodesLimit: Int = 0,
       balanced: Bool = false
     ) -> [NodeAnchor] {
+      let location = abs(location)  // 防呆
       if location == 0 || location > mutGrid.width {
         return [] as [NodeAnchor]
       }

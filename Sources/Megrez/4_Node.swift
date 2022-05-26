@@ -152,6 +152,7 @@ extension Megrez {
     ///   - index: 索引位置。
     ///   - score: 給定權重條件。
     public func selectFloatingCandidateAt(index: Int, score: Double) {
+      let index = abs(index)  // 防呆
       mutSelectedUnigramIndex = index >= mutUnigrams.count ? 0 : index
       mutCandidateFixed = false
       mutScore = score

@@ -71,7 +71,7 @@ extension Megrez {
       }
 
       let n = mutSpans[location].node(length: spanningLength)
-      return n == nil ? false : key == n?.key
+      return n != nil && key == n?.key
     }
 
     /// 在該軌格的指定位置擴增一個幅位。

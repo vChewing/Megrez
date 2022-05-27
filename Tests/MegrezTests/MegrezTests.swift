@@ -34,31 +34,53 @@ final class MegrezTests: XCTestCase {
     print("// 開始測試語言文字輸入處理")
     let lmTestInput = SimpleLM(input: strSampleData)
     let builder = Megrez.BlockReadingBuilder(lm: lmTestInput)
+    var walked = [Megrez.NodeAnchor]()
 
+    func walk(at location: Int) {
+      walked = builder.walk(at: location, score: 0.0, nodesLimit: 3, balanced: true)
+    }
+
+    // 模擬輸入法的行為，每次敲字或選字都重新 walk。
     builder.insertReadingAtCursor(reading: "gao1")
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "ji4")
+    walk(at: builder.grid.width)
     builder.cursorIndex = 1
     builder.insertReadingAtCursor(reading: "ke1")
+    walk(at: builder.grid.width)
     builder.cursorIndex = 1
     builder.deleteReadingToTheFrontOfCursor()
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "ke1")
+    walk(at: builder.grid.width)
     builder.cursorIndex = 0
     builder.deleteReadingToTheFrontOfCursor()
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "gao1")
+    walk(at: builder.grid.width)
     builder.cursorIndex = builder.length
     builder.insertReadingAtCursor(reading: "gong1")
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "si1")
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "de5")
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "nian2")
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "zhong1")
+    walk(at: builder.grid.width)
     builder.grid.fixNodeSelectedCandidate(location: 7, value: "年終")
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "jiang3")
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "jin1")
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "ni3")
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "zhe4")
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "yang4")
-
-    var walked = builder.walk(at: builder.grid.width, score: 0.0, nodesLimit: 3, balanced: true)
+    walk(at: builder.grid.width)
 
     // 這裡模擬一個輸入法的常見情況：每次敲一個字詞都會 walk，然後你回頭編輯完一些內容之後又會立刻重新 walk。
     // 如果只在這裡測試第一遍 walk 的話，測試通過了也無法測試之後再次 walk 是否會正常。
@@ -67,14 +89,17 @@ final class MegrezTests: XCTestCase {
     builder.deleteReadingToTheFrontOfCursor()
 
     // 於是咱們 walk 第二遍
-    walked = builder.walk(at: builder.grid.width, score: 0.0, nodesLimit: 3, balanced: true)
+    walk(at: builder.grid.width)
     XCTAssert(!walked.isEmpty)
 
-    // 做好第三遍的準備，這次咱們來一次插入性編輯
-    builder.insertReadingAtCursor(reading: "ke1")  // 重點測試這句是否正常，畢竟是在 walked 過的節點內進行插入編輯
+    // 做好第三遍的準備，這次咱們來一次插入性編輯。
+    // 重點測試這句是否正常，畢竟是在 walked 過的節點內進行插入編輯。
+    builder.insertReadingAtCursor(reading: "ke1")
 
-    // 於是咱們 walk 第三遍，這一遍會直接曝露「上述修改是否有對 builder 造成了破壞性的損失」所以很重要
-    walked = builder.walk(at: builder.grid.width, score: 0.0, nodesLimit: 3, balanced: true)
+    // 於是咱們 walk 第三遍。
+    // 這一遍會直接曝露「上述修改是否有對 builder 造成了破壞性的損失」，
+    // 所以很重要。
+    walk(at: builder.grid.width)
     XCTAssert(!walked.isEmpty)
 
     var composed: [String] = []

@@ -133,6 +133,7 @@ extension Megrez {
     ///   - index: 索引位置。
     ///   - fix: 是否將當前解點標記為「候選詞已鎖定」的狀態。
     public func selectCandidateAt(index: Int = 0, fix: Bool = false) {
+      let index = abs(index)
       mutSelectedUnigramIndex = index >= mutUnigrams.count ? 0 : index
       mutCandidateFixed = fix
       mutScore = kSelectedCandidateScore
@@ -152,6 +153,7 @@ extension Megrez {
     ///   - index: 索引位置。
     ///   - score: 給定權重條件。
     public func selectFloatingCandidateAt(index: Int, score: Double) {
+      let index = abs(index)  // 防呆
       mutSelectedUnigramIndex = index >= mutUnigrams.count ? 0 : index
       mutCandidateFixed = false
       mutScore = score

@@ -28,142 +28,59 @@ import XCTest
 @testable import Megrez
 
 final class MegrezTests: XCTestCase {
-  // MARK: - Input Test (FSM)
-
-  func testInputFSM() throws {
-    print("// 開始測試語言文字輸入處理")
-    let lmTestInput = FiniteStateMachineLM(input: strSampleData)
-    let builder = Megrez.BlockReadingBuilder(lm: lmTestInput)
-
-    builder.insertReadingAtCursor(reading: "gao1")
-    builder.insertReadingAtCursor(reading: "ji4")
-    builder.cursorIndex = 1
-    builder.insertReadingAtCursor(reading: "ke1")
-    builder.cursorIndex = 1
-    builder.deleteReadingToTheFrontOfCursor()
-    builder.insertReadingAtCursor(reading: "ke1")
-    builder.cursorIndex = 0
-    builder.deleteReadingToTheFrontOfCursor()
-    builder.insertReadingAtCursor(reading: "gao1")
-    builder.cursorIndex = builder.length
-    builder.insertReadingAtCursor(reading: "gong1")
-    builder.insertReadingAtCursor(reading: "si1")
-    builder.insertReadingAtCursor(reading: "de5")
-    builder.insertReadingAtCursor(reading: "nian2")
-    builder.insertReadingAtCursor(reading: "zhong1")
-    builder.grid.fixNodeSelectedCandidate(location: 7, value: "年終")
-    builder.insertReadingAtCursor(reading: "jiang3")
-    builder.insertReadingAtCursor(reading: "jin1")
-    builder.insertReadingAtCursor(reading: "ni3")
-    builder.insertReadingAtCursor(reading: "zhe4")
-    builder.insertReadingAtCursor(reading: "yang4")
-
-    var walked = builder.walk(at: builder.grid.width, score: 0.0, nodesLimit: 3, balanced: true)
-
-    // 這裡模擬一個輸入法的常見情況：每次敲一個字詞都會 walk，然後你回頭編輯完一些內容之後又會立刻重新 walk。
-    // 如果只在這裡測試第一遍 walk 的話，測試通過了也無法測試之後再次 walk 是否會正常。
-
-    builder.cursorIndex = 1
-    builder.deleteReadingToTheFrontOfCursor()
-
-    // 於是咱們 walk 第二遍
-    walked = builder.walk(at: builder.grid.width, score: 0.0, nodesLimit: 3, balanced: true)
-    XCTAssert(!walked.isEmpty)
-
-    // 做好第三遍的準備，這次咱們來一次插入性編輯
-    builder.insertReadingAtCursor(reading: "ke1")  // 重點測試這句是否正常，畢竟是在 walked 過的節點內進行插入編輯
-
-    // 於是咱們 walk 第三遍，這一遍會直接曝露「上述修改是否有對 builder 造成了破壞性的損失」所以很重要
-    walked = builder.walk(at: builder.grid.width, score: 0.0, nodesLimit: 3, balanced: true)
-    XCTAssert(!walked.isEmpty)
-
-    var composed: [String] = []
-    for phrase in walked {
-      if let node = phrase.node {
-        composed.append(node.currentKeyValue.value)
-      }
-    }
-    print(composed)
-    let correctResult = ["高科技", "公司", "的", "年終", "獎金", "你", "這樣"]
-    print(" - 上述列印結果理應於下面這行一致：")
-    print(correctResult)
-    XCTAssertEqual(composed, correctResult)
-
-    // 測試 DumpDOT
-    builder.cursorIndex = builder.length
-    builder.deleteReadingAtTheRearOfCursor()
-    builder.deleteReadingAtTheRearOfCursor()
-    builder.deleteReadingAtTheRearOfCursor()
-    let expectedDumpDOT =
-      "digraph {\ngraph [ rankdir=LR ];\nBOS;\nBOS -> 高;\n高;\n高 -> 科;\n高 -> 科技;\nBOS -> 高科技;\n高科技;\n高科技 -> 工;\n高科技 -> 公司;\n科;\n科 -> 際;\n科 -> 濟公;\n科技;\n科技 -> 工;\n科技 -> 公司;\n際;\n際 -> 工;\n際 -> 公司;\n濟公;\n濟公 -> 斯;\n工;\n工 -> 斯;\n公司;\n公司 -> 的;\n斯;\n斯 -> 的;\n的;\n的 -> 年;\n的 -> 年終;\n年;\n年 -> 中;\n年終;\n年終 -> 獎;\n年終 -> 獎金;\n中;\n中 -> 獎;\n中 -> 獎金;\n獎;\n獎 -> 金;\n獎金;\n獎金 -> EOS;\n金;\n金 -> EOS;\nEOS;\n}\n"
-    XCTAssertEqual(builder.grid.dumpDOT, expectedDumpDOT)
-  }
-
-  // MARK: - Test Word Segmentation (FSM)
-
-  func testWordSegmentationFSM() throws {
-    print("// 開始測試語句分節處理")
-    let lmTestSegmentation = FiniteStateMachineLM(input: strSampleData, swapKeyValue: true)
-    let builder = Megrez.BlockReadingBuilder(lm: lmTestSegmentation, separator: "")
-
-    builder.insertReadingAtCursor(reading: "高")
-    builder.insertReadingAtCursor(reading: "科")
-    builder.insertReadingAtCursor(reading: "技")
-    builder.insertReadingAtCursor(reading: "公")
-    builder.insertReadingAtCursor(reading: "司")
-    builder.insertReadingAtCursor(reading: "的")
-    builder.insertReadingAtCursor(reading: "年")
-    builder.insertReadingAtCursor(reading: "終")
-    builder.insertReadingAtCursor(reading: "獎")
-    builder.insertReadingAtCursor(reading: "金")
-
-    let walked = Array(builder.reverseWalk(at: builder.grid.width, score: 0.0).reversed())
-
-    var segmented: [String] = []
-    for phrase in walked {
-      if let key = phrase.node?.currentKeyValue.key {
-        segmented.append(key)
-      }
-    }
-    print(segmented)
-    let correctResult = ["高科技", "公司", "的", "年終", "獎金"]
-    print(" - 上述列印結果理應於下面這行一致：")
-    print(correctResult)
-
-    XCTAssertEqual(segmented, correctResult)
-  }
-
   // MARK: - Input Test (SimpleLM)
 
   func testInput() throws {
     print("// 開始測試語言文字輸入處理")
     let lmTestInput = SimpleLM(input: strSampleData)
     let builder = Megrez.BlockReadingBuilder(lm: lmTestInput)
+    var walked = [Megrez.NodeAnchor]()
 
+    func walk(at location: Int) {
+      walked = builder.walk(at: location, score: 0.0, nodesLimit: 3, balanced: true)
+    }
+
+    // 模擬輸入法的行為，每次敲字或選字都重新 walk。
     builder.insertReadingAtCursor(reading: "gao1")
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "ji4")
+    walk(at: builder.grid.width)
     builder.cursorIndex = 1
     builder.insertReadingAtCursor(reading: "ke1")
+    walk(at: builder.grid.width)
     builder.cursorIndex = 1
     builder.deleteReadingToTheFrontOfCursor()
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "ke1")
+    walk(at: builder.grid.width)
     builder.cursorIndex = 0
     builder.deleteReadingToTheFrontOfCursor()
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "gao1")
+    walk(at: builder.grid.width)
     builder.cursorIndex = builder.length
     builder.insertReadingAtCursor(reading: "gong1")
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "si1")
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "de5")
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "nian2")
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "zhong1")
+    walk(at: builder.grid.width)
     builder.grid.fixNodeSelectedCandidate(location: 7, value: "年終")
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "jiang3")
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "jin1")
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "ni3")
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "zhe4")
+    walk(at: builder.grid.width)
     builder.insertReadingAtCursor(reading: "yang4")
-
-    var walked = builder.walk(at: builder.grid.width, score: 0.0, nodesLimit: 3, balanced: true)
+    walk(at: builder.grid.width)
 
     // 這裡模擬一個輸入法的常見情況：每次敲一個字詞都會 walk，然後你回頭編輯完一些內容之後又會立刻重新 walk。
     // 如果只在這裡測試第一遍 walk 的話，測試通過了也無法測試之後再次 walk 是否會正常。
@@ -172,14 +89,17 @@ final class MegrezTests: XCTestCase {
     builder.deleteReadingToTheFrontOfCursor()
 
     // 於是咱們 walk 第二遍
-    walked = builder.walk(at: builder.grid.width, score: 0.0, nodesLimit: 3, balanced: true)
+    walk(at: builder.grid.width)
     XCTAssert(!walked.isEmpty)
 
-    // 做好第三遍的準備，這次咱們來一次插入性編輯
-    builder.insertReadingAtCursor(reading: "ke1")  // 重點測試這句是否正常，畢竟是在 walked 過的節點內進行插入編輯
+    // 做好第三遍的準備，這次咱們來一次插入性編輯。
+    // 重點測試這句是否正常，畢竟是在 walked 過的節點內進行插入編輯。
+    builder.insertReadingAtCursor(reading: "ke1")
 
-    // 於是咱們 walk 第三遍，這一遍會直接曝露「上述修改是否有對 builder 造成了破壞性的損失」所以很重要
-    walked = builder.walk(at: builder.grid.width, score: 0.0, nodesLimit: 3, balanced: true)
+    // 於是咱們 walk 第三遍。
+    // 這一遍會直接曝露「上述修改是否有對 builder 造成了破壞性的損失」，
+    // 所以很重要。
+    walk(at: builder.grid.width)
     XCTAssert(!walked.isEmpty)
 
     var composed: [String] = []
@@ -236,93 +156,6 @@ final class MegrezTests: XCTestCase {
     print(correctResult)
 
     XCTAssertEqual(segmented, correctResult)
-  }
-}
-
-// MARK: - 用以測試的語言模型（一次性字串分析型）
-
-class FiniteStateMachineLM: Megrez.LanguageModel {
-  var rangeMap = [String: [Range<String.Index>]]()
-  var shouldReverse = false
-  var defaultScore: Double = 0
-  var shouldForceDefaultScore = false
-
-  init(input: String, swapKeyValue: Bool = false) {
-    super.init()
-    rangeMap = TestFSM.parse(string: input, swap: swapKeyValue)
-    shouldReverse = swapKeyValue
-  }
-
-  override func unigramsFor(key: String) -> [Megrez.Unigram] {
-    var grams: [Megrez.Unigram] = []
-    if let arrRangeRecords: [Range<String.Index>] = rangeMap[key] {
-      for netaRange in arrRangeRecords {
-        let neta = strSampleData[netaRange].split(separator: " ")
-        let theValue: String = shouldReverse ? String(neta[0]) : String(neta[1])
-        let kvPair = Megrez.KeyValuePair(key: key, value: theValue)
-        var theScore: Double = defaultScore
-        if neta.count >= 3, !shouldForceDefaultScore {
-          theScore = .init(String(neta[2])) ?? defaultScore
-        }
-        if theScore > 0 {
-          theScore *= -1  // 應對可能忘記寫負號的情形
-        }
-        grams.append(Megrez.Unigram(keyValue: kvPair, score: theScore))
-      }
-    }
-    return grams
-  }
-
-  override func hasUnigramsFor(key: String) -> Bool {
-    rangeMap.keys.contains(key)
-  }
-}
-
-// MARK: - 一次性字串分析機
-
-public enum TestFSM {
-  static func parse(string strData: String, swap isSwapped: Bool = false) -> [String: [Range<String.Index>]] {
-    var rangeMap = [String: [Range<String.Index>]]()
-    var isObservingTheKey = !isSwapped
-    var newLineStartIndex = 0
-    var theKey = ""
-    var skipThisLine = false
-    var previousChar = String.Element(" ")
-    var columnIndicator = 0
-    for (idxNow, theChar) in strData.enumerated() {
-      if String(theChar) == "\n" {
-        if !theKey.isEmpty, idxNow > newLineStartIndex, skipThisLine == false {
-          let indexStart = strData.index(strData.startIndex, offsetBy: newLineStartIndex, limitedBy: strData.endIndex)!
-          let indexEnd = strData.index(strData.startIndex, offsetBy: idxNow, limitedBy: strData.endIndex)!
-          let theValue = indexStart..<indexEnd
-          rangeMap[theKey, default: []].append(theValue)
-        }
-        // Reset state observers
-        theKey.removeAll()
-        newLineStartIndex = idxNow + 1
-        isObservingTheKey = !isSwapped
-        skipThisLine = false
-        columnIndicator = 0
-      } else {
-        if String(theChar) == "#", String(previousChar) == "\n" {
-          skipThisLine = true
-        }
-        if " \t".contains(String(theChar)) {
-          columnIndicator += 1
-          if columnIndicator == 1 {
-            isObservingTheKey = isSwapped
-          }
-          if columnIndicator == 2 {
-            isObservingTheKey = false
-          }
-        }
-        if isObservingTheKey, String(theChar) != " " {
-          theKey += String(theChar)
-        }
-      }
-      previousChar = theChar
-    }
-    return rangeMap
   }
 }
 

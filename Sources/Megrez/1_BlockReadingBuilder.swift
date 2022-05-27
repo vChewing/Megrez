@@ -121,8 +121,10 @@ extension Megrez {
         if mutCursorIndex > 0 {
           mutCursorIndex -= 1
         }
-        mutReadings.removeFirst()
-        mutGrid.shrinkGridByOneAt(location: 0)
+        if !mutReadings.isEmpty {
+          mutReadings.removeFirst()
+          mutGrid.shrinkGridByOneAt(location: 0)
+        }
         build()
       }
 

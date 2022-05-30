@@ -52,14 +52,9 @@ extension Megrez {
       return stream
     }
 
-    /// 獲取加權量。
-    public var additionalWeights: Double {
-      (Double(spanningLength) - 1) * 0.75
-    }
-
-    /// 獲取平衡權重。
-    public var balancedScore: Double {
-      (node?.score ?? 0) + additionalWeights
+    /// 獲取用來比較的權重。
+    public var scoreForSort: Double {
+      node?.score ?? 0
     }
   }
 }

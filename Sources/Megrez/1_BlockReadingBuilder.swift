@@ -26,6 +26,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 extension Megrez {
   /// 分節讀音槽。
   public class BlockReadingBuilder {
+    /// 給被丟掉的節點路徑施加的負權重。
+    private let kDroppedPathScore: Double = -999
     /// 該分節讀音曹內可以允許的最大詞長。
     private var mutMaximumBuildSpanLength = 10
     /// 該分節讀音槽的游標位置。
@@ -144,13 +146,14 @@ extension Megrez {
     public func walk(
       at location: Int,
       score accumulatedScore: Double = 0.0,
-      nodesLimit: Int = 0,
-      balanced: Bool = false
+      joinedPhrase: String = "",
+      longPhrases arrLongPhrases: [String] = .init()
     ) -> [NodeAnchor] {
       Array(
         reverseWalk(
           at: location, score: accumulatedScore,
-          nodesLimit: nodesLimit, balanced: balanced
+          joinedPhrase: joinedPhrase,
+          longPhrases: arrLongPhrases
         ).reversed())
     }
 
@@ -163,72 +166,101 @@ extension Megrez {
     public func reverseWalk(
       at location: Int,
       score accumulatedScore: Double = 0.0,
-      nodesLimit: Int = 0,
-      balanced: Bool = false
+      joinedPhrase: String = "",
+      longPhrases arrLongPhrases: [String] = .init()
     ) -> [NodeAnchor] {
       let location = abs(location)  // 防呆
-      let nodesLimit = abs(nodesLimit)  // 防呆
       if location == 0 || location > mutGrid.width {
-        return [] as [NodeAnchor]
+        return.init()
       }
 
-      var paths: [[NodeAnchor]] = []
-      var nodes: [NodeAnchor] = mutGrid.nodesEndingAt(location: location)
+      var paths = [[NodeAnchor]]()
+      var nodes = mutGrid.nodesEndingAt(location: location)
+      var arrLongPhrases = arrLongPhrases
 
-      if balanced {
-        nodes.sort {
-          $0.balancedScore > $1.balancedScore
-        }
+      nodes = nodes.stableSorted {
+        $0.scoreForSort > $1.scoreForSort
       }
 
-      for (i, n) in nodes.enumerated() {
-        // 只檢查前 X 個 NodeAnchor 是否有 node。
-        // 這裡有 abs 是為了防止有白癡填負數。
-        if nodesLimit > 0, i == nodesLimit {
-          break
-        }
-
-        var n = n
-        guard let nNode = n.node else {
-          continue
-        }
-
-        n.accumulatedScore = accumulatedScore + nNode.score
-
-        // 利用幅位長度來決定權重。
-        // 這樣一來，例：「再見」比「在」與「見」的權重更高。
-        if balanced {
-          n.accumulatedScore += n.additionalWeights
-        }
-
-        var path: [NodeAnchor] = reverseWalk(
-          at: location - n.spanningLength,
-          score: n.accumulatedScore
-        )
-
-        path.insert(n, at: 0)
-
+      if let nodeOfNodeZero = nodes[0].node, nodeOfNodeZero.score >= nodeOfNodeZero.kSelectedCandidateScore {
+        // 在使用者有選過候選字詞的情況下，摒棄非依此據而成的節點路徑。
+        var nodeZero = nodes[0]
+        nodeZero.accumulatedScore = accumulatedScore + nodeOfNodeZero.score
+        var path: [NodeAnchor] = reverseWalk(at: location - nodeZero.spanningLength, score: nodeZero.accumulatedScore)
+        path.insert(nodeZero, at: 0)
         paths.append(path)
-
-        // 始終使用固定的候選字詞
-        if balanced, nNode.score >= 0 {
-          break
-        }
-      }
-
-      if !paths.isEmpty {
-        if var result = paths.first {
-          for value in paths {
-            if let vLast = value.last, let rLast = result.last {
-              if vLast.accumulatedScore > rLast.accumulatedScore {
-                result = value
-              }
-            }
+      } else if arrLongPhrases.count > 0 {
+        var path = [NodeAnchor]()
+        for theAnchor in nodes {
+          guard let theNode = theAnchor.node else { continue }
+          var theAnchor = theAnchor
+          let joinedValue = theNode.currentKeyValue.value + joinedPhrase
+          // 如果只是一堆單漢字的節點組成了同樣的長詞的話，直接棄用這個節點路徑。
+          // 打比方說「八/月/中/秋/山/林/涼」與「八月/中秋/山林/涼」在使用者來看
+          // 是「結果等價」的，那就扔掉前者。
+          if arrLongPhrases.contains(joinedValue) {
+            theAnchor.accumulatedScore = kDroppedPathScore
+            path.insert(theAnchor, at: 0)
+            paths.append(path)
+            continue
           }
-          return result
+          theAnchor.accumulatedScore = accumulatedScore + theNode.score
+          if joinedValue.count >= arrLongPhrases[0].count {
+            path = reverseWalk(
+              at: location - theAnchor.spanningLength, score: theAnchor.accumulatedScore, joinedPhrase: "",
+              longPhrases: .init())
+          } else {
+            path = reverseWalk(
+              at: location - theAnchor.spanningLength, score: theAnchor.accumulatedScore, joinedPhrase: joinedValue,
+              longPhrases: arrLongPhrases)
+          }
+          path.insert(theAnchor, at: 0)
+          paths.append(path)
+        }
+      } else {
+        // 看看當前格位有沒有更長的候選字詞。
+        var arrLongPhrasesNeo = [String]()
+        for theAnchor in nodes {
+          guard let theNode = theAnchor.node else { continue }
+          if theAnchor.spanningLength > 1 {
+            arrLongPhrases.append(theNode.currentKeyValue.value)
+          }
+        }
+
+        arrLongPhrasesNeo = arrLongPhrasesNeo.stableSorted {
+          $0.count > $1.count
+        }
+        for theAnchor in nodes {
+          var theAnchor = theAnchor
+          guard let theNode = theAnchor.node else { continue }
+          theAnchor.accumulatedScore = accumulatedScore + theNode.score
+          var path = [NodeAnchor]()
+          if theAnchor.spanningLength > 1 {
+            path = reverseWalk(
+              at: location - theAnchor.spanningLength, score: theAnchor.accumulatedScore, joinedPhrase: "",
+              longPhrases: .init())
+          } else {
+            path = reverseWalk(
+              at: location - theAnchor.spanningLength, score: theAnchor.accumulatedScore,
+              joinedPhrase: theNode.currentKeyValue.value, longPhrases: arrLongPhrasesNeo)
+          }
+          path.insert(theAnchor, at: 0)
+          paths.append(path)
         }
       }
-      return [] as [NodeAnchor]
+
+      guard !paths.isEmpty else {
+        return .init()
+      }
+
+      var result: [NodeAnchor] = paths[0]
+      for neta in paths {
+        if neta.last!.accumulatedScore > result.last!.accumulatedScore {
+          result = neta
+        }
+      }
+
+      return result
     }
 
     // MARK: - Private functions
@@ -264,5 +296,28 @@ extension Megrez {
       }
       return arrResult.joined(separator: separator)
     }
+  }
+}
+
+// MARK: - Stable Sort Extension
+
+// Reference: https://stackoverflow.com/a/50545761/4162914
+
+extension Sequence {
+  /// Return a stable-sorted collection.
+  ///
+  /// - Parameter areInIncreasingOrder: Return nil when two element are equal.
+  /// - Returns: The sorted collection.
+  func stableSorted(
+    by areInIncreasingOrder: (Element, Element) throws -> Bool
+  )
+    rethrows -> [Element]
+  {
+    try enumerated()
+      .sorted { a, b -> Bool in
+        try areInIncreasingOrder(a.element, b.element)
+          || (a.offset < b.offset && !areInIncreasingOrder(b.element, a.element))
+      }
+      .map(\.element)
   }
 }

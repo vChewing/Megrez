@@ -47,7 +47,7 @@ extension Megrez {
     /// 用來登記「當前選中的單元圖」的索引值的變數。
     private var mutSelectedUnigramIndex: Int = 0
     /// 用來登記要施加給「『被標記為選中狀態』的候選字詞」的複寫權重的數值。
-    private let kSelectedCandidateScore: Double = 99
+    public let kSelectedCandidateScore: Double = 99
     /// 將當前節點列印成一個字串。
     public var description: String {
       "(node,key:\(mutKey),fixed:\(mutCandidateFixed ? "true" : "false"),selected:\(mutSelectedUnigramIndex),\(mutUnigrams))"

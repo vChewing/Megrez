@@ -37,7 +37,7 @@ final class MegrezTests: XCTestCase {
     var walked = [Megrez.NodeAnchor]()
 
     func walk(at location: Int) {
-      walked = builder.walk(at: location, score: 0.0, nodesLimit: 3, balanced: true)
+      walked = builder.walk(at: location, score: 0.0)
     }
 
     // 模擬輸入法的行為，每次敲字或選字都重新 walk。

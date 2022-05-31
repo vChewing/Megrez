@@ -186,7 +186,7 @@ extension Megrez {
         var path: [NodeAnchor] = reverseWalk(at: location - nodeZero.spanningLength, score: nodeZero.accumulatedScore)
         path.insert(nodeZero, at: 0)
         paths.append(path)
-      } else if longPhrases.count > 0 {
+      } else if !longPhrases.isEmpty {
         var path = [NodeAnchor]()
         for theAnchor in nodes {
           guard let theNode = theAnchor.node else { continue }

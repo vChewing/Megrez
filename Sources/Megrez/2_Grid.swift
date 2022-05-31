@@ -29,10 +29,17 @@ extension Megrez {
     /// 幅位陣列。
     private var mutSpans: [Megrez.Span]
 
+    /// 該幅位內可以允許的最大詞長。
+    private var mutMaxBuildSpanLength = 10
+
+    /// 公開：該幅位內可以允許的最大詞長。
+    public var maxBuildSpanLength: Int { mutMaxBuildSpanLength }
+
     /// 軌格的寬度，也就是其內的幅位陣列當中的幅位數量。
     var width: Int { mutSpans.count }
 
-    public init() {
+    public init(spanLength: Int = 10) {
+      mutMaxBuildSpanLength = spanLength
       mutSpans = [Megrez.Span]()
     }
 

@@ -28,8 +28,6 @@ extension Megrez {
   public class BlockReadingBuilder {
     /// 給被丟掉的節點路徑施加的負權重。
     private let kDroppedPathScore: Double = -999
-    /// 該分節讀音曹內可以允許的最大詞長。
-    private var mutMaximumBuildSpanLength = 10
     /// 該分節讀音槽的游標位置。
     private var mutCursorIndex: Int = 0
     /// 該分節讀音槽的讀音陣列。
@@ -39,6 +37,8 @@ extension Megrez {
     /// 該分節讀音槽所使用的語言模型。
     private var mutLM: LanguageModel
 
+    /// 公開該分節讀音槽內可以允許的最大詞長。
+    public var maxBuildSpanLength: Int { mutGrid.maxBuildSpanLength }
     /// 公開：多字讀音鍵當中用以分割漢字讀音的記號，預設為空。
     public var joinSeparator: String = ""
     /// 公開：該分節讀音槽的游標位置。
@@ -57,11 +57,11 @@ extension Megrez {
     /// 分節讀音槽。
     /// - Parameters:
     ///   - lm: 語言模型。可以是任何基於 Megrez.LanguageModel 的衍生型別。
-    ///   - length: 指定該分節讀音曹內可以允許的最大詞長，預設為 10 字。
+    ///   - length: 指定該分節讀音槽內可以允許的最大詞長，預設為 10 字。
     ///   - separator: 多字讀音鍵當中用以分割漢字讀音的記號，預設為空。
     public init(lm: LanguageModel, length: Int = 10, separator: String = "") {
       mutLM = lm
-      mutMaximumBuildSpanLength = abs(length)  // 防呆
+      mutGrid = .init(spanLength: abs(length))  // 防呆
       joinSeparator = separator
     }
 
@@ -270,11 +270,11 @@ extension Megrez {
 
     private func build() {
       let itrBegin: Int =
-        (mutCursorIndex < mutMaximumBuildSpanLength) ? 0 : mutCursorIndex - mutMaximumBuildSpanLength
-      let itrEnd: Int = min(mutCursorIndex + mutMaximumBuildSpanLength, mutReadings.count)
+        (mutCursorIndex < maxBuildSpanLength) ? 0 : mutCursorIndex - maxBuildSpanLength
+      let itrEnd: Int = min(mutCursorIndex + maxBuildSpanLength, mutReadings.count)
 
       for p in itrBegin..<itrEnd {
-        for q in 1..<mutMaximumBuildSpanLength {
+        for q in 1..<maxBuildSpanLength {
           if p + q > itrEnd {
             break
           }

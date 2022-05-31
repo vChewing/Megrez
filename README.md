@@ -38,7 +38,7 @@ class ctlInputMethod: IMKInputController {
   /// 分節讀音槽。
   /// - Parameters:
   ///   - lm: 語言模型。可以是任何基於 Megrez.LanguageModel 的衍生型別。
-  ///   - length: 指定該分節讀音曹內可以允許的最大詞長，預設為 10 字。
+  ///   - length: 指定該分節讀音槽內可以允許的最大詞長，預設為 10 字。
   ///   - separator: 多字讀音鍵當中用以分割漢字讀音的記號，預設為空。
   let _builder: Megrez.BlockReadingBuilder = .init(lm: lmTest, length: 13, separator: "-")
 ```

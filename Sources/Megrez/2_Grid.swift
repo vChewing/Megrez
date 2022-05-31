@@ -111,12 +111,35 @@ extension Megrez {
       }
     }
 
+    /// 給定位置，枚舉出所有在這個位置開始的節點。
+    /// - Parameters:
+    ///   - location: 位置。
+    public func nodesBeginningAt(location: Int) -> [NodeAnchor] {
+      let location = abs(location)  // 防呆
+      var results = [NodeAnchor]()
+      if location < mutSpans.count {  // 此時 mutSpans 必然不為空
+        let span = mutSpans[location]
+        for i in 1...maxBuildSpanLength {
+          if let np = span.node(length: i) {
+            results.append(
+              NodeAnchor(
+                node: np,
+                location: location,
+                spanningLength: i
+              )
+            )
+          }
+        }
+      }
+      return results
+    }
+
     /// 給定位置，枚舉出所有在這個位置結尾的節點。
     /// - Parameters:
     ///   - location: 位置。
     public func nodesEndingAt(location: Int) -> [NodeAnchor] {
       let location = abs(location)  // 防呆
-      var results: [NodeAnchor] = []
+      var results = [NodeAnchor]()
       if !mutSpans.isEmpty, location <= mutSpans.count {
         for i in 0..<location {
           let span = mutSpans[i]
@@ -141,7 +164,7 @@ extension Megrez {
     ///   - location: 位置。
     public func nodesCrossingOrEndingAt(location: Int) -> [NodeAnchor] {
       let location = abs(location)  // 防呆
-      var results: [NodeAnchor] = []
+      var results = [NodeAnchor]()
       if !mutSpans.isEmpty, location <= mutSpans.count {
         for i in 0..<location {
           let span = mutSpans[i]

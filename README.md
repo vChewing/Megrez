@@ -85,14 +85,12 @@ MegrezTests.swift 檔案內的 SimpleLM 可以作為範例。
 
 ```swift
   /// 對已給定的軌格按照給定的位置與條件進行正向爬軌。
-  ///
-  /// 其實就是將反向爬軌的結果顛倒順序再給出來而已，省得使用者自己再顛倒一遍。
   /// - Parameters:
   ///   - at: 開始爬軌的位置。
   ///   - score: 給定累計權重，非必填參數。預設值為 0。
-  ///   - nodesLimit: 限定最多只爬多少個節點。
-  ///   - balanced: 啟用平衡權重，在節點權重的基礎上根據節點幅位長度來加權。
-  var walked = _builder.walk(at: builder.grid.width, score: 0.0, nodesLimit: 3, balanced: true)
+  ///   - joinedPhrase: 用以統計累計長詞的內部參數，請勿主動使用。
+  ///   - longPhrases: 用以統計累計長詞的內部參數，請勿主動使用。
+  var walked = _builder.walk(at: 0, score: 0.0)
 ```
 
 MegrezTests.swift 是輸入了很多內容之後再 walk 的。實際上一款輸入法會在你每次插入讀音或刪除讀音的時候都重新 walk。那些處於候選字詞鎖定狀態的節點不會再受到之後的 walk 的行為的影響，但除此之外的節點會因為每次 walk 而可能各自的候選字詞會出現自動變化。如果給了 nodesLimit 一個非零的數值的話，則 walk 的範圍外的節點不會受到影響。

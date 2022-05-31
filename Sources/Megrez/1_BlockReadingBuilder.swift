@@ -136,33 +136,120 @@ extension Megrez {
     // MARK: - Walker
 
     /// 對已給定的軌格按照給定的位置與條件進行正向爬軌。
-    ///
-    /// 其實就是將反向爬軌的結果顛倒順序再給出來而已，省得使用者自己再顛倒一遍。
     /// - Parameters:
     ///   - at: 開始爬軌的位置。
     ///   - score: 給定累計權重，非必填參數。預設值為 0。
-    ///   - nodesLimit: 限定最多只爬多少個節點。
-    ///   - balanced: 啟用平衡權重，在節點權重的基礎上根據節點幅位長度來加權。
+    ///   - joinedPhrase: 用以統計累計長詞的內部參數，請勿主動使用。
+    ///   - longPhrases: 用以統計累計長詞的內部參數，請勿主動使用。
     public func walk(
-      at location: Int = 1,
+      at location: Int = 0,
       score accumulatedScore: Double = 0.0,
       joinedPhrase: String = "",
-      longPhrases arrLongPhrases: [String] = .init()
+      longPhrases: [String] = .init()
     ) -> [NodeAnchor] {
-      Array(
-        reverseWalk(
-          at: location, score: accumulatedScore,
-          joinedPhrase: joinedPhrase,
-          longPhrases: arrLongPhrases
-        ).reversed())
+      let location = abs(location)  // 防呆
+      if location >= mutGrid.width {
+        return .init()
+      }
+
+      var paths = [[NodeAnchor]]()
+      var nodes = mutGrid.nodesBeginningAt(location: location)
+
+      nodes = nodes.stableSorted {
+        $0.scoreForSort > $1.scoreForSort
+      }
+
+      if let nodeOfNodeZero = nodes[0].node, nodeOfNodeZero.score >= nodeOfNodeZero.kSelectedCandidateScore {
+        // 在使用者有選過候選字詞的情況下，摒棄非依此據而成的節點路徑。
+        var nodeZero = nodes[0]
+        nodeZero.accumulatedScore = accumulatedScore + nodeOfNodeZero.score
+        var path: [NodeAnchor] = walk(at: location + nodeZero.spanningLength, score: nodeZero.accumulatedScore)
+        path.insert(nodeZero, at: 0)
+        paths.append(path)
+      } else if longPhrases.count > 0 {
+        var path = [NodeAnchor]()
+        for theAnchor in nodes {
+          guard let theNode = theAnchor.node else { continue }
+          var theAnchor = theAnchor
+          let joinedValue = joinedPhrase + theNode.currentKeyValue.value
+          // 如果只是一堆單漢字的節點組成了同樣的長詞的話，直接棄用這個節點路徑。
+          // 打比方說「八/月/中/秋/山/林/涼」與「八月/中秋/山林/涼」在使用者來看
+          // 是「結果等價」的，那就扔掉前者。
+          if longPhrases.contains(joinedValue) {
+            theAnchor.accumulatedScore = kDroppedPathScore
+            path.insert(theAnchor, at: 0)
+            paths.append(path)
+            continue
+          }
+          theAnchor.accumulatedScore = accumulatedScore + theNode.score
+          if joinedValue.count >= longPhrases[0].count {
+            path = walk(
+              at: location + theAnchor.spanningLength, score: theAnchor.accumulatedScore, joinedPhrase: "",
+              longPhrases: .init()
+            )
+          } else {
+            path = walk(
+              at: location + theAnchor.spanningLength, score: theAnchor.accumulatedScore, joinedPhrase: joinedValue,
+              longPhrases: longPhrases
+            )
+          }
+          path.insert(theAnchor, at: 0)
+          paths.append(path)
+        }
+      } else {
+        // 看看當前格位有沒有更長的候選字詞。
+        var longPhrases = [String]()
+        for theAnchor in nodes {
+          guard let theNode = theAnchor.node else { continue }
+          if theAnchor.spanningLength > 1 {
+            longPhrases.append(theNode.currentKeyValue.value)
+          }
+        }
+
+        longPhrases = longPhrases.stableSorted {
+          $0.count > $1.count
+        }
+        for theAnchor in nodes {
+          var theAnchor = theAnchor
+          guard let theNode = theAnchor.node else { continue }
+          theAnchor.accumulatedScore = accumulatedScore + theNode.score
+          var path = [NodeAnchor]()
+          if theAnchor.spanningLength > 1 {
+            path = walk(
+              at: location + theAnchor.spanningLength, score: theAnchor.accumulatedScore, joinedPhrase: "",
+              longPhrases: .init()
+            )
+          } else {
+            path = walk(
+              at: location + 1, score: theAnchor.accumulatedScore,
+              joinedPhrase: theNode.currentKeyValue.value, longPhrases: longPhrases
+            )
+          }
+          path.insert(theAnchor, at: 0)
+          paths.append(path)
+        }
+      }
+
+      guard !paths.isEmpty else {
+        return .init()
+      }
+
+      var result: [NodeAnchor] = paths[0]
+      for neta in paths {
+        if neta.last!.accumulatedScore > result.last!.accumulatedScore {
+          result = neta
+        }
+      }
+
+      return result
     }
 
     /// 對已給定的軌格按照給定的位置與條件進行反向爬軌。
     /// - Parameters:
     ///   - at: 開始爬軌的位置。
     ///   - score: 給定累計權重，非必填參數。預設值為 0。
-    ///   - nodesLimit: 限定最多只爬多少個節點。
-    ///   - balanced: 啟用平衡權重，在節點權重的基礎上根據節點幅位長度來加權。
+    ///   - joinedPhrase: 用以統計累計長詞的內部參數，請勿主動使用。
+    ///   - longPhrases: 用以統計累計長詞的內部參數，請勿主動使用。   
     public func reverseWalk(
       at location: Int,
       score accumulatedScore: Double = 0.0,

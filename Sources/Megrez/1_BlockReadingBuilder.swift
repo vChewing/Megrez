@@ -28,8 +28,6 @@ extension Megrez {
   public class BlockReadingBuilder {
     /// 給被丟掉的節點路徑施加的負權重。
     private let kDroppedPathScore: Double = -999
-    /// 該分節讀音曹內可以允許的最大詞長。
-    private var mutMaximumBuildSpanLength = 10
     /// 該分節讀音槽的游標位置。
     private var mutCursorIndex: Int = 0
     /// 該分節讀音槽的讀音陣列。
@@ -39,6 +37,8 @@ extension Megrez {
     /// 該分節讀音槽所使用的語言模型。
     private var mutLM: LanguageModel
 
+    /// 公開該分節讀音槽內可以允許的最大詞長。
+    public var maxBuildSpanLength: Int { mutGrid.maxBuildSpanLength }
     /// 公開：多字讀音鍵當中用以分割漢字讀音的記號，預設為空。
     public var joinSeparator: String = ""
     /// 公開：該分節讀音槽的游標位置。
@@ -57,11 +57,11 @@ extension Megrez {
     /// 分節讀音槽。
     /// - Parameters:
     ///   - lm: 語言模型。可以是任何基於 Megrez.LanguageModel 的衍生型別。
-    ///   - length: 指定該分節讀音曹內可以允許的最大詞長，預設為 10 字。
+    ///   - length: 指定該分節讀音槽內可以允許的最大詞長，預設為 10 字。
     ///   - separator: 多字讀音鍵當中用以分割漢字讀音的記號，預設為空。
     public init(lm: LanguageModel, length: Int = 10, separator: String = "") {
       mutLM = lm
-      mutMaximumBuildSpanLength = abs(length)  // 防呆
+      mutGrid = .init(spanLength: abs(length))  // 防呆
       joinSeparator = separator
     }
 
@@ -136,38 +136,125 @@ extension Megrez {
     // MARK: - Walker
 
     /// 對已給定的軌格按照給定的位置與條件進行正向爬軌。
-    ///
-    /// 其實就是將反向爬軌的結果顛倒順序再給出來而已，省得使用者自己再顛倒一遍。
     /// - Parameters:
     ///   - at: 開始爬軌的位置。
     ///   - score: 給定累計權重，非必填參數。預設值為 0。
-    ///   - nodesLimit: 限定最多只爬多少個節點。
-    ///   - balanced: 啟用平衡權重，在節點權重的基礎上根據節點幅位長度來加權。
+    ///   - joinedPhrase: 用以統計累計長詞的內部參數，請勿主動使用。
+    ///   - longPhrases: 用以統計累計長詞的內部參數，請勿主動使用。
     public func walk(
-      at location: Int,
+      at location: Int = 0,
       score accumulatedScore: Double = 0.0,
       joinedPhrase: String = "",
-      longPhrases arrLongPhrases: [String] = .init()
+      longPhrases: [String] = .init()
     ) -> [NodeAnchor] {
-      Array(
-        reverseWalk(
-          at: location, score: accumulatedScore,
-          joinedPhrase: joinedPhrase,
-          longPhrases: arrLongPhrases
-        ).reversed())
+      let location = abs(location)  // 防呆
+      if location >= mutGrid.width {
+        return .init()
+      }
+
+      var paths = [[NodeAnchor]]()
+      var nodes = mutGrid.nodesBeginningAt(location: location)
+
+      nodes = nodes.stableSorted {
+        $0.scoreForSort > $1.scoreForSort
+      }
+
+      if let nodeOfNodeZero = nodes[0].node, nodeOfNodeZero.score >= nodeOfNodeZero.kSelectedCandidateScore {
+        // 在使用者有選過候選字詞的情況下，摒棄非依此據而成的節點路徑。
+        var nodeZero = nodes[0]
+        nodeZero.accumulatedScore = accumulatedScore + nodeOfNodeZero.score
+        var path: [NodeAnchor] = walk(at: location + nodeZero.spanningLength, score: nodeZero.accumulatedScore)
+        path.insert(nodeZero, at: 0)
+        paths.append(path)
+      } else if longPhrases.count > 0 {
+        var path = [NodeAnchor]()
+        for theAnchor in nodes {
+          guard let theNode = theAnchor.node else { continue }
+          var theAnchor = theAnchor
+          let joinedValue = joinedPhrase + theNode.currentKeyValue.value
+          // 如果只是一堆單漢字的節點組成了同樣的長詞的話，直接棄用這個節點路徑。
+          // 打比方說「八/月/中/秋/山/林/涼」與「八月/中秋/山林/涼」在使用者來看
+          // 是「結果等價」的，那就扔掉前者。
+          if longPhrases.contains(joinedValue) {
+            theAnchor.accumulatedScore = kDroppedPathScore
+            path.insert(theAnchor, at: 0)
+            paths.append(path)
+            continue
+          }
+          theAnchor.accumulatedScore = accumulatedScore + theNode.score
+          if joinedValue.count >= longPhrases[0].count {
+            path = walk(
+              at: location + theAnchor.spanningLength, score: theAnchor.accumulatedScore, joinedPhrase: "",
+              longPhrases: .init()
+            )
+          } else {
+            path = walk(
+              at: location + theAnchor.spanningLength, score: theAnchor.accumulatedScore, joinedPhrase: joinedValue,
+              longPhrases: longPhrases
+            )
+          }
+          path.insert(theAnchor, at: 0)
+          paths.append(path)
+        }
+      } else {
+        // 看看當前格位有沒有更長的候選字詞。
+        var longPhrases = [String]()
+        for theAnchor in nodes {
+          guard let theNode = theAnchor.node else { continue }
+          if theAnchor.spanningLength > 1 {
+            longPhrases.append(theNode.currentKeyValue.value)
+          }
+        }
+
+        longPhrases = longPhrases.stableSorted {
+          $0.count > $1.count
+        }
+        for theAnchor in nodes {
+          var theAnchor = theAnchor
+          guard let theNode = theAnchor.node else { continue }
+          theAnchor.accumulatedScore = accumulatedScore + theNode.score
+          var path = [NodeAnchor]()
+          if theAnchor.spanningLength > 1 {
+            path = walk(
+              at: location + theAnchor.spanningLength, score: theAnchor.accumulatedScore, joinedPhrase: "",
+              longPhrases: .init()
+            )
+          } else {
+            path = walk(
+              at: location + 1, score: theAnchor.accumulatedScore,
+              joinedPhrase: theNode.currentKeyValue.value, longPhrases: longPhrases
+            )
+          }
+          path.insert(theAnchor, at: 0)
+          paths.append(path)
+        }
+      }
+
+      guard !paths.isEmpty else {
+        return .init()
+      }
+
+      var result: [NodeAnchor] = paths[0]
+      for neta in paths {
+        if neta.last!.accumulatedScore > result.last!.accumulatedScore {
+          result = neta
+        }
+      }
+
+      return result
     }
 
     /// 對已給定的軌格按照給定的位置與條件進行反向爬軌。
     /// - Parameters:
     ///   - at: 開始爬軌的位置。
     ///   - score: 給定累計權重，非必填參數。預設值為 0。
-    ///   - nodesLimit: 限定最多只爬多少個節點。
-    ///   - balanced: 啟用平衡權重，在節點權重的基礎上根據節點幅位長度來加權。
+    ///   - joinedPhrase: 用以統計累計長詞的內部參數，請勿主動使用。
+    ///   - longPhrases: 用以統計累計長詞的內部參數，請勿主動使用。
     public func reverseWalk(
       at location: Int,
       score accumulatedScore: Double = 0.0,
       joinedPhrase: String = "",
-      longPhrases arrLongPhrases: [String] = .init()
+      longPhrases: [String] = .init()
     ) -> [NodeAnchor] {
       let location = abs(location)  // 防呆
       if location == 0 || location > mutGrid.width {
@@ -176,7 +263,6 @@ extension Megrez {
 
       var paths = [[NodeAnchor]]()
       var nodes = mutGrid.nodesEndingAt(location: location)
-      var arrLongPhrases = arrLongPhrases
 
       nodes = nodes.stableSorted {
         $0.scoreForSort > $1.scoreForSort
@@ -189,7 +275,7 @@ extension Megrez {
         var path: [NodeAnchor] = reverseWalk(at: location - nodeZero.spanningLength, score: nodeZero.accumulatedScore)
         path.insert(nodeZero, at: 0)
         paths.append(path)
-      } else if arrLongPhrases.count > 0 {
+      } else if longPhrases.count > 0 {
         var path = [NodeAnchor]()
         for theAnchor in nodes {
           guard let theNode = theAnchor.node else { continue }
@@ -198,36 +284,38 @@ extension Megrez {
           // 如果只是一堆單漢字的節點組成了同樣的長詞的話，直接棄用這個節點路徑。
           // 打比方說「八/月/中/秋/山/林/涼」與「八月/中秋/山林/涼」在使用者來看
           // 是「結果等價」的，那就扔掉前者。
-          if arrLongPhrases.contains(joinedValue) {
+          if longPhrases.contains(joinedValue) {
             theAnchor.accumulatedScore = kDroppedPathScore
             path.insert(theAnchor, at: 0)
             paths.append(path)
             continue
           }
           theAnchor.accumulatedScore = accumulatedScore + theNode.score
-          if joinedValue.count >= arrLongPhrases[0].count {
+          if joinedValue.count >= longPhrases[0].count {
             path = reverseWalk(
               at: location - theAnchor.spanningLength, score: theAnchor.accumulatedScore, joinedPhrase: "",
-              longPhrases: .init())
+              longPhrases: .init()
+            )
           } else {
             path = reverseWalk(
               at: location - theAnchor.spanningLength, score: theAnchor.accumulatedScore, joinedPhrase: joinedValue,
-              longPhrases: arrLongPhrases)
+              longPhrases: longPhrases
+            )
           }
           path.insert(theAnchor, at: 0)
           paths.append(path)
         }
       } else {
         // 看看當前格位有沒有更長的候選字詞。
-        var arrLongPhrasesNeo = [String]()
+        var longPhrases = [String]()
         for theAnchor in nodes {
           guard let theNode = theAnchor.node else { continue }
           if theAnchor.spanningLength > 1 {
-            arrLongPhrases.append(theNode.currentKeyValue.value)
+            longPhrases.append(theNode.currentKeyValue.value)
           }
         }
 
-        arrLongPhrasesNeo = arrLongPhrasesNeo.stableSorted {
+        longPhrases = longPhrases.stableSorted {
           $0.count > $1.count
         }
         for theAnchor in nodes {
@@ -238,11 +326,13 @@ extension Megrez {
           if theAnchor.spanningLength > 1 {
             path = reverseWalk(
               at: location - theAnchor.spanningLength, score: theAnchor.accumulatedScore, joinedPhrase: "",
-              longPhrases: .init())
+              longPhrases: .init()
+            )
           } else {
             path = reverseWalk(
               at: location - theAnchor.spanningLength, score: theAnchor.accumulatedScore,
-              joinedPhrase: theNode.currentKeyValue.value, longPhrases: arrLongPhrasesNeo)
+              joinedPhrase: theNode.currentKeyValue.value, longPhrases: longPhrases
+            )
           }
           path.insert(theAnchor, at: 0)
           paths.append(path)
@@ -267,11 +357,11 @@ extension Megrez {
 
     private func build() {
       let itrBegin: Int =
-        (mutCursorIndex < mutMaximumBuildSpanLength) ? 0 : mutCursorIndex - mutMaximumBuildSpanLength
-      let itrEnd: Int = min(mutCursorIndex + mutMaximumBuildSpanLength, mutReadings.count)
+        (mutCursorIndex < maxBuildSpanLength) ? 0 : mutCursorIndex - maxBuildSpanLength
+      let itrEnd: Int = min(mutCursorIndex + maxBuildSpanLength, mutReadings.count)
 
       for p in itrBegin..<itrEnd {
-        for q in 1..<mutMaximumBuildSpanLength {
+        for q in 1..<maxBuildSpanLength {
           if p + q > itrEnd {
             break
           }

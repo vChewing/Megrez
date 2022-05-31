@@ -29,10 +29,17 @@ extension Megrez {
     /// 幅位陣列。
     private var mutSpans: [Megrez.Span]
 
+    /// 該幅位內可以允許的最大詞長。
+    private var mutMaxBuildSpanLength = 10
+
+    /// 公開：該幅位內可以允許的最大詞長。
+    public var maxBuildSpanLength: Int { mutMaxBuildSpanLength }
+
     /// 軌格的寬度，也就是其內的幅位陣列當中的幅位數量。
     var width: Int { mutSpans.count }
 
-    public init() {
+    public init(spanLength: Int = 10) {
+      mutMaxBuildSpanLength = spanLength
       mutSpans = [Megrez.Span]()
     }
 
@@ -104,12 +111,35 @@ extension Megrez {
       }
     }
 
+    /// 給定位置，枚舉出所有在這個位置開始的節點。
+    /// - Parameters:
+    ///   - location: 位置。
+    public func nodesBeginningAt(location: Int) -> [NodeAnchor] {
+      let location = abs(location)  // 防呆
+      var results = [NodeAnchor]()
+      if location < mutSpans.count {  // 此時 mutSpans 必然不為空
+        let span = mutSpans[location]
+        for i in 1...maxBuildSpanLength {
+          if let np = span.node(length: i) {
+            results.append(
+              NodeAnchor(
+                node: np,
+                location: location,
+                spanningLength: i
+              )
+            )
+          }
+        }
+      }
+      return results
+    }
+
     /// 給定位置，枚舉出所有在這個位置結尾的節點。
     /// - Parameters:
     ///   - location: 位置。
     public func nodesEndingAt(location: Int) -> [NodeAnchor] {
       let location = abs(location)  // 防呆
-      var results: [NodeAnchor] = []
+      var results = [NodeAnchor]()
       if !mutSpans.isEmpty, location <= mutSpans.count {
         for i in 0..<location {
           let span = mutSpans[i]
@@ -134,7 +164,7 @@ extension Megrez {
     ///   - location: 位置。
     public func nodesCrossingOrEndingAt(location: Int) -> [NodeAnchor] {
       let location = abs(location)  // 防呆
-      var results: [NodeAnchor] = []
+      var results = [NodeAnchor]()
       if !mutSpans.isEmpty, location <= mutSpans.count {
         for i in 0..<location {
           let span = mutSpans[i]

@@ -189,14 +189,43 @@ extension Megrez {
       return results
     }
 
+    /// 獲取給定的範圍內的節點，以節錨為單位來獲取一個結果陣列。
+    /// - Parameters:
+    ///   - range: 給定首尾範圍，必須得是閉區間。
+    func nodes(in range: ClosedRange<Int>) -> [NodeAnchor] {
+      var result = [NodeAnchor]()
+      if !mutSpans.isEmpty, range.upperBound <= mutSpans.count {
+        for i in 0..<range.upperBound {
+          let span = mutSpans[i]
+          if i + span.maximumLength > range.lowerBound {
+            for j in 1...span.maximumLength {
+              guard let np = span.node(length: j),
+                (i + j) > range.lowerBound
+              else { continue }
+              result.append(
+                NodeAnchor(
+                  node: np,
+                  location: i,
+                  spanningLength: j
+                )
+              )
+            }
+          }
+        }
+      }
+      return result
+    }
+
     /// 將給定位置的節點的候選字詞改為與給定的字串一致的候選字詞。
     /// - Parameters:
     ///   - location: 位置。
     ///   - value: 給定字串。
     @discardableResult public func fixNodeSelectedCandidate(location: Int, value: String) -> NodeAnchor {
       let location = abs(location)  // 防呆
-      var node = NodeAnchor()
-      for nodeAnchor in nodesCrossingOrEndingAt(location: location) {
+      var anchor = NodeAnchor()
+      var selectedIndex = 0
+      var anchors = nodesCrossingOrEndingAt(location: location)
+      for nodeAnchor in anchors {
         guard let theNode = nodeAnchor.node else {
           continue
         }
@@ -205,13 +234,24 @@ extension Megrez {
         theNode.resetCandidate()
         for (i, candidate) in candidates.enumerated() {
           if candidate.value == value {
-            theNode.selectCandidateAt(index: i)
-            node = nodeAnchor
+            selectedIndex = i
+            anchor = nodeAnchor
             break
           }
         }
       }
-      return node
+      guard let node = anchor.node else {
+        return anchor
+      }
+      anchors = nodes(in: (location - anchor.spanningLength)...location)
+      for nodeAnchor in anchors {
+        if let theNode = nodeAnchor.node {
+          theNode.resetCandidate()
+        }
+      }
+      node.selectCandidateAt(index: selectedIndex)
+      anchor.node = node
+      return anchor
     }
 
     /// 將給定位置的節點的與給定的字串一致的候選字詞的權重複寫為給定權重數值。
@@ -221,7 +261,10 @@ extension Megrez {
     ///   - overridingScore: 給定權重數值。
     public func overrideNodeScoreForSelectedCandidate(location: Int, value: String, overridingScore: Double) {
       let location = abs(location)  // 防呆
-      for nodeAnchor in nodesCrossingOrEndingAt(location: location) {
+      let anchor = NodeAnchor()
+      let selectedIndex = 0
+      var anchors = nodesCrossingOrEndingAt(location: location)
+      for nodeAnchor in anchors {
         guard let theNode = nodeAnchor.node else {
           continue
         }
@@ -235,6 +278,14 @@ extension Megrez {
           }
         }
       }
+      guard let node = anchor.node else { return }
+      anchors = nodes(in: (location - anchor.spanningLength)...location)
+      for nodeAnchor in anchors {
+        if let theNode = nodeAnchor.node {
+          theNode.resetCandidate()
+        }
+      }
+      node.selectFloatingCandidateAt(index: selectedIndex, score: overridingScore)
     }
   }
 }

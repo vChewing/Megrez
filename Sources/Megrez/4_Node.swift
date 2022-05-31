@@ -84,7 +84,7 @@ extension Megrez {
         $0.score > $1.score
       }
 
-      if mutUnigrams.count > 0 {
+      if !mutUnigrams.isEmpty {
         mutScore = mutUnigrams[0].score
       }
 

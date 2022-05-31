@@ -144,7 +144,7 @@ extension Megrez {
     ///   - nodesLimit: 限定最多只爬多少個節點。
     ///   - balanced: 啟用平衡權重，在節點權重的基礎上根據節點幅位長度來加權。
     public func walk(
-      at location: Int,
+      at location: Int = 1,
       score accumulatedScore: Double = 0.0,
       joinedPhrase: String = "",
       longPhrases arrLongPhrases: [String] = .init()
@@ -167,7 +167,7 @@ extension Megrez {
       at location: Int,
       score accumulatedScore: Double = 0.0,
       joinedPhrase: String = "",
-      longPhrases arrLongPhrases: [String] = .init()
+      longPhrases: [String] = .init()
     ) -> [NodeAnchor] {
       let location = abs(location)  // 防呆
       if location == 0 || location > mutGrid.width {
@@ -176,7 +176,6 @@ extension Megrez {
 
       var paths = [[NodeAnchor]]()
       var nodes = mutGrid.nodesEndingAt(location: location)
-      var arrLongPhrases = arrLongPhrases
 
       nodes = nodes.stableSorted {
         $0.scoreForSort > $1.scoreForSort
@@ -189,7 +188,7 @@ extension Megrez {
         var path: [NodeAnchor] = reverseWalk(at: location - nodeZero.spanningLength, score: nodeZero.accumulatedScore)
         path.insert(nodeZero, at: 0)
         paths.append(path)
-      } else if arrLongPhrases.count > 0 {
+      } else if longPhrases.count > 0 {
         var path = [NodeAnchor]()
         for theAnchor in nodes {
           guard let theNode = theAnchor.node else { continue }
@@ -198,36 +197,38 @@ extension Megrez {
           // 如果只是一堆單漢字的節點組成了同樣的長詞的話，直接棄用這個節點路徑。
           // 打比方說「八/月/中/秋/山/林/涼」與「八月/中秋/山林/涼」在使用者來看
           // 是「結果等價」的，那就扔掉前者。
-          if arrLongPhrases.contains(joinedValue) {
+          if longPhrases.contains(joinedValue) {
             theAnchor.accumulatedScore = kDroppedPathScore
             path.insert(theAnchor, at: 0)
             paths.append(path)
             continue
           }
           theAnchor.accumulatedScore = accumulatedScore + theNode.score
-          if joinedValue.count >= arrLongPhrases[0].count {
+          if joinedValue.count >= longPhrases[0].count {
             path = reverseWalk(
               at: location - theAnchor.spanningLength, score: theAnchor.accumulatedScore, joinedPhrase: "",
-              longPhrases: .init())
+              longPhrases: .init()
+            )
           } else {
             path = reverseWalk(
               at: location - theAnchor.spanningLength, score: theAnchor.accumulatedScore, joinedPhrase: joinedValue,
-              longPhrases: arrLongPhrases)
+              longPhrases: longPhrases
+            )
           }
           path.insert(theAnchor, at: 0)
           paths.append(path)
         }
       } else {
         // 看看當前格位有沒有更長的候選字詞。
-        var arrLongPhrasesNeo = [String]()
+        var longPhrases = [String]()
         for theAnchor in nodes {
           guard let theNode = theAnchor.node else { continue }
           if theAnchor.spanningLength > 1 {
-            arrLongPhrases.append(theNode.currentKeyValue.value)
+            longPhrases.append(theNode.currentKeyValue.value)
           }
         }
 
-        arrLongPhrasesNeo = arrLongPhrasesNeo.stableSorted {
+        longPhrases = longPhrases.stableSorted {
           $0.count > $1.count
         }
         for theAnchor in nodes {
@@ -238,11 +239,13 @@ extension Megrez {
           if theAnchor.spanningLength > 1 {
             path = reverseWalk(
               at: location - theAnchor.spanningLength, score: theAnchor.accumulatedScore, joinedPhrase: "",
-              longPhrases: .init())
+              longPhrases: .init()
+            )
           } else {
             path = reverseWalk(
               at: location - theAnchor.spanningLength, score: theAnchor.accumulatedScore,
-              joinedPhrase: theNode.currentKeyValue.value, longPhrases: arrLongPhrasesNeo)
+              joinedPhrase: theNode.currentKeyValue.value, longPhrases: longPhrases
+            )
           }
           path.insert(theAnchor, at: 0)
           paths.append(path)

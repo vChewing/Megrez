@@ -179,12 +179,14 @@ extension Megrez {
         $0.scoreForSort > $1.scoreForSort
       }
 
-      if let nodeOfNodeZero = nodes[0].node, nodeOfNodeZero.score >= nodeOfNodeZero.kSelectedCandidateScore {
+      if let nodeZero = nodes[0].node, nodeZero.score >= nodeZero.kSelectedCandidateScore {
         // 在使用者有選過候選字詞的情況下，摒棄非依此據而成的節點路徑。
-        var nodeZero = nodes[0]
-        nodeZero.accumulatedScore = accumulatedScore + nodeOfNodeZero.score
-        var path: [NodeAnchor] = reverseWalk(at: location - nodeZero.spanningLength, score: nodeZero.accumulatedScore)
-        path.insert(nodeZero, at: 0)
+        var anchorZero = nodes[0]
+        anchorZero.accumulatedScore = accumulatedScore + nodeZero.score
+        var path: [NodeAnchor] = reverseWalk(
+          at: location - anchorZero.spanningLength, score: anchorZero.accumulatedScore
+        )
+        path.insert(anchorZero, at: 0)
         paths.append(path)
       } else if !longPhrases.isEmpty {
         var path = [NodeAnchor]()
@@ -202,17 +204,12 @@ extension Megrez {
             continue
           }
           theAnchor.accumulatedScore = accumulatedScore + theNode.score
-          if joinedValue.count >= longPhrases[0].count {
-            path = reverseWalk(
-              at: location - theAnchor.spanningLength, score: theAnchor.accumulatedScore, joinedPhrase: "",
-              longPhrases: .init()
-            )
-          } else {
-            path = reverseWalk(
-              at: location - theAnchor.spanningLength, score: theAnchor.accumulatedScore, joinedPhrase: joinedValue,
-              longPhrases: longPhrases
-            )
-          }
+          path = reverseWalk(
+            at: location - theAnchor.spanningLength,
+            score: theAnchor.accumulatedScore,
+            joinedPhrase: (joinedValue.count >= longPhrases[0].count) ? "" : joinedValue,
+            longPhrases: .init()
+          )
           path.insert(theAnchor, at: 0)
           paths.append(path)
         }
@@ -234,17 +231,11 @@ extension Megrez {
           guard let theNode = theAnchor.node else { continue }
           theAnchor.accumulatedScore = accumulatedScore + theNode.score
           var path = [NodeAnchor]()
-          if theAnchor.spanningLength > 1 {
-            path = reverseWalk(
-              at: location - theAnchor.spanningLength, score: theAnchor.accumulatedScore, joinedPhrase: "",
-              longPhrases: .init()
-            )
-          } else {
-            path = reverseWalk(
-              at: location - theAnchor.spanningLength, score: theAnchor.accumulatedScore,
-              joinedPhrase: theNode.currentKeyValue.value, longPhrases: longPhrases
-            )
-          }
+          path = reverseWalk(
+            at: location - theAnchor.spanningLength, score: theAnchor.accumulatedScore,
+            joinedPhrase: (theAnchor.spanningLength > 1) ? "" : theNode.currentKeyValue.value,
+            longPhrases: .init()
+          )
           path.insert(theAnchor, at: 0)
           paths.append(path)
         }

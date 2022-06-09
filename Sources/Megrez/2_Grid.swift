@@ -256,9 +256,9 @@ extension Megrez.Grid {
         strOutput += "\(np.currentKeyValue.value);\n"
 
         if (p + ni) < mutSpans.count {
-          let destinatedSpan = mutSpans[p + ni]
-          for q in 0...(destinatedSpan.maximumLength) {
-            if let dn = destinatedSpan.node(length: q) {
+          let destinationSpan = mutSpans[p + ni]
+          for q in 0...(destinationSpan.maximumLength) {
+            if let dn = destinationSpan.node(length: q) {
               strOutput += np.currentKeyValue.value + " -> " + dn.currentKeyValue.value + ";\n"
             }
           }

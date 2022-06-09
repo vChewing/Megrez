@@ -109,23 +109,16 @@ extension Megrez {
         for neta in precedingKeyValues {
           let bigrams = mutPrecedingBigramMap[neta] ?? []
           for bigram in bigrams {
-            if bigram.score > max {
-              if let valRetrieved = mutValueUnigramIndexMap[bigram.keyValue.value] {
-                newIndex = valRetrieved as Int
-                max = bigram.score
-              }
+            guard bigram.score > max else { continue }
+            if let valRetrieved = mutValueUnigramIndexMap[bigram.keyValue.value] {
+              newIndex = valRetrieved as Int
+              max = bigram.score
             }
           }
         }
       }
-
-      if mutScore != max {
-        mutScore = max
-      }
-
-      if mutSelectedUnigramIndex != newIndex {
-        mutSelectedUnigramIndex = newIndex
-      }
+      mutScore = max
+      mutSelectedUnigramIndex = newIndex
     }
 
     /// 選中位於給定索引位置的候選字詞。

@@ -25,7 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extension Megrez {
   /// 節點。
-  public class Node: CustomStringConvertible {
+  public class Node {
     /// 當前節點對應的語言模型。
     private let mutLM: LanguageModel = .init()
     /// 鍵。
@@ -162,14 +162,6 @@ extension Megrez {
         }
       }
       return 0.0
-    }
-
-    public static func == (lhs: Node, rhs: Node) -> Bool {
-      lhs.mutUnigrams == rhs.mutUnigrams && lhs.mutCandidates == rhs.mutCandidates
-        && lhs.mutValueUnigramIndexMap == rhs.mutValueUnigramIndexMap
-        && lhs.mutPrecedingBigramMap == rhs.mutPrecedingBigramMap
-        && lhs.mutCandidateFixed == rhs.mutCandidateFixed
-        && lhs.mutSelectedUnigramIndex == rhs.mutSelectedUnigramIndex
     }
   }
 }

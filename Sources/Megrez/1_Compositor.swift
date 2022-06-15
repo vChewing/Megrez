@@ -25,7 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extension Megrez {
   /// 分節讀音槽。
-  public class BlockReadingBuilder {
+  public class Compositor {
     /// 給被丟掉的節點路徑施加的負權重。
     private let kDroppedPathScore: Double = -999
     /// 該分節讀音槽的游標位置。

@@ -33,60 +33,60 @@ final class MegrezTests: XCTestCase {
   func testInputWithForwardWalk() throws {
     print("// 開始測試語言文字輸入處理")
     let lmTestInput = SimpleLM(input: strSampleData)
-    let builder = Megrez.BlockReadingBuilder(lm: lmTestInput)
+    let compositor = Megrez.Compositor(lm: lmTestInput)
     var walked = [Megrez.NodeAnchor]()
 
     func walk() {
-      walked = builder.walk(at: 0, score: 0.0)
+      walked = compositor.walk(at: 0, score: 0.0)
     }
 
     // 模擬輸入法的行為，每次敲字或選字都重新 walk。
-    builder.insertReadingAtCursor(reading: "gao1")
+    compositor.insertReadingAtCursor(reading: "gao1")
     walk()
-    builder.insertReadingAtCursor(reading: "ji4")
+    compositor.insertReadingAtCursor(reading: "ji4")
     walk()
-    builder.cursorIndex = 1
-    builder.insertReadingAtCursor(reading: "ke1")
+    compositor.cursorIndex = 1
+    compositor.insertReadingAtCursor(reading: "ke1")
     walk()
-    builder.cursorIndex = 1
-    builder.deleteReadingToTheFrontOfCursor()
+    compositor.cursorIndex = 1
+    compositor.deleteReadingToTheFrontOfCursor()
     walk()
-    builder.insertReadingAtCursor(reading: "ke1")
+    compositor.insertReadingAtCursor(reading: "ke1")
     walk()
-    builder.cursorIndex = 0
-    builder.deleteReadingToTheFrontOfCursor()
+    compositor.cursorIndex = 0
+    compositor.deleteReadingToTheFrontOfCursor()
     walk()
-    builder.insertReadingAtCursor(reading: "gao1")
+    compositor.insertReadingAtCursor(reading: "gao1")
     walk()
-    builder.cursorIndex = builder.length
-    builder.insertReadingAtCursor(reading: "gong1")
+    compositor.cursorIndex = compositor.length
+    compositor.insertReadingAtCursor(reading: "gong1")
     walk()
-    builder.insertReadingAtCursor(reading: "si1")
+    compositor.insertReadingAtCursor(reading: "si1")
     walk()
-    builder.insertReadingAtCursor(reading: "de5")
+    compositor.insertReadingAtCursor(reading: "de5")
     walk()
-    builder.insertReadingAtCursor(reading: "nian2")
+    compositor.insertReadingAtCursor(reading: "nian2")
     walk()
-    builder.insertReadingAtCursor(reading: "zhong1")
+    compositor.insertReadingAtCursor(reading: "zhong1")
     walk()
-    builder.grid.fixNodeSelectedCandidate(location: 7, value: "年終")
+    compositor.grid.fixNodeSelectedCandidate(location: 7, value: "年終")
     walk()
-    builder.insertReadingAtCursor(reading: "jiang3")
+    compositor.insertReadingAtCursor(reading: "jiang3")
     walk()
-    builder.insertReadingAtCursor(reading: "jin1")
+    compositor.insertReadingAtCursor(reading: "jin1")
     walk()
-    builder.insertReadingAtCursor(reading: "ni3")
+    compositor.insertReadingAtCursor(reading: "ni3")
     walk()
-    builder.insertReadingAtCursor(reading: "zhe4")
+    compositor.insertReadingAtCursor(reading: "zhe4")
     walk()
-    builder.insertReadingAtCursor(reading: "yang4")
+    compositor.insertReadingAtCursor(reading: "yang4")
     walk()
 
     // 這裡模擬一個輸入法的常見情況：每次敲一個字詞都會 walk，然後你回頭編輯完一些內容之後又會立刻重新 walk。
     // 如果只在這裡測試第一遍 walk 的話，測試通過了也無法測試之後再次 walk 是否會正常。
 
-    builder.cursorIndex = 1
-    builder.deleteReadingToTheFrontOfCursor()
+    compositor.cursorIndex = 1
+    compositor.deleteReadingToTheFrontOfCursor()
 
     // 於是咱們 walk 第二遍
     walk()
@@ -94,10 +94,10 @@ final class MegrezTests: XCTestCase {
 
     // 做好第三遍的準備，這次咱們來一次插入性編輯。
     // 重點測試這句是否正常，畢竟是在 walked 過的節點內進行插入編輯。
-    builder.insertReadingAtCursor(reading: "ke1")
+    compositor.insertReadingAtCursor(reading: "ke1")
 
     // 於是咱們 walk 第三遍。
-    // 這一遍會直接曝露「上述修改是否有對 builder 造成了破壞性的損失」，
+    // 這一遍會直接曝露「上述修改是否有對 compositor 造成了破壞性的損失」，
     // 所以很重要。
     walk()
     XCTAssert(!walked.isEmpty)
@@ -115,23 +115,23 @@ final class MegrezTests: XCTestCase {
     XCTAssertEqual(composed, correctResult)
 
     // 測試 DumpDOT
-    builder.cursorIndex = builder.length
-    builder.deleteReadingAtTheRearOfCursor()
-    builder.deleteReadingAtTheRearOfCursor()
-    builder.deleteReadingAtTheRearOfCursor()
+    compositor.cursorIndex = compositor.length
+    compositor.deleteReadingAtTheRearOfCursor()
+    compositor.deleteReadingAtTheRearOfCursor()
+    compositor.deleteReadingAtTheRearOfCursor()
     let expectedDumpDOT =
       "digraph {\ngraph [ rankdir=LR ];\nBOS;\nBOS -> 高;\n高;\n高 -> 科;\n高 -> 科技;\nBOS -> 高科技;\n高科技;\n高科技 -> 工;\n高科技 -> 公司;\n科;\n科 -> 際;\n科 -> 濟公;\n科技;\n科技 -> 工;\n科技 -> 公司;\n際;\n際 -> 工;\n際 -> 公司;\n濟公;\n濟公 -> 斯;\n工;\n工 -> 斯;\n公司;\n公司 -> 的;\n斯;\n斯 -> 的;\n的;\n的 -> 年;\n的 -> 年終;\n年;\n年 -> 中;\n年終;\n年終 -> 獎;\n年終 -> 獎金;\n中;\n中 -> 獎;\n中 -> 獎金;\n獎;\n獎 -> 金;\n獎金;\n獎金 -> EOS;\n金;\n金 -> EOS;\nEOS;\n}\n"
-    XCTAssertEqual(builder.grid.dumpDOT, expectedDumpDOT)
+    XCTAssertEqual(compositor.grid.dumpDOT, expectedDumpDOT)
 
     print("========新測試========")
-    builder.clear()
-    builder.insertReadingAtCursor(reading: "jiao4")
+    compositor.clear()
+    compositor.insertReadingAtCursor(reading: "jiao4")
     walk()
-    builder.insertReadingAtCursor(reading: "yu4")
+    compositor.insertReadingAtCursor(reading: "yu4")
     walk()
-    builder.grid.fixNodeSelectedCandidate(location: 0, value: "較")
+    compositor.grid.fixNodeSelectedCandidate(location: 0, value: "較")
     walk()
-    builder.grid.fixNodeSelectedCandidate(location: 2, value: "教育")
+    compositor.grid.fixNodeSelectedCandidate(location: 2, value: "教育")
     walk()
 
     composed.removeAll()
@@ -150,73 +150,73 @@ final class MegrezTests: XCTestCase {
   func testInputWithreverseWalk() throws {
     print("// 開始測試語言文字輸入處理")
     let lmTestInput = SimpleLM(input: strSampleData)
-    let builder = Megrez.BlockReadingBuilder(lm: lmTestInput)
+    let compositor = Megrez.Compositor(lm: lmTestInput)
     var walked = [Megrez.NodeAnchor]()
 
     func reverseWalk(at location: Int) {
-      walked = Array(builder.reverseWalk(at: location, score: 0.0).reversed())
+      walked = Array(compositor.reverseWalk(at: location, score: 0.0).reversed())
     }
 
     // 模擬輸入法的行為，每次敲字或選字都重新 walk。
-    builder.insertReadingAtCursor(reading: "gao1")
-    reverseWalk(at: builder.grid.width)
-    builder.insertReadingAtCursor(reading: "ji4")
-    reverseWalk(at: builder.grid.width)
-    builder.cursorIndex = 1
-    builder.insertReadingAtCursor(reading: "ke1")
-    reverseWalk(at: builder.grid.width)
-    builder.cursorIndex = 1
-    builder.deleteReadingToTheFrontOfCursor()
-    reverseWalk(at: builder.grid.width)
-    builder.insertReadingAtCursor(reading: "ke1")
-    reverseWalk(at: builder.grid.width)
-    builder.cursorIndex = 0
-    builder.deleteReadingToTheFrontOfCursor()
-    reverseWalk(at: builder.grid.width)
-    builder.insertReadingAtCursor(reading: "gao1")
-    reverseWalk(at: builder.grid.width)
-    builder.cursorIndex = builder.length
-    builder.insertReadingAtCursor(reading: "gong1")
-    reverseWalk(at: builder.grid.width)
-    builder.insertReadingAtCursor(reading: "si1")
-    reverseWalk(at: builder.grid.width)
-    builder.insertReadingAtCursor(reading: "de5")
-    reverseWalk(at: builder.grid.width)
-    builder.insertReadingAtCursor(reading: "nian2")
-    reverseWalk(at: builder.grid.width)
-    builder.insertReadingAtCursor(reading: "zhong1")
-    reverseWalk(at: builder.grid.width)
-    builder.grid.fixNodeSelectedCandidate(location: 7, value: "年終")
-    reverseWalk(at: builder.grid.width)
-    builder.insertReadingAtCursor(reading: "jiang3")
-    reverseWalk(at: builder.grid.width)
-    builder.insertReadingAtCursor(reading: "jin1")
-    reverseWalk(at: builder.grid.width)
-    builder.insertReadingAtCursor(reading: "ni3")
-    reverseWalk(at: builder.grid.width)
-    builder.insertReadingAtCursor(reading: "zhe4")
-    reverseWalk(at: builder.grid.width)
-    builder.insertReadingAtCursor(reading: "yang4")
-    reverseWalk(at: builder.grid.width)
+    compositor.insertReadingAtCursor(reading: "gao1")
+    reverseWalk(at: compositor.grid.width)
+    compositor.insertReadingAtCursor(reading: "ji4")
+    reverseWalk(at: compositor.grid.width)
+    compositor.cursorIndex = 1
+    compositor.insertReadingAtCursor(reading: "ke1")
+    reverseWalk(at: compositor.grid.width)
+    compositor.cursorIndex = 1
+    compositor.deleteReadingToTheFrontOfCursor()
+    reverseWalk(at: compositor.grid.width)
+    compositor.insertReadingAtCursor(reading: "ke1")
+    reverseWalk(at: compositor.grid.width)
+    compositor.cursorIndex = 0
+    compositor.deleteReadingToTheFrontOfCursor()
+    reverseWalk(at: compositor.grid.width)
+    compositor.insertReadingAtCursor(reading: "gao1")
+    reverseWalk(at: compositor.grid.width)
+    compositor.cursorIndex = compositor.length
+    compositor.insertReadingAtCursor(reading: "gong1")
+    reverseWalk(at: compositor.grid.width)
+    compositor.insertReadingAtCursor(reading: "si1")
+    reverseWalk(at: compositor.grid.width)
+    compositor.insertReadingAtCursor(reading: "de5")
+    reverseWalk(at: compositor.grid.width)
+    compositor.insertReadingAtCursor(reading: "nian2")
+    reverseWalk(at: compositor.grid.width)
+    compositor.insertReadingAtCursor(reading: "zhong1")
+    reverseWalk(at: compositor.grid.width)
+    compositor.grid.fixNodeSelectedCandidate(location: 7, value: "年終")
+    reverseWalk(at: compositor.grid.width)
+    compositor.insertReadingAtCursor(reading: "jiang3")
+    reverseWalk(at: compositor.grid.width)
+    compositor.insertReadingAtCursor(reading: "jin1")
+    reverseWalk(at: compositor.grid.width)
+    compositor.insertReadingAtCursor(reading: "ni3")
+    reverseWalk(at: compositor.grid.width)
+    compositor.insertReadingAtCursor(reading: "zhe4")
+    reverseWalk(at: compositor.grid.width)
+    compositor.insertReadingAtCursor(reading: "yang4")
+    reverseWalk(at: compositor.grid.width)
 
     // 這裡模擬一個輸入法的常見情況：每次敲一個字詞都會 walk，然後你回頭編輯完一些內容之後又會立刻重新 walk。
     // 如果只在這裡測試第一遍 walk 的話，測試通過了也無法測試之後再次 walk 是否會正常。
 
-    builder.cursorIndex = 1
-    builder.deleteReadingToTheFrontOfCursor()
+    compositor.cursorIndex = 1
+    compositor.deleteReadingToTheFrontOfCursor()
 
     // 於是咱們 walk 第二遍
-    reverseWalk(at: builder.grid.width)
+    reverseWalk(at: compositor.grid.width)
     XCTAssert(!walked.isEmpty)
 
     // 做好第三遍的準備，這次咱們來一次插入性編輯。
     // 重點測試這句是否正常，畢竟是在 walked 過的節點內進行插入編輯。
-    builder.insertReadingAtCursor(reading: "ke1")
+    compositor.insertReadingAtCursor(reading: "ke1")
 
     // 於是咱們 walk 第三遍。
-    // 這一遍會直接曝露「上述修改是否有對 builder 造成了破壞性的損失」，
+    // 這一遍會直接曝露「上述修改是否有對 compositor 造成了破壞性的損失」，
     // 所以很重要。
-    reverseWalk(at: builder.grid.width)
+    reverseWalk(at: compositor.grid.width)
     XCTAssert(!walked.isEmpty)
 
     var composed: [String] = []
@@ -232,13 +232,13 @@ final class MegrezTests: XCTestCase {
     XCTAssertEqual(composed, correctResult)
 
     // 測試 DumpDOT
-    builder.cursorIndex = builder.length
-    builder.deleteReadingAtTheRearOfCursor()
-    builder.deleteReadingAtTheRearOfCursor()
-    builder.deleteReadingAtTheRearOfCursor()
+    compositor.cursorIndex = compositor.length
+    compositor.deleteReadingAtTheRearOfCursor()
+    compositor.deleteReadingAtTheRearOfCursor()
+    compositor.deleteReadingAtTheRearOfCursor()
     let expectedDumpDOT =
       "digraph {\ngraph [ rankdir=LR ];\nBOS;\nBOS -> 高;\n高;\n高 -> 科;\n高 -> 科技;\nBOS -> 高科技;\n高科技;\n高科技 -> 工;\n高科技 -> 公司;\n科;\n科 -> 際;\n科 -> 濟公;\n科技;\n科技 -> 工;\n科技 -> 公司;\n際;\n際 -> 工;\n際 -> 公司;\n濟公;\n濟公 -> 斯;\n工;\n工 -> 斯;\n公司;\n公司 -> 的;\n斯;\n斯 -> 的;\n的;\n的 -> 年;\n的 -> 年終;\n年;\n年 -> 中;\n年終;\n年終 -> 獎;\n年終 -> 獎金;\n中;\n中 -> 獎;\n中 -> 獎金;\n獎;\n獎 -> 金;\n獎金;\n獎金 -> EOS;\n金;\n金 -> EOS;\nEOS;\n}\n"
-    XCTAssertEqual(builder.grid.dumpDOT, expectedDumpDOT)
+    XCTAssertEqual(compositor.grid.dumpDOT, expectedDumpDOT)
   }
 
   // MARK: - Test Word Segmentation (SimpleLM)
@@ -246,20 +246,20 @@ final class MegrezTests: XCTestCase {
   func testWordSegmentation() throws {
     print("// 開始測試語句分節處理")
     let lmTestSegmentation = SimpleLM(input: strSampleData, swapKeyValue: true)
-    let builder = Megrez.BlockReadingBuilder(lm: lmTestSegmentation, separator: "")
+    let compositor = Megrez.Compositor(lm: lmTestSegmentation, separator: "")
 
-    builder.insertReadingAtCursor(reading: "高")
-    builder.insertReadingAtCursor(reading: "科")
-    builder.insertReadingAtCursor(reading: "技")
-    builder.insertReadingAtCursor(reading: "公")
-    builder.insertReadingAtCursor(reading: "司")
-    builder.insertReadingAtCursor(reading: "的")
-    builder.insertReadingAtCursor(reading: "年")
-    builder.insertReadingAtCursor(reading: "終")
-    builder.insertReadingAtCursor(reading: "獎")
-    builder.insertReadingAtCursor(reading: "金")
+    compositor.insertReadingAtCursor(reading: "高")
+    compositor.insertReadingAtCursor(reading: "科")
+    compositor.insertReadingAtCursor(reading: "技")
+    compositor.insertReadingAtCursor(reading: "公")
+    compositor.insertReadingAtCursor(reading: "司")
+    compositor.insertReadingAtCursor(reading: "的")
+    compositor.insertReadingAtCursor(reading: "年")
+    compositor.insertReadingAtCursor(reading: "終")
+    compositor.insertReadingAtCursor(reading: "獎")
+    compositor.insertReadingAtCursor(reading: "金")
 
-    let walked = Array(builder.reverseWalk(at: builder.grid.width, score: 0.0).reversed())
+    let walked = Array(compositor.reverseWalk(at: compositor.grid.width, score: 0.0).reversed())
 
     var segmented: [String] = []
     for phrase in walked {

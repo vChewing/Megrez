@@ -52,21 +52,21 @@ extension Megrez {
     }
 
     /// 公開：候選字詞陣列（唯讀），以鍵值陣列的形式存在。
-    var candidates: [KeyValuePair] { mutCandidates }
+    public var candidates: [KeyValuePair] { mutCandidates }
     /// 公開：用來登記「當前選中的單元圖」的索引值的變數（唯讀）。
-    var isCandidateFixed: Bool { mutCandidateFixed }
+    public var isCandidateFixed: Bool { mutCandidateFixed }
 
     /// 公開：鍵（唯讀）。
-    var key: String { mutKey }
+    public var key: String { mutKey }
     /// 公開：當前節點的當前被選中的候選字詞「在該節點內的」目前的權重（唯讀）。
-    var score: Double { mutScore }
+    public var score: Double { mutScore }
     /// 公開：當前被選中的候選字詞的鍵值配對。
-    var currentKeyValue: KeyValuePair {
+    public var currentKeyValue: KeyValuePair {
       mutSelectedUnigramIndex >= mutUnigrams.count ? KeyValuePair() : mutCandidates[mutSelectedUnigramIndex]
     }
 
     /// 公開：給出當前單元圖陣列內最高的權重數值。
-    var highestUnigramScore: Double { mutUnigrams.isEmpty ? 0.0 : mutUnigrams[0].score }
+    public var highestUnigramScore: Double { mutUnigrams.isEmpty ? 0.0 : mutUnigrams[0].score }
 
     /// 初期化一個節點。
     /// - Parameters:

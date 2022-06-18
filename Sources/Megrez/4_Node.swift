@@ -26,8 +26,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 extension Megrez {
   /// 節點。
   public class Node {
-    /// 當前節點對應的語言模型。
-    private let mutLM: LanguageModel = .init()
     /// 鍵。
     private var mutKey: String = ""
     /// 當前節點的當前被選中的候選字詞「在該節點內的」目前的權重。

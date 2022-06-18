@@ -38,6 +38,9 @@ extension Megrez {
     /// 軌格的寬度，也就是其內的幅位陣列當中的幅位數量。
     var width: Int { mutSpans.count }
 
+    /// 軌格是否為空。
+    var isEmpty: Bool { mutSpans.isEmpty }
+
     public init(spanLength: Int = 10) {
       mutMaxBuildSpanLength = spanLength
       mutSpans = [Megrez.Span]()

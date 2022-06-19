@@ -61,7 +61,7 @@ class ExampleLM: Megrez.LanguageModel {
 }
 ```
 
-這個型別需要下述兩個函數能夠針對給定的鍵回饋對應的資料值、或其存無狀態：
+這個型別需要下述兩個函式能夠針對給定的鍵回饋對應的資料值、或其存無狀態：
 - unigramsFor(key: String) -> [Megrez.Unigram]
 - hasUnigramsFor(key: String) -> Bool
 
@@ -73,7 +73,7 @@ MegrezTests.swift 檔案內的 SimpleLM 可以作為範例。
 
 #### // 2. 怎樣與 compositor 互動：
 
-這裡只講幾個常用函數：
+這裡只講幾個常用函式：
 
 - 游標位置 `compositor.cursorIndex` 是可以賦值與取值的動態變數，且會在賦值內容為超出位置範圍的數值時自動修正。初期值為 0。
 - `compositor.insertReadingAtCursor(reading: "gao1")` 可以在當前的游標位置插入讀音「gao1」。

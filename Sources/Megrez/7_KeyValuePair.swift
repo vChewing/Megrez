@@ -25,7 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extension Megrez {
   /// 鍵值配對。
-  @frozen public struct KeyValuePair: Equatable, Hashable, Comparable, CustomStringConvertible {
+  @frozen public struct KeyValuePaired: Equatable, Hashable, Comparable, CustomStringConvertible {
     /// 鍵。一般情況下用來放置讀音等可以用來作為索引的內容。
     public var key: String
     /// 資料值。
@@ -49,23 +49,23 @@ extension Megrez {
       hasher.combine(value)
     }
 
-    public static func == (lhs: KeyValuePair, rhs: KeyValuePair) -> Bool {
+    public static func == (lhs: KeyValuePaired, rhs: KeyValuePaired) -> Bool {
       lhs.key.count == rhs.key.count && lhs.value == rhs.value
     }
 
-    public static func < (lhs: KeyValuePair, rhs: KeyValuePair) -> Bool {
+    public static func < (lhs: KeyValuePaired, rhs: KeyValuePaired) -> Bool {
       (lhs.key.count < rhs.key.count) || (lhs.key.count == rhs.key.count && lhs.value < rhs.value)
     }
 
-    public static func > (lhs: KeyValuePair, rhs: KeyValuePair) -> Bool {
+    public static func > (lhs: KeyValuePaired, rhs: KeyValuePaired) -> Bool {
       (lhs.key.count > rhs.key.count) || (lhs.key.count == rhs.key.count && lhs.value > rhs.value)
     }
 
-    public static func <= (lhs: KeyValuePair, rhs: KeyValuePair) -> Bool {
+    public static func <= (lhs: KeyValuePaired, rhs: KeyValuePaired) -> Bool {
       (lhs.key.count <= rhs.key.count) || (lhs.key.count == rhs.key.count && lhs.value <= rhs.value)
     }
 
-    public static func >= (lhs: KeyValuePair, rhs: KeyValuePair) -> Bool {
+    public static func >= (lhs: KeyValuePaired, rhs: KeyValuePaired) -> Bool {
       (lhs.key.count >= rhs.key.count) || (lhs.key.count == rhs.key.count && lhs.value >= rhs.value)
     }
   }

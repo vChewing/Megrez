@@ -291,7 +291,7 @@ class SimpleLM: Megrez.LanguageModel {
       let col0 = String(linestream[0])
       let col1 = String(linestream[1])
       let col2 = Double(linestream[2]) ?? 0.0
-      var u = Megrez.Unigram(keyValue: Megrez.KeyValuePair(), score: 0)
+      var u = Megrez.Unigram(keyValue: Megrez.KeyValuePaired(), score: 0)
       if swapKeyValue {
         u.keyValue.key = col1
         u.keyValue.value = col0

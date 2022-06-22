@@ -292,7 +292,7 @@ extension Sequence {
   ///
   /// - Parameter areInIncreasingOrder: Return nil when two element are equal.
   /// - Returns: The sorted collection.
-  func stableSorted(
+  fileprivate func stableSorted(
     by areInIncreasingOrder: (Element, Element) throws -> Bool
   )
     rethrows -> [Element]

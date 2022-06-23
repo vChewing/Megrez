@@ -31,9 +31,11 @@ extension Megrez {
     /// 資料值。
     public var value: String
     /// 將當前鍵值列印成一個字串。
-    public var description: String {
-      "(" + key + "," + value + ")"
-    }
+    public var description: String { "(" + key + "," + value + ")" }
+    /// 判斷當前鍵值配對是否合規。如果鍵與值有任一為空，則結果為 false。
+    public var isValid: Bool { !key.isEmpty && !value.isEmpty }
+    /// 將當前鍵值列印成一個字串，但如果該鍵值配對為空的話則僅列印「()」。
+    public var toNGramKey: String { !isValid ? "()" : "(" + key + "," + value + ")" }
 
     /// 初期化一組鍵值配對。
     /// - Parameters:

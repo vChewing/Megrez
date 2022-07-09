@@ -61,7 +61,7 @@ extension Megrez {
 
     public static func < (lhs: Bigram, rhs: Bigram) -> Bool {
       lhs.precedingKeyValue < rhs.precedingKeyValue
-        || (lhs.keyValue < rhs.keyValue || (lhs.keyValue == rhs.keyValue && lhs.keyValue < rhs.keyValue))
+        || (lhs.keyValue < rhs.keyValue || (lhs.keyValue == rhs.keyValue && lhs.score < rhs.score))
     }
   }
 }

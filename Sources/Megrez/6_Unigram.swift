@@ -54,7 +54,7 @@ extension Megrez {
     }
 
     public static func < (lhs: Unigram, rhs: Unigram) -> Bool {
-      lhs.keyValue < rhs.keyValue || (lhs.keyValue == rhs.keyValue && lhs.keyValue < rhs.keyValue)
+      lhs.keyValue < rhs.keyValue || (lhs.keyValue == rhs.keyValue && lhs.score < rhs.score)
     }
   }
 }

@@ -25,3 +25,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /// The namespace for this package.
 public enum Megrez {}
+
+// 術語：
+
+// Grid: 節軌
+// Walk: 爬軌
+// Node: 節點
+// SpanLength: 節幅
+// Span: 幅位

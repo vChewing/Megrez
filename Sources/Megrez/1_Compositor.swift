@@ -24,284 +24,162 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 extension Megrez {
-  /// 組字器。
+  // A Compositor for deriving the most likely hidden values from a series of
+  // observations. For our purpose, the observations are phonabet keys, and
+  // the hidden values are the actual Mandarin words. This can also be used for
+  // segmentation: in that case, the observations are Mandarin words, and the
+  // hidden values are the most likely groupings.
+  //
+  // While we use the terminology from hidden Markov model (HMM), the actual
+  // implementation is a much simpler Bayesian inference, since the underlying
+  // language model consists of only unigrams. Once we have put all plausible
+  // unigrams as nodes on the grid, a simple DAG shortest-path walk will give us
+  // the maximum likelihood estimation (MLE) for the hidden values.
   public class Compositor {
-    /// 給被丟掉的節點路徑施加的負權重。
-    private let kDroppedPathScore: Double = -999
-    /// 該組字器的游標位置。
-    private var mutCursorIndex: Int = 0
-    /// 該組字器的讀音陣列。
-    private var mutReadings: [String] = []
-    /// 該組字器的軌格。
-    private var mutGrid: Grid = .init()
-    /// 該組字器所使用的語言模型。
-    private var mutLM: LanguageModelProtocol
+    public enum TypingDirection { case front, rear }
+    public enum GridResizeAction { case expand, shrink }
+    public static var maxSpanLength: Int = 10 { didSet { maxSpanLength = max(6, maxSpanLength) } }
+    public static let kDefaultSeparator: String = "-"
+    public var cursor: Int = 0 { didSet { cursor = max(0, min(cursor, length)) } }
+    public var separator = kDefaultSeparator
+    public var width: Int { keys.count }
+    private(set) var keys = [String]()
+    private(set) var spans = [Span]()
+    private(set) var langModel: LangModelRanked
+    public var length: Int { keys.count }
 
-    /// 公開：該組字器內可以允許的最大詞長。
-    public var maxBuildSpanLength: Int { mutGrid.maxBuildSpanLength }
-    /// 公開：多字讀音鍵當中用以分割漢字讀音的記號，預設為空。
-    public var joinSeparator: String = ""
-    /// 公開：該組字器的游標位置。
-    public var cursorIndex: Int {
-      get { mutCursorIndex }
-      set { mutCursorIndex = (newValue < 0) ? 0 : min(newValue, mutReadings.count) }
+    public init(with langModel: LangModelProtocol) {
+      self.langModel = .init(withLM: langModel)
     }
 
-    /// 公開：該組字器是否為空。
-    public var isEmpty: Bool { mutGrid.isEmpty }
-
-    /// 公開：該組字器的軌格（唯讀）。
-    public var grid: Grid { mutGrid }
-    /// 公開：該組字器的長度，也就是內建漢字讀音的數量（唯讀）。
-    public var length: Int { mutReadings.count }
-    /// 公開：該組字器的讀音陣列（唯讀）。
-    public var readings: [String] { mutReadings }
-
-    /// 組字器。
-    /// - Parameters:
-    ///   - lm: 語言模型。可以是任何基於 Megrez.LanguageModel 的衍生型別。
-    ///   - length: 指定該組字器內可以允許的最大詞長，預設為 10 字。
-    ///   - separator: 多字讀音鍵當中用以分割漢字讀音的記號，預設為空。
-    public init(lm: LanguageModelProtocol, length: Int = 10, separator: String = "") {
-      mutLM = lm
-      mutGrid = .init(spanLength: abs(length))  // 防呆
-      joinSeparator = separator
-    }
-
-    /// 組字器自我清空專用函式。
     public func clear() {
-      mutCursorIndex = 0
-      mutReadings.removeAll()
-      mutGrid.clear()
+      cursor = 0
+      keys.removeAll()
+      spans.removeAll()
     }
 
-    /// 在游標位置插入給定的讀音。
-    /// - Parameters:
-    ///   - reading: 要插入的讀音。
-    public func insertReadingAtCursor(reading: String) {
-      mutReadings.insert(reading, at: mutCursorIndex)
-      mutGrid.expandGridByOneAt(location: mutCursorIndex)
-      build()
-      mutCursorIndex += 1
-    }
-
-    /// 朝著與文字輸入方向相反的方向、砍掉一個與游標相鄰的讀音。
-    /// 在威注音的術語體系當中，「與文字輸入方向相反的方向」為向後（Rear）。
-    @discardableResult public func deleteReadingAtTheRearOfCursor() -> Bool {
-      if mutCursorIndex == 0 {
-        return false
-      }
-
-      mutReadings.remove(at: mutCursorIndex - 1)
-      mutCursorIndex -= 1
-      mutGrid.shrinkGridByOneAt(location: mutCursorIndex)
-      build()
+    /// Insert the key at the current cursor index.
+    /// - Parameter key: The key to insert.
+    /// - Returns: Whether the process is successful.
+    @discardableResult public func insertKey(_ key: String) -> Bool {
+      guard !key.isEmpty, key != separator, langModel.hasUnigramsFor(key: key) else { return false }
+      keys.insert(key, at: cursor)
+      resizeGrid(at: cursor, do: .expand)
+      update()
+      cursor += 1  // 游標必須得在執行 update() 之後才可以變動。
       return true
     }
 
-    /// 朝著往文字輸入方向、砍掉一個與游標相鄰的讀音。
-    /// 在威注音的術語體系當中，「文字輸入方向」為向前（Front）。
-    @discardableResult public func deleteReadingToTheFrontOfCursor() -> Bool {
-      if mutCursorIndex == mutReadings.count {
-        return false
-      }
-
-      mutReadings.remove(at: mutCursorIndex)
-      mutGrid.shrinkGridByOneAt(location: mutCursorIndex)
-      build()
+    /// Delete the key at the rear of the cursor like Backspace
+    /// (or to the front of the cursor like PC Delete).
+    /// Cursor will decrement by one if the direction is to the rear.
+    /// - Parameter direction: Typing direction.
+    /// - Returns: Whether the process is successful.
+    @discardableResult public func dropKey(direction: TypingDirection) -> Bool {
+      let isBackSpace: Bool = direction == .rear ? true : false
+      guard cursor != (isBackSpace ? 0 : keys.count) else { return false }
+      keys.remove(at: cursor - (isBackSpace ? 1 : 0))
+      cursor -= isBackSpace ? 1 : 0  // 在縮節之前。
+      resizeGrid(at: cursor, do: .shrink)
+      update()
       return true
-    }
-
-    /// 移除該組字器最先被輸入的第 X 個讀音單元。
-    ///
-    /// 用於輸入法組字區長度上限處理：
-    /// 將該位置要溢出的敲字內容遞交之後、再執行這個函式。
-    @discardableResult public func removeHeadReadings(count: Int) -> Bool {
-      let count = abs(count)  // 防呆
-      if count > length {
-        return false
-      }
-
-      for _ in 0..<count {
-        if mutCursorIndex > 0 {
-          mutCursorIndex -= 1
-        }
-        if !mutReadings.isEmpty {
-          mutReadings.removeFirst()
-          mutGrid.shrinkGridByOneAt(location: 0)
-        }
-        build()
-      }
-
-      return true
-    }
-
-    // MARK: - Walker
-
-    /// 對已給定的軌格按照給定的位置與條件進行正向爬軌。
-    /// - Parameters:
-    ///   - location: 開始爬軌的位置。
-    ///   - accumulatedScore: 給定累計權重，非必填參數。預設值為 0。
-    ///   - joinedPhrase: 用以統計累計長詞的內部參數，請勿主動使用。
-    ///   - longPhrases: 用以統計累計長詞的內部參數，請勿主動使用。
-    public func walk(
-      at location: Int = 0,
-      score accumulatedScore: Double = 0.0,
-      joinedPhrase: String = "",
-      longPhrases: [String] = .init()
-    ) -> [NodeAnchor] {
-      let newLocation = (mutGrid.width) - abs(location)  // 防呆
-      return Array(
-        reverseWalk(
-          at: newLocation, score: accumulatedScore,
-          joinedPhrase: joinedPhrase, longPhrases: longPhrases
-        ).reversed())
-    }
-
-    /// 對已給定的軌格按照給定的位置與條件進行反向爬軌。
-    /// - Parameters:
-    ///   - location: 開始爬軌的位置。
-    ///   - accumulatedScore: 給定累計權重，非必填參數。預設值為 0。
-    ///   - joinedPhrase: 用以統計累計長詞的內部參數，請勿主動使用。
-    ///   - longPhrases: 用以統計累計長詞的內部參數，請勿主動使用。
-    public func reverseWalk(
-      at location: Int,
-      score accumulatedScore: Double = 0.0,
-      joinedPhrase: String = "",
-      longPhrases: [String] = .init()
-    ) -> [NodeAnchor] {
-      let location = abs(location)  // 防呆
-      if location == 0 || location > mutGrid.width {
-        return .init()
-      }
-
-      var paths = [[NodeAnchor]]()
-      var nodes = mutGrid.nodesEndingAt(location: location)
-
-      nodes = nodes.stableSorted {
-        $0.scoreForSort > $1.scoreForSort
-      }
-
-      if let nodeZero = nodes[0].node, nodeZero.score >= nodeZero.kSelectedCandidateScore {
-        // 在使用者有選過候選字詞的情況下，摒棄非依此據而成的節點路徑。
-        var anchorZero = nodes[0]
-        anchorZero.accumulatedScore = accumulatedScore + nodeZero.score
-        var path: [NodeAnchor] = reverseWalk(
-          at: location - anchorZero.spanningLength, score: anchorZero.accumulatedScore
-        )
-        path.insert(anchorZero, at: 0)
-        paths.append(path)
-      } else if !longPhrases.isEmpty {
-        var path = [NodeAnchor]()
-        for theAnchor in nodes {
-          guard let theNode = theAnchor.node else { continue }
-          var theAnchor = theAnchor
-          let joinedValue = theNode.currentKeyValue.value + joinedPhrase
-          // 如果只是一堆單漢字的節點組成了同樣的長詞的話，直接棄用這個節點路徑。
-          // 打比方說「八/月/中/秋/山/林/涼」與「八月/中秋/山林/涼」在使用者來看
-          // 是「結果等價」的，那就扔掉前者。
-          if longPhrases.contains(joinedValue) {
-            theAnchor.accumulatedScore = kDroppedPathScore
-            path.insert(theAnchor, at: 0)
-            paths.append(path)
-            continue
-          }
-          theAnchor.accumulatedScore = accumulatedScore + theNode.score
-          path = reverseWalk(
-            at: location - theAnchor.spanningLength,
-            score: theAnchor.accumulatedScore,
-            joinedPhrase: (joinedValue.count >= longPhrases[0].count) ? "" : joinedValue,
-            longPhrases: .init()
-          )
-          path.insert(theAnchor, at: 0)
-          paths.append(path)
-        }
-      } else {
-        // 看看當前格位有沒有更長的候選字詞。
-        var longPhrases = [String]()
-        for theAnchor in nodes.lazy.filter({ $0.spanningLength > 1 }) {
-          guard let theNode = theAnchor.node else { continue }
-          longPhrases.append(theNode.currentKeyValue.value)
-        }
-
-        longPhrases = longPhrases.stableSorted {
-          $0.count > $1.count
-        }
-        for theAnchor in nodes {
-          var theAnchor = theAnchor
-          guard let theNode = theAnchor.node else { continue }
-          theAnchor.accumulatedScore = accumulatedScore + theNode.score
-          var path = [NodeAnchor]()
-          path = reverseWalk(
-            at: location - theAnchor.spanningLength, score: theAnchor.accumulatedScore,
-            joinedPhrase: (theAnchor.spanningLength > 1) ? "" : theNode.currentKeyValue.value,
-            longPhrases: .init()
-          )
-          path.insert(theAnchor, at: 0)
-          paths.append(path)
-        }
-      }
-
-      guard !paths.isEmpty else {
-        return .init()
-      }
-
-      var result: [NodeAnchor] = paths[0]
-      for neta in paths.lazy.filter({
-        $0.last!.accumulatedScore > result.last!.accumulatedScore
-      }) {
-        result = neta
-      }
-
-      return result
-    }
-
-    // MARK: - Private functions
-
-    private func build() {
-      let itrBegin: Int =
-        (mutCursorIndex < maxBuildSpanLength) ? 0 : mutCursorIndex - maxBuildSpanLength
-      let itrEnd: Int = min(mutCursorIndex + maxBuildSpanLength, mutReadings.count)
-
-      for p in itrBegin..<itrEnd {
-        for q in 1..<maxBuildSpanLength {
-          if p + q > itrEnd { break }
-          let arrSlice = mutReadings[p..<(p + q)]
-          let combinedReading: String = join(slice: arrSlice, separator: joinSeparator)
-          if mutGrid.hasMatchedNode(location: p, spanningLength: q, key: combinedReading) { continue }
-          let unigrams: [Unigram] = mutLM.unigramsFor(key: combinedReading)
-          if unigrams.isEmpty { continue }
-          let n = Node(key: combinedReading, unigrams: unigrams)
-          mutGrid.insertNode(node: n, location: p, spanningLength: q)
-        }
-      }
-    }
-
-    private func join(slice arrSlice: ArraySlice<String>, separator: String) -> String {
-      arrSlice.joined(separator: separator)
     }
   }
 }
 
-// MARK: - Stable Sort Extension
+// MARK: - Internal Methods
 
-// Reference: https://stackoverflow.com/a/50545761/4162914
+extension Megrez.Compositor {
+  // MARK: Internal methods for maintaining the grid.
 
-extension Sequence {
-  /// Return a stable-sorted collection.
+  /// Expand or shrink a span at designated cursor location.
+  /// - Parameters:
+  ///   - location: Designated cursor location.
+  ///   - action: Tell this function to expand or shrink.
+  func resizeGrid(at location: Int, do action: GridResizeAction) {
+    switch action {
+      case .expand:
+        // if location > spans.count { return }  // TASK: 這句話該不該用還不好說
+        spans.insert(Span(), at: location)
+        if [0, spans.count].contains(location) { return }
+      case .shrink:
+        if spans.count == location { return }
+        spans.remove(at: location)
+    }
+    dropWreckedNodes(at: location)
+  }
+
+  /// Drop wrecked nodes which are results of the resizeGrid() function.
   ///
-  /// - Parameter areInIncreasingOrder: Return nil when two element are equal.
-  /// - Returns: The sorted collection.
-  fileprivate func stableSorted(
-    by areInIncreasingOrder: (Element, Element) throws -> Bool
-  )
-    rethrows -> [Element]
-  {
-    try enumerated()
-      .sorted { a, b -> Bool in
-        try areInIncreasingOrder(a.element, b.element)
-          || (a.offset < b.offset && !areInIncreasingOrder(b.element, a.element))
+  /// Because of the resizeGrid(), certain spans now have wrecked nodes. We need
+  /// to drop them. For example (expansion), before:
+  /// ```
+  /// Span index 0   1   2   3
+  ///                (---)
+  ///                (-------)
+  ///            (-----------)
+  /// ```
+  /// After we've inserted a span at 2:
+  /// ```
+  /// Span index 0   1   2   3   4
+  ///                (---)
+  ///                (XXX?   ?XXX) <-Wrecked
+  ///            (XXXXXXX?   ?XXX) <-Wrecked
+  /// ```
+  /// Similarly for shrinkage, before:
+  /// ```
+  /// Span index 0   1   2   3
+  ///                (---)
+  ///                (-------)
+  ///            (-----------)
+  /// ```
+  /// After we've deleted the span at 2:
+  /// ```
+  /// Span index 0   1   2   3   4
+  ///                (---)
+  ///                (XXX? <-Wrecked
+  ///            (XXXXXXX? <-Wrecked
+  /// ```
+  /// - Parameter location: Designated cursor location.
+  func dropWreckedNodes(at location: Int) {
+    let location = max(0, location)  // 防呆
+    guard !spans.isEmpty else { return }
+    let affectedLength = Megrez.Compositor.maxSpanLength - 1
+    let begin = max(0, location - affectedLength)
+    guard location >= begin else { return }
+    for i in begin..<location {
+      spans[i].dropNodesOfOrBeyond(length: location - i + 1)
+    }
+  }
+
+  @discardableResult func insertNode(_ node: Node, at location: Int) -> Bool {
+    guard location < spans.count else { return false }
+    spans[location].append(node: node)
+    return true
+  }
+
+  func getJointKey(range: Range<Int>) -> String {
+    guard range.upperBound <= keys.count, range.lowerBound >= 0 else { return "" }
+    return keys[range].joined(separator: separator)
+  }
+
+  func hasNode(at location: Int, length: Int, key: String) -> Bool {
+    guard location >= spans.count else { return false }
+    guard let node = spans[location].nodeOf(length: length) else { return false }
+    return key == node.key
+  }
+
+  func update() {
+    let maxSpanLength = Megrez.Compositor.maxSpanLength
+    let range = max(0, cursor - maxSpanLength)..<min(cursor + maxSpanLength, keys.count)
+    for position in range {
+      for theLength in 1...min(maxSpanLength, range.upperBound - position) {
+        let jointKey = getJointKey(range: position..<(position + theLength))
+        if hasNode(at: position, length: theLength, key: jointKey) { continue }
+        let unigrams = langModel.unigramsFor(key: jointKey)
+        guard !unigrams.isEmpty else { continue }
+        insertNode(.init(key: jointKey, spanLength: theLength, unigrams: unigrams), at: position)
       }
-      .map(\.element)
+    }
   }
 }

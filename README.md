@@ -79,10 +79,10 @@ MegrezTests.swift 檔案內的 SimpleLM 可以作為範例。
 這裡只講幾個常用函式：
 
 - 游標位置 `compositor.cursorIndex` 是可以賦值與取值的動態變數，且會在賦值內容為超出位置範圍的數值時自動修正。初期值為 0。
-- `compositor.insertReading("gao1")` 可以在當前的游標位置插入讀音「gao1」。
-- `compositor.dropReading(direction: .front)` 的作用是：朝著往文字輸入方向、砍掉一個與游標相鄰的讀音。反之，`dropReading(direction: .rear)` 則朝著與文字輸入方向相反的方向、砍掉一個與游標相鄰的讀音。
+- `compositor.insertKey("gao1")` 可以在當前的游標位置插入讀音「gao1」。
+- `compositor.dropKey(direction: .front)` 的作用是：朝著往文字輸入方向、砍掉一個與游標相鄰的讀音。反之，`dropKey(direction: .rear)` 則朝著與文字輸入方向相反的方向、砍掉一個與游標相鄰的讀音。
   - 在威注音的術語體系當中，「文字輸入方向」為向前（Front）、與此相反的方向為向後（Rear）。
-- `compositor.fixNodeWithCandidate(.init(key: "讀音", value: "候選字"), at: 游標位置)` 用來根據輸入法選中的候選字詞、據此更新當前游標位置選中的候選字詞節點當中的候選字詞。
+- `compositor.overrideCandidate(.init(key: "讀音", value: "候選字"), at: 游標位置, overrideType: 覆寫模式)` 用來根據輸入法選中的候選字詞、據此更新當前游標位置選中的候選字詞節點當中的候選字詞。
 
 輸入完內容之後，可以聲明一個用來接收結果的變數：
 
@@ -96,7 +96,7 @@ MegrezTests.swift 是輸入了很多內容之後再 walk 的。實際上一款�
 walk 之後的取值的方法及利用方法可以有很多種。這裡有其中的一個：
 
 ```swift
-    var composed: [String] = walked.map(\.node.currentPair.value)
+    var composed: [String] = walked.map(\.value)
     print(composed)
 ```
 
@@ -104,7 +104,7 @@ walk 之後的取值的方法及利用方法可以有很多種。這裡有其中
 
 ```swift
     for phrase in walked {
-        composed.append(phrase.node.currentKeyValue.value)
+        composed.append(phrase.value)
     }
     print(composed)
 ```
@@ -118,7 +118,6 @@ walk 之後的取值的方法及利用方法可以有很多種。這裡有其中
 
 ## 著作權 (Credits)
 
-- Swiftified and further development by (c) 2022 and onwards The vChewing Project (MIT-NTL License).
+- Swiftified and further development by (c) 2022 and onwards The vChewing Project (MIT License).
   - Swift programmer: Shiki Suen
-  - C++ migration review: Hiraku Wong
-- Was initially rebranded from (c) Lukhnos Liu's C++ library "Gramambular" (MIT License).
+- Was initially rebranded from (c) Lukhnos Liu's C++ library "Gramambular 2" (MIT License).

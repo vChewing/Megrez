@@ -1,27 +1,21 @@
-// Swiftified by (c) 2022 and onwards The vChewing Project (MIT-NTL License).
-// Rebranded from (c) Lukhnos Liu's C++ library "Gramambular" (MIT License).
-/*
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
-
-1. The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-2. No trademark license is granted to use the trade names, trademarks, service
-marks, or product names of Contributor, except as required to fulfill notice
-requirements above.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+// Swiftified by (c) 2022 and onwards The vChewing Project (MIT License).
+// Rebranded from (c) Lukhnos Liu's C++ library "Gramambular 2" (MIT License).
+// ====================
+// This code is released under the MIT license (SPDX-License-Identifier: MIT)
 
 /// The namespace for this package.
-public enum Megrez {}
+public enum Megrez {
+  public typealias KeyValuePaired = Compositor.Candidate  // 相容性措施。
+}
+
+// 著作權聲明：
+// 除了 Megrez 專有的修改與實作以外，該套件所有程式邏輯來自於 Gramambular、算法歸 Lukhnos Liu 所有。
+// 天權星引擎（Megrez Compositor）僅僅是將 Gramambular 用 Swift 重寫之後繼續開發的結果而已。
+
+// 術語：
+
+// Grid: 節軌
+// Walk: 爬軌
+// Node: 節點
+// SpanLength: 節幅
+// Span: 幅位

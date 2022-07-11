@@ -25,25 +25,27 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extension Megrez {
   /// 節锚。
-  @frozen public struct NodeAnchor: CustomStringConvertible {
+  @frozen public struct NodeAnchor {
+    /// 用來判斷該節錨是否為空。
+    public var isEmpty: Bool { node.key.isEmpty }
     /// 節點。一個節锚內不一定有節點。
-    public var node: Node?
+    public var node: Node = .init()
     /// 節锚所在的位置。
     public var location: Int = 0
-    /// 幅位長度。
-    public var spanningLength: Int = 0
+    /// 指定的幅位長度。
+    public var spanLength: Int = 0
     /// 累計權重。
-    public var accumulatedScore: Double = 0.0
+    public var mass: Double = 0.0
     /// 索引鍵的長度。
     public var keyLength: Int {
-      node?.key.count ?? 0
+      isEmpty ? node.key.count : 0
     }
 
     /// 將當前節锚列印成一個字串。
     public var description: String {
       var stream = ""
-      stream += "{@(" + String(location) + "," + String(spanningLength) + "),"
-      if let node = node {
+      stream += "{@(" + String(location) + "," + String(spanLength) + "),"
+      if node.key.isEmpty {
         stream += node.description
       } else {
         stream += "null"
@@ -54,7 +56,7 @@ extension Megrez {
 
     /// 獲取用來比較的權重。
     public var scoreForSort: Double {
-      node?.score ?? 0
+      isEmpty ? node.score : 0
     }
   }
 }

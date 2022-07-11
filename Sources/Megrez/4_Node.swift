@@ -170,5 +170,15 @@ extension Megrez {
       }
       return 0.0
     }
+
+    /// 藉由給定的候選字詞鍵值配對，找出在庫的單元圖權重數值。沒有的話就找零。
+    /// - Parameters:
+    ///   - candidate: 給定的候選字詞字串。
+    public func scoreForPaired(candidate: KeyValuePaired) -> Double {
+      for unigram in unigrams.lazy.filter({ $0.keyValue == candidate }) {
+        return unigram.score
+      }
+      return 0.0
+    }
   }
 }

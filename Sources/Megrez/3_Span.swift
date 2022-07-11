@@ -50,7 +50,7 @@ extension Megrez {
     /// 移除任何比給定的長度更長的節點。
     /// - Parameters:
     ///   - length: 給定的節點長度。
-    mutating func removeNodeOfLengthBeyond(_ length: Int) {
+    mutating func dropNodesBeyond(length: Int) {
       let length = abs(length)  // 防呆
       if length > maxLength { return }
       var lenMax = 0

@@ -26,6 +26,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 extension Megrez {
   /// 組字器。
   public class Compositor: Grid {
+    /// 文字輸入方向
+    public enum TypingDirection { case front, rear }
     /// 給被丟掉的節點路徑施加的負權重。
     private let kDroppedPathScore: Double = -999
     /// 該組字器的游標位置。
@@ -36,7 +38,7 @@ extension Megrez {
     private var langModel: LangModelProtocol
 
     /// 公開：多字讀音鍵當中用以分割漢字讀音的記號，預設為空。
-    public var joinSeparator: String = ""
+    public var joinSeparator: String = "-"
 
     /// 公開：該組字器的長度，也就是內建漢字讀音的數量（唯讀）。
     public var length: Int { readings.count }
@@ -46,7 +48,7 @@ extension Megrez {
     ///   - lm: 語言模型。可以是任何基於 Megrez.LangModel 的衍生型別。
     ///   - length: 指定該組字器內可以允許的最大詞長，預設為 10 字。
     ///   - separator: 多字讀音鍵當中用以分割漢字讀音的記號，預設為空。
-    public init(lm: LangModelProtocol, length: Int = 10, separator: String = "") {
+    public init(lm: LangModelProtocol, length: Int = 10, separator: String = "-") {
       langModel = lm
       super.init(spanLength: abs(length))  // 防呆
       joinSeparator = separator
@@ -62,35 +64,27 @@ extension Megrez {
     /// 在游標位置插入給定的讀音。
     /// - Parameters:
     ///   - reading: 要插入的讀音。
-    public func insertReadingAtCursor(reading: String) {
+    @discardableResult public func insertReading(_ reading: String) -> Bool {
+      guard !reading.isEmpty, langModel.hasUnigramsFor(key: reading) else { return false }
       readings.insert(reading, at: cursorIndex)
       expandGridByOneAt(location: cursorIndex)
       build()
       cursorIndex += 1
-    }
-
-    /// 朝著與文字輸入方向相反的方向、砍掉一個與游標相鄰的讀音。
-    /// 在威注音的術語體系當中，「與文字輸入方向相反的方向」為向後（Rear）。
-    @discardableResult public func deleteReadingAtTheRearOfCursor() -> Bool {
-      if cursorIndex == 0 {
-        return false
-      }
-
-      readings.remove(at: cursorIndex - 1)
-      cursorIndex -= 1
-      shrinkGridByOneAt(location: cursorIndex)
-      build()
       return true
     }
 
-    /// 朝著往文字輸入方向、砍掉一個與游標相鄰的讀音。
-    /// 在威注音的術語體系當中，「文字輸入方向」為向前（Front）。
-    @discardableResult public func deleteReadingToTheFrontOfCursor() -> Bool {
-      if cursorIndex == readings.count {
+    /// 朝著指定方向砍掉一個與游標相鄰的讀音。
+    ///
+    /// 在威注音的術語體系當中，「與文字輸入方向相反的方向」為向後（Rear），反之則為向前（Front）。
+    /// - Parameter direction: 指定方向。
+    /// - Returns: 該操作是否順利完成。
+    @discardableResult public func dropReading(direction: TypingDirection) -> Bool {
+      let isBackSpace = direction == .rear
+      if cursorIndex == (isBackSpace ? 0 : readings.count) {
         return false
       }
-
-      readings.remove(at: cursorIndex)
+      readings.remove(at: cursorIndex - (isBackSpace ? 1 : 0))
+      cursorIndex -= (isBackSpace ? 1 : 0)
       shrinkGridByOneAt(location: cursorIndex)
       build()
       return true

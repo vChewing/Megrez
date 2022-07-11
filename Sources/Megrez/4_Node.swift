@@ -25,7 +25,26 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extension Megrez {
   /// 節點。
-  public class Node {
+  public class Node: Equatable, Hashable {
+    public static func == (lhs: Megrez.Node, rhs: Megrez.Node) -> Bool {
+      lhs.key == rhs.key && lhs.score == rhs.score && lhs.unigrams == rhs.unigrams && lhs.bigrams == rhs.bigrams
+        && lhs.candidates == rhs.candidates && lhs.valueUnigramIndexMap == rhs.valueUnigramIndexMap
+        && lhs.precedingBigramMap == rhs.precedingBigramMap && lhs.isCandidateFixed == rhs.isCandidateFixed
+        && lhs.selectedUnigramIndex == rhs.selectedUnigramIndex
+    }
+
+    public func hash(into hasher: inout Hasher) {
+      hasher.combine(key)
+      hasher.combine(score)
+      hasher.combine(unigrams)
+      hasher.combine(bigrams)
+      hasher.combine(candidates)
+      hasher.combine(valueUnigramIndexMap)
+      hasher.combine(precedingBigramMap)
+      hasher.combine(isCandidateFixed)
+      hasher.combine(selectedUnigramIndex)
+    }
+
     /// 鍵。
     private(set) var key: String = ""
     /// 當前節點的當前被選中的候選字詞「在該節點內的」目前的權重。

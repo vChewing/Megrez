@@ -27,7 +27,7 @@ extension Megrez {
   /// 軌格，會被組字器作為原始型別來繼承。
   public class Grid {
     /// 幅位陣列。
-    private var spans: [Megrez.SpanUnit]
+    private(set) var spans: [Megrez.SpanUnit]
 
     /// 該軌格內可以允許的最大幅位長度。
     private(set) var maxBuildSpanLength = 10
@@ -91,7 +91,7 @@ extension Megrez {
       if location == 0 || location == spans.count { return }
       for i in 0..<location {
         // zaps overlapping spans
-        spans[i].removeNodeOfLengthBeyond(location - i)
+        spans[i].dropNodesBeyond(length: location - i)
       }
     }
 
@@ -107,7 +107,7 @@ extension Megrez {
       spans.remove(at: location)
       for i in 0..<location {
         // zaps overlapping spans
-        spans[i].removeNodeOfLengthBeyond(location - i)
+        spans[i].dropNodesBeyond(length: location - i)
       }
     }
 
@@ -183,23 +183,55 @@ extension Megrez {
       return results  // 已證實不會有空節點產生。
     }
 
+    /// 給定位置，枚舉出所有在這個位置結尾或開頭或者橫跨該位置的節點。
+    ///
+    /// ⚠️ 注意：排序可能失真。
+    /// - Parameters:
+    ///   - location: 位置。
+    public func nodesOverlappedAt(location: Int) -> [NodeAnchor] {
+      Array(Set(nodesBeginningAt(location: location) + nodesCrossingOrEndingAt(location: location)))
+    }
+
     /// 將給定位置的節點的候選字詞改為與給定的字串一致的候選字詞。
     ///
     /// 該函式可以僅用作過程函式。
     /// - Parameters:
     ///   - location: 位置。
     ///   - value: 給定字串。
-    @discardableResult public func fixNodeSelectedCandidate(location: Int, value: String) -> NodeAnchor {
+    @discardableResult public func fixNodeSelectedCandidate(_ value: String, at location: Int) -> NodeAnchor {
       let location = abs(location)  // 防呆
       var node = NodeAnchor()
-      for theAnchor
-        in nodesCrossingOrEndingAt(location: location)
-      {
+      for theAnchor in nodesOverlappedAt(location: location) {
         let candidates = theAnchor.node.candidates
         // 將該位置的所有節點的候選字詞鎖定狀態全部重設。
         theAnchor.node.resetCandidate()
         for (i, candidate) in candidates.enumerated() {
           if candidate.value == value {
+            theAnchor.node.selectCandidateAt(index: i)
+            node = theAnchor
+            break
+          }
+        }
+      }
+      return node
+    }
+
+    /// 將給定位置的節點的候選字詞改為與給定的字串一致的候選字詞。
+    ///
+    /// 該函式可以僅用作過程函式。
+    /// - Parameters:
+    ///   - location: 位置。
+    ///   - value: 給定字串。
+    @discardableResult public func fixNodeSelectedCandidatePair(_ pair: KeyValuePaired, at location: Int) -> NodeAnchor
+    {
+      let location = abs(location)  // 防呆
+      var node = NodeAnchor()
+      for theAnchor in nodesOverlappedAt(location: location) {
+        let candidates = theAnchor.node.candidates
+        // 將該位置的所有節點的候選字詞鎖定狀態全部重設。
+        theAnchor.node.resetCandidate()
+        for (i, candidate) in candidates.enumerated() {
+          if candidate == pair {
             theAnchor.node.selectCandidateAt(index: i)
             node = theAnchor
             break
@@ -216,9 +248,7 @@ extension Megrez {
     ///   - overridingScore: 給定權重數值。
     public func overrideNodeScoreForSelectedCandidate(location: Int, value: String, overridingScore: Double) {
       let location = abs(location)  // 防呆
-      for theAnchor
-        in nodesCrossingOrEndingAt(location: location)
-      {
+      for theAnchor in nodesOverlappedAt(location: location) {
         let candidates = theAnchor.node.candidates
         // 將該位置的所有節點的候選字詞鎖定狀態全部重設。
         theAnchor.node.resetCandidate()

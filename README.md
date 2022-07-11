@@ -17,7 +17,7 @@ Megrez Engine is a module made for processing lingual data of an input method. T
 
 以 KeyHandler 為例：
 ```swift
-class KeyHandler: NSObject {
+class KeyHandler {
   // 先設定好變數
   let compositor: Megrez.Compositor = .init()
   ...
@@ -79,10 +79,10 @@ MegrezTests.swift 檔案內的 SimpleLM 可以作為範例。
 這裡只講幾個常用函式：
 
 - 游標位置 `compositor.cursorIndex` 是可以賦值與取值的動態變數，且會在賦值內容為超出位置範圍的數值時自動修正。初期值為 0。
-- `compositor.insertReadingAtCursor(reading: "gao1")` 可以在當前的游標位置插入讀音「gao1」。
-- `compositor.deleteReadingToTheFrontOfCursor()` 的作用是：朝著往文字輸入方向、砍掉一個與游標相鄰的讀音。反之，`deleteReadingAtTheRearOfCursor` 則朝著與文字輸入方向相反的方向、砍掉一個與游標相鄰的讀音。
+- `compositor.insertReading("gao1")` 可以在當前的游標位置插入讀音「gao1」。
+- `compositor.dropReading(direction: .front)` 的作用是：朝著往文字輸入方向、砍掉一個與游標相鄰的讀音。反之，`dropReading(direction: .rear)` 則朝著與文字輸入方向相反的方向、砍掉一個與游標相鄰的讀音。
   - 在威注音的術語體系當中，「文字輸入方向」為向前（Front）、與此相反的方向為向後（Rear）。
-- `compositor.grid.fixNodeSelectedCandidate(location: ?, value: "??")` 用來根據輸入法選中的候選字詞、據此更新當前游標位置選中的候選字詞節點當中的候選字詞。
+- `compositor.grid.fixNodeSelectedCandidate("??", at: ?)` 用來根據輸入法選中的候選字詞、據此更新當前游標位置選中的候選字詞節點當中的候選字詞。
 
 輸入完內容之後，可以聲明一個用來接收結果的變數：
 

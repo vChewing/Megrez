@@ -25,7 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extension Megrez {
   /// 節锚。
-  @frozen public struct NodeAnchor {
+  @frozen public struct NodeAnchor: Hashable {
     /// 用來判斷該節錨是否為空。
     public var isEmpty: Bool { node.key.isEmpty }
     /// 節點。一個節锚內不一定有節點。
@@ -39,6 +39,13 @@ extension Megrez {
     /// 索引鍵的長度。
     public var keyLength: Int {
       isEmpty ? node.key.count : 0
+    }
+
+    public func hash(into hasher: inout Hasher) {
+      hasher.combine(node)
+      hasher.combine(location)
+      hasher.combine(spanLength)
+      hasher.combine(mass)
     }
 
     /// 將當前節锚列印成一個字串。
@@ -61,7 +68,7 @@ extension Megrez {
   }
 }
 
-// MARK: - DumpDOT-related functions.
+// MARK: - Array Extensions.
 
 extension Array where Element == Megrez.NodeAnchor {
   /// 將節锚陣列列印成一個字串。
@@ -71,5 +78,15 @@ extension Array where Element == Megrez.NodeAnchor {
       arrOutputContent.append(anchor.description)
     }
     return arrOutputContent.joined(separator: "<-")
+  }
+
+  /// 從一個節錨陣列當中取出目前的自動選字字串陣列。
+  public var values: [String] {
+    map(\.node.currentPair.value)
+  }
+
+  /// 從一個節錨陣列當中取出目前的索引鍵陣列。
+  public var keys: [String] {
+    map(\.node.currentPair.key)
   }
 }

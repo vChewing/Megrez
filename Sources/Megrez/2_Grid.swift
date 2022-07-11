@@ -185,7 +185,7 @@ extension Megrez {
 
     /// 給定位置，枚舉出所有在這個位置結尾或開頭或者橫跨該位置的節點。
     ///
-    /// ⚠️ 注意：排序可能失真。
+    /// ⚠︎ 注意：排序可能失真。
     /// - Parameters:
     ///   - location: 位置。
     public func nodesOverlappedAt(location: Int) -> [NodeAnchor] {

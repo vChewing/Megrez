@@ -126,7 +126,7 @@ extension Megrez {
     public func resetCandidate() {
       selectedUnigramIndex = 0
       isCandidateFixed = false
-      if !self.unigrams.isEmpty {
+      if !unigrams.isEmpty {
         score = unigrams[0].score
       }
     }

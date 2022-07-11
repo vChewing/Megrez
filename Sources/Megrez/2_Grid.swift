@@ -24,7 +24,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 extension Megrez {
-  /// 軌格。
+  /// 軌格，會被組字器作為原始型別來繼承。
   public class Grid {
     /// 幅位陣列。
     private var spans: [Megrez.SpanUnit]

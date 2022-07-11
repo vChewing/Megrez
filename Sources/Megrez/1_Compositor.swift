@@ -25,25 +25,18 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extension Megrez {
   /// 組字器。
-  public class Compositor {
+  public class Compositor: Grid {
     /// 給被丟掉的節點路徑施加的負權重。
     private let kDroppedPathScore: Double = -999
     /// 該組字器的游標位置。
     public var cursorIndex: Int = 0 { didSet { cursorIndex = max(0, min(cursorIndex, readings.count)) } }
     /// 該組字器的讀音陣列。
     private(set) var readings: [String] = []
-    /// 該組字器的軌格。
-    private(set) var grid: Grid = .init()
     /// 該組字器所使用的語言模型。
     private var langModel: LangModelProtocol
 
-    /// 公開：該組字器內可以允許的最大詞長。
-    public var maxBuildSpanLength: Int { grid.maxBuildSpanLength }
     /// 公開：多字讀音鍵當中用以分割漢字讀音的記號，預設為空。
     public var joinSeparator: String = ""
-
-    /// 公開：該組字器是否為空。
-    public var isEmpty: Bool { grid.isEmpty }
 
     /// 公開：該組字器的長度，也就是內建漢字讀音的數量（唯讀）。
     public var length: Int { readings.count }
@@ -55,15 +48,15 @@ extension Megrez {
     ///   - separator: 多字讀音鍵當中用以分割漢字讀音的記號，預設為空。
     public init(lm: LangModelProtocol, length: Int = 10, separator: String = "") {
       langModel = lm
-      grid = .init(spanLength: abs(length))  // 防呆
+      super.init(spanLength: abs(length))  // 防呆
       joinSeparator = separator
     }
 
     /// 組字器自我清空專用函式。
-    public func clear() {
+    override public func clear() {
+      super.clear()
       cursorIndex = 0
       readings.removeAll()
-      grid.clear()
     }
 
     /// 在游標位置插入給定的讀音。
@@ -71,7 +64,7 @@ extension Megrez {
     ///   - reading: 要插入的讀音。
     public func insertReadingAtCursor(reading: String) {
       readings.insert(reading, at: cursorIndex)
-      grid.expandGridByOneAt(location: cursorIndex)
+      expandGridByOneAt(location: cursorIndex)
       build()
       cursorIndex += 1
     }
@@ -85,7 +78,7 @@ extension Megrez {
 
       readings.remove(at: cursorIndex - 1)
       cursorIndex -= 1
-      grid.shrinkGridByOneAt(location: cursorIndex)
+      shrinkGridByOneAt(location: cursorIndex)
       build()
       return true
     }
@@ -98,7 +91,7 @@ extension Megrez {
       }
 
       readings.remove(at: cursorIndex)
-      grid.shrinkGridByOneAt(location: cursorIndex)
+      shrinkGridByOneAt(location: cursorIndex)
       build()
       return true
     }
@@ -119,7 +112,7 @@ extension Megrez {
         }
         if !readings.isEmpty {
           readings.removeFirst()
-          grid.shrinkGridByOneAt(location: 0)
+          shrinkGridByOneAt(location: 0)
         }
         build()
       }
@@ -130,7 +123,7 @@ extension Megrez {
     /// 對已給定的軌格按照給定的位置與條件進行正向爬軌。
     /// - Returns: 一個包含有效結果的節錨陣列。
     public func walk() -> [NodeAnchor] {
-      let newLocation = (grid.width)
+      let newLocation = width
       // 這裡把所有空節點都過濾掉。
       return Array(
         reverseWalk(at: newLocation).reversed()
@@ -153,12 +146,12 @@ extension Megrez {
       longPhrases: [String] = .init()
     ) -> [NodeAnchor] {
       let location = abs(location)  // 防呆
-      if location == 0 || location > grid.width {
+      if location == 0 || location > width {
         return .init()
       }
 
       var paths = [[NodeAnchor]]()
-      let nodes = grid.nodesEndingAt(location: location).stableSorted {
+      let nodes = nodesEndingAt(location: location).stableSorted {
         $0.scoreForSort > $1.scoreForSort
       }
 
@@ -245,11 +238,11 @@ extension Megrez {
           if p + q > itrEnd { break }
           let arrSlice = readings[p..<(p + q)]
           let combinedReading: String = join(slice: arrSlice, separator: joinSeparator)
-          if grid.hasMatchedNode(location: p, spanLength: q, key: combinedReading) { continue }
+          if hasMatchedNode(location: p, spanLength: q, key: combinedReading) { continue }
           let unigrams: [Unigram] = langModel.unigramsFor(key: combinedReading)
           if unigrams.isEmpty { continue }
           let n = Node(key: combinedReading, unigrams: unigrams)
-          grid.insertNode(node: n, location: p, spanLength: q)
+          insertNode(node: n, location: p, spanLength: q)
         }
       }
     }

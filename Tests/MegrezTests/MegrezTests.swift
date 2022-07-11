@@ -23,391 +23,446 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+import Cocoa
 import XCTest
 
 @testable import Megrez
 
 final class MegrezTests: XCTestCase {
-  // MARK: - Input Test (SimpleLM)
+  func testSpanUnitInternalAbilities() throws {
+    let langModel = SimpleLM(input: strSampleData)
+    var span = Megrez.SpanUnit()
+    let n1 = Megrez.Node(key: "gao", unigrams: langModel.unigramsFor(key: "gao1"))
+    let n3 = Megrez.Node(key: "gao1ke1ji4", unigrams: langModel.unigramsFor(key: "gao1ke1ji4"))
+    XCTAssertEqual(span.maxLength, 0)
+    span.insert(node: n1, length: 1)
+    XCTAssertEqual(span.maxLength, 1)
+    span.insert(node: n3, length: 3)
+    XCTAssertEqual(span.maxLength, 3)
+    XCTAssertEqual(span.nodeOf(length: 1), n1)
+    XCTAssertEqual(span.nodeOf(length: 2), nil)
+    XCTAssertEqual(span.nodeOf(length: 3), n3)
+    span.clear()
+    XCTAssertEqual(span.maxLength, 0)
+    XCTAssertEqual(span.nodeOf(length: 1), nil)
+    XCTAssertEqual(span.nodeOf(length: 2), nil)
+    XCTAssertEqual(span.nodeOf(length: 3), nil)
 
-  func testInputWithForwardWalk() throws {
-    print("// 開始測試語言文字輸入處理")
-    let lmTestInput = SimpleLM(input: strSampleData)
-    let compositor = Megrez.Compositor(lm: lmTestInput)
-    var walked = [Megrez.NodeAnchor]()
+    span.insert(node: n1, length: 1)
+    span.insert(node: n3, length: 3)
+    span.dropNodesBeyond(length: 1)
+    XCTAssertEqual(span.maxLength, 1)
+    XCTAssertEqual(span.nodeOf(length: 1), n1)
+    XCTAssertEqual(span.nodeOf(length: 2), nil)
+    XCTAssertEqual(span.nodeOf(length: 3), nil)
+    span.dropNodesBeyond(length: 0)
+    XCTAssertEqual(span.maxLength, 0)
+    XCTAssertEqual(span.nodeOf(length: 1), nil)
+  }
 
-    func walk() {
-      walked = compositor.walk(at: 0, score: 0.0)
+  func testBasicFeaturesOfCompositor() throws {
+    let compositor = Megrez.Compositor(lm: MockLM())
+    compositor.joinSeparator = ""
+    XCTAssertEqual(compositor.joinSeparator, "")
+    XCTAssertEqual(compositor.cursorIndex, 0)
+    XCTAssertEqual(compositor.length, 0)
+
+    XCTAssertTrue(compositor.insertReading("a"))
+    XCTAssertEqual(compositor.cursorIndex, 1)
+    XCTAssertEqual(compositor.length, 1)
+    XCTAssertEqual(compositor.width, 1)
+    XCTAssertEqual(compositor.spans[0].maxLength, 1)
+    guard let zeroNode = compositor.spans[0].nodeOf(length: 1) else {
+      return
     }
+    XCTAssertEqual(zeroNode.key, "a")
 
-    // 模擬輸入法的行為，每次敲字或選字都重新 walk。
-    compositor.insertReadingAtCursor(reading: "gao1")
-    walk()
-    compositor.insertReadingAtCursor(reading: "ji4")
-    walk()
-    compositor.cursorIndex = 1
-    compositor.insertReadingAtCursor(reading: "ke1")
-    walk()
-    compositor.cursorIndex = 1
-    compositor.deleteReadingToTheFrontOfCursor()
-    walk()
-    compositor.insertReadingAtCursor(reading: "ke1")
-    walk()
-    compositor.cursorIndex = 0
-    compositor.deleteReadingToTheFrontOfCursor()
-    walk()
-    compositor.insertReadingAtCursor(reading: "gao1")
-    walk()
-    compositor.cursorIndex = compositor.length
-    compositor.insertReadingAtCursor(reading: "gong1")
-    walk()
-    compositor.insertReadingAtCursor(reading: "si1")
-    walk()
-    compositor.insertReadingAtCursor(reading: "de5")
-    walk()
-    compositor.insertReadingAtCursor(reading: "nian2")
-    walk()
-    compositor.insertReadingAtCursor(reading: "zhong1")
-    walk()
-    compositor.grid.fixNodeSelectedCandidate(location: 7, value: "年終")
-    walk()
-    compositor.insertReadingAtCursor(reading: "jiang3")
-    walk()
-    compositor.insertReadingAtCursor(reading: "jin1")
-    walk()
-    compositor.insertReadingAtCursor(reading: "ni3")
-    walk()
-    compositor.insertReadingAtCursor(reading: "zhe4")
-    walk()
-    compositor.insertReadingAtCursor(reading: "yang4")
-    walk()
+    XCTAssertTrue(compositor.dropReading(direction: .rear))
+    XCTAssertEqual(compositor.cursorIndex, 0)
+    XCTAssertEqual(compositor.cursorIndex, 0)
+    XCTAssertEqual(compositor.width, 0)
+  }
 
-    // 這裡模擬一個輸入法的常見情況：每次敲一個字詞都會 walk，然後你回頭編輯完一些內容之後又會立刻重新 walk。
-    // 如果只在這裡測試第一遍 walk 的話，測試通過了也無法測試之後再次 walk 是否會正常。
+  func testInvalidOperations() throws {
+    class TestLM: LangModelProtocol {
+      func bigramsForKeys(precedingKey _: String, key _: String) -> [Megrez.Bigram] {
+        .init()
+      }
 
-    compositor.cursorIndex = 1
-    compositor.deleteReadingToTheFrontOfCursor()
-
-    // 於是咱們 walk 第二遍
-    walk()
-    XCTAssert(!walked.isEmpty)
-
-    // 做好第三遍的準備，這次咱們來一次插入性編輯。
-    // 重點測試這句是否正常，畢竟是在 walked 過的節點內進行插入編輯。
-    compositor.insertReadingAtCursor(reading: "ke1")
-
-    // 於是咱們 walk 第三遍。
-    // 這一遍會直接曝露「上述修改是否有對 compositor 造成了破壞性的損失」，
-    // 所以很重要。
-    walk()
-    XCTAssert(!walked.isEmpty)
-
-    var composed: [String] = []
-    for phrase in walked {
-      if let node = phrase.node {
-        composed.append(node.currentKeyValue.value)
+      func hasUnigramsFor(key: String) -> Bool { key == "foo" }
+      func unigramsFor(key: String) -> [Megrez.Unigram] {
+        key == "foo" ? [.init(keyValue: .init(key: "foo", value: "foo"), score: -1)] : .init()
       }
     }
-    print(composed)
-    let correctResult = ["高科技", "公司", "的", "年終", "獎金", "你", "這樣"]
-    print(" - 上述列印結果理應於下面這行一致：")
-    print(correctResult)
-    XCTAssertEqual(composed, correctResult)
 
-    // 測試 DumpDOT
-    compositor.cursorIndex = compositor.length
-    compositor.deleteReadingAtTheRearOfCursor()
-    compositor.deleteReadingAtTheRearOfCursor()
-    compositor.deleteReadingAtTheRearOfCursor()
-    let expectedDumpDOT =
-      "digraph {\ngraph [ rankdir=LR ];\nBOS;\nBOS -> 高;\n高;\n高 -> 科;\n高 -> 科技;\nBOS -> 高科技;\n高科技;\n高科技 -> 工;\n高科技 -> 公司;\n科;\n科 -> 際;\n科 -> 濟公;\n科技;\n科技 -> 工;\n科技 -> 公司;\n際;\n際 -> 工;\n際 -> 公司;\n濟公;\n濟公 -> 斯;\n工;\n工 -> 斯;\n公司;\n公司 -> 的;\n斯;\n斯 -> 的;\n的;\n的 -> 年;\n的 -> 年終;\n年;\n年 -> 中;\n年終;\n年終 -> 獎;\n年終 -> 獎金;\n中;\n中 -> 獎;\n中 -> 獎金;\n獎;\n獎 -> 金;\n獎金;\n獎金 -> EOS;\n金;\n金 -> EOS;\nEOS;\n}\n"
-    XCTAssertEqual(compositor.grid.dumpDOT, expectedDumpDOT)
+    let compositor = Megrez.Compositor(lm: TestLM())
+    compositor.joinSeparator = ";"
+    XCTAssertFalse(compositor.insertReading("bar"))
+    XCTAssertFalse(compositor.insertReading(""))
+    XCTAssertFalse(compositor.insertReading(""))
+    XCTAssertFalse(compositor.dropReading(direction: .rear))
+    XCTAssertFalse(compositor.dropReading(direction: .front))
 
-    print("========新測試========")
+    compositor.insertReading("foo")
+    XCTAssertTrue(compositor.dropReading(direction: .rear))
+    XCTAssertEqual(compositor.length, 0)
+    compositor.insertReading("foo")
+    compositor.cursorIndex = 0
+    XCTAssertTrue(compositor.dropReading(direction: .front))
+    XCTAssertEqual(compositor.length, 0)
+  }
+
+  func testDeleteToTheFrontOfCursor() throws {
+    let compositor = Megrez.Compositor(lm: MockLM())
+    compositor.insertReading("a")
+    compositor.cursorIndex = 0
+    XCTAssertEqual(compositor.cursorIndex, 0)
+    XCTAssertEqual(compositor.length, 1)
+    XCTAssertEqual(compositor.width, 1)
+    XCTAssertFalse(compositor.dropReading(direction: .rear))
+    XCTAssertEqual(compositor.cursorIndex, 0)
+    XCTAssertEqual(compositor.length, 1)
+    XCTAssertTrue(compositor.dropReading(direction: .front))
+    XCTAssertEqual(compositor.cursorIndex, 0)
+    XCTAssertEqual(compositor.length, 0)
+    XCTAssertEqual(compositor.width, 0)
+  }
+
+  func testMultipleSpanUnits() throws {
+    let compositor = Megrez.Compositor(lm: MockLM())
+    compositor.joinSeparator = ";"
+    compositor.insertReading("a")
+    compositor.insertReading("b")
+    compositor.insertReading("c")
+    XCTAssertEqual(compositor.cursorIndex, 3)
+    XCTAssertEqual(compositor.length, 3)
+    XCTAssertEqual(compositor.width, 3)
+    XCTAssertEqual(compositor.spans[0].maxLength, 3)
+    XCTAssertEqual(compositor.spans[0].nodeOf(length: 1)?.key, "a")
+    XCTAssertEqual(compositor.spans[0].nodeOf(length: 2)?.key, "a;b")
+    XCTAssertEqual(compositor.spans[0].nodeOf(length: 3)?.key, "a;b;c")
+    XCTAssertEqual(compositor.spans[1].maxLength, 2)
+    XCTAssertEqual(compositor.spans[1].nodeOf(length: 1)?.key, "b")
+    XCTAssertEqual(compositor.spans[1].nodeOf(length: 2)?.key, "b;c")
+    XCTAssertEqual(compositor.spans[2].maxLength, 1)
+    XCTAssertEqual(compositor.spans[2].nodeOf(length: 1)?.key, "c")
+  }
+
+  func testSpanUnitDeletionFromFront() throws {
+    let compositor = Megrez.Compositor(lm: MockLM())
+    compositor.joinSeparator = ";"
+    compositor.insertReading("a")
+    compositor.insertReading("b")
+    compositor.insertReading("c")
+    XCTAssertFalse(compositor.dropReading(direction: .front))
+    XCTAssertTrue(compositor.dropReading(direction: .rear))
+    XCTAssertEqual(compositor.cursorIndex, 2)
+    XCTAssertEqual(compositor.length, 2)
+    XCTAssertEqual(compositor.width, 2)
+    XCTAssertEqual(compositor.spans[0].maxLength, 2)
+    XCTAssertEqual(compositor.spans[0].nodeOf(length: 1)?.key, "a")
+    XCTAssertEqual(compositor.spans[0].nodeOf(length: 2)?.key, "a;b")
+    XCTAssertEqual(compositor.spans[1].maxLength, 1)
+    XCTAssertEqual(compositor.spans[1].nodeOf(length: 1)?.key, "b")
+  }
+
+  func testSpanUnitDeletionFromMiddle() throws {
+    let compositor = Megrez.Compositor(lm: MockLM())
+    compositor.joinSeparator = ";"
+    compositor.insertReading("a")
+    compositor.insertReading("b")
+    compositor.insertReading("c")
+    compositor.cursorIndex = 2
+
+    XCTAssertTrue(compositor.dropReading(direction: .rear))
+    XCTAssertEqual(compositor.cursorIndex, 1)
+    XCTAssertEqual(compositor.length, 2)
+    XCTAssertEqual(compositor.width, 2)
+    XCTAssertEqual(compositor.spans[0].maxLength, 2)
+    XCTAssertEqual(compositor.spans[0].nodeOf(length: 1)?.key, "a")
+    XCTAssertEqual(compositor.spans[0].nodeOf(length: 2)?.key, "a;c")
+    XCTAssertEqual(compositor.spans[1].maxLength, 1)
+    XCTAssertEqual(compositor.spans[1].nodeOf(length: 1)?.key, "c")
+
     compositor.clear()
-    compositor.insertReadingAtCursor(reading: "jiao4")
-    walk()
-    compositor.insertReadingAtCursor(reading: "yu4")
-    walk()
-    compositor.grid.fixNodeSelectedCandidate(location: 0, value: "較")
-    walk()
-    compositor.grid.fixNodeSelectedCandidate(location: 2, value: "教育")
-    walk()
+    compositor.insertReading("a")
+    compositor.insertReading("b")
+    compositor.insertReading("c")
+    compositor.cursorIndex = 1
 
-    composed.removeAll()
-    for phrase in walked {
-      if let node = phrase.node {
-        composed.append(node.currentKeyValue.value)
-      }
-    }
-    print(composed)
-    let expectedResult = ["教育"]
-    print(" - 上述列印結果理應於下面這行一致：")
-    print(expectedResult)
-    XCTAssertEqual(composed, expectedResult)
+    XCTAssertTrue(compositor.dropReading(direction: .front))
+    XCTAssertEqual(compositor.cursorIndex, 1)
+    XCTAssertEqual(compositor.length, 2)
+    XCTAssertEqual(compositor.width, 2)
+    XCTAssertEqual(compositor.spans[0].maxLength, 2)
+    XCTAssertEqual(compositor.spans[0].nodeOf(length: 1)?.key, "a")
+    XCTAssertEqual(compositor.spans[0].nodeOf(length: 2)?.key, "a;c")
+    XCTAssertEqual(compositor.spans[1].maxLength, 1)
+    XCTAssertEqual(compositor.spans[1].nodeOf(length: 1)?.key, "c")
   }
 
-  func testInputWithreverseWalk() throws {
-    print("// 開始測試語言文字輸入處理")
-    let lmTestInput = SimpleLM(input: strSampleData)
-    let compositor = Megrez.Compositor(lm: lmTestInput)
-    var walked = [Megrez.NodeAnchor]()
-
-    func reverseWalk(at location: Int) {
-      walked = Array(compositor.reverseWalk(at: location, score: 0.0).reversed())
-    }
-
-    // 模擬輸入法的行為，每次敲字或選字都重新 walk。
-    compositor.insertReadingAtCursor(reading: "gao1")
-    reverseWalk(at: compositor.grid.width)
-    compositor.insertReadingAtCursor(reading: "ji4")
-    reverseWalk(at: compositor.grid.width)
-    compositor.cursorIndex = 1
-    compositor.insertReadingAtCursor(reading: "ke1")
-    reverseWalk(at: compositor.grid.width)
-    compositor.cursorIndex = 1
-    compositor.deleteReadingToTheFrontOfCursor()
-    reverseWalk(at: compositor.grid.width)
-    compositor.insertReadingAtCursor(reading: "ke1")
-    reverseWalk(at: compositor.grid.width)
+  func testSpanUnitDeletionFromRear() throws {
+    let compositor = Megrez.Compositor(lm: MockLM())
+    compositor.joinSeparator = ";"
+    compositor.insertReading("a")
+    compositor.insertReading("b")
+    compositor.insertReading("c")
     compositor.cursorIndex = 0
-    compositor.deleteReadingToTheFrontOfCursor()
-    reverseWalk(at: compositor.grid.width)
-    compositor.insertReadingAtCursor(reading: "gao1")
-    reverseWalk(at: compositor.grid.width)
-    compositor.cursorIndex = compositor.length
-    compositor.insertReadingAtCursor(reading: "gong1")
-    reverseWalk(at: compositor.grid.width)
-    compositor.insertReadingAtCursor(reading: "si1")
-    reverseWalk(at: compositor.grid.width)
-    compositor.insertReadingAtCursor(reading: "de5")
-    reverseWalk(at: compositor.grid.width)
-    compositor.insertReadingAtCursor(reading: "nian2")
-    reverseWalk(at: compositor.grid.width)
-    compositor.insertReadingAtCursor(reading: "zhong1")
-    reverseWalk(at: compositor.grid.width)
-    compositor.grid.fixNodeSelectedCandidate(location: 7, value: "年終")
-    reverseWalk(at: compositor.grid.width)
-    compositor.insertReadingAtCursor(reading: "jiang3")
-    reverseWalk(at: compositor.grid.width)
-    compositor.insertReadingAtCursor(reading: "jin1")
-    reverseWalk(at: compositor.grid.width)
-    compositor.insertReadingAtCursor(reading: "ni3")
-    reverseWalk(at: compositor.grid.width)
-    compositor.insertReadingAtCursor(reading: "zhe4")
-    reverseWalk(at: compositor.grid.width)
-    compositor.insertReadingAtCursor(reading: "yang4")
-    reverseWalk(at: compositor.grid.width)
 
-    // 這裡模擬一個輸入法的常見情況：每次敲一個字詞都會 walk，然後你回頭編輯完一些內容之後又會立刻重新 walk。
-    // 如果只在這裡測試第一遍 walk 的話，測試通過了也無法測試之後再次 walk 是否會正常。
-
-    compositor.cursorIndex = 1
-    compositor.deleteReadingToTheFrontOfCursor()
-
-    // 於是咱們 walk 第二遍
-    reverseWalk(at: compositor.grid.width)
-    XCTAssert(!walked.isEmpty)
-
-    // 做好第三遍的準備，這次咱們來一次插入性編輯。
-    // 重點測試這句是否正常，畢竟是在 walked 過的節點內進行插入編輯。
-    compositor.insertReadingAtCursor(reading: "ke1")
-
-    // 於是咱們 walk 第三遍。
-    // 這一遍會直接曝露「上述修改是否有對 compositor 造成了破壞性的損失」，
-    // 所以很重要。
-    reverseWalk(at: compositor.grid.width)
-    XCTAssert(!walked.isEmpty)
-
-    var composed: [String] = []
-    for phrase in walked {
-      if let node = phrase.node {
-        composed.append(node.currentKeyValue.value)
-      }
-    }
-    print(composed)
-    let correctResult = ["高科技", "公司", "的", "年終", "獎金", "你", "這樣"]
-    print(" - 上述列印結果理應於下面這行一致：")
-    print(correctResult)
-    XCTAssertEqual(composed, correctResult)
-
-    // 測試 DumpDOT
-    compositor.cursorIndex = compositor.length
-    compositor.deleteReadingAtTheRearOfCursor()
-    compositor.deleteReadingAtTheRearOfCursor()
-    compositor.deleteReadingAtTheRearOfCursor()
-    let expectedDumpDOT =
-      "digraph {\ngraph [ rankdir=LR ];\nBOS;\nBOS -> 高;\n高;\n高 -> 科;\n高 -> 科技;\nBOS -> 高科技;\n高科技;\n高科技 -> 工;\n高科技 -> 公司;\n科;\n科 -> 際;\n科 -> 濟公;\n科技;\n科技 -> 工;\n科技 -> 公司;\n際;\n際 -> 工;\n際 -> 公司;\n濟公;\n濟公 -> 斯;\n工;\n工 -> 斯;\n公司;\n公司 -> 的;\n斯;\n斯 -> 的;\n的;\n的 -> 年;\n的 -> 年終;\n年;\n年 -> 中;\n年終;\n年終 -> 獎;\n年終 -> 獎金;\n中;\n中 -> 獎;\n中 -> 獎金;\n獎;\n獎 -> 金;\n獎金;\n獎金 -> EOS;\n金;\n金 -> EOS;\nEOS;\n}\n"
-    XCTAssertEqual(compositor.grid.dumpDOT, expectedDumpDOT)
+    XCTAssertFalse(compositor.dropReading(direction: .rear))
+    XCTAssertTrue(compositor.dropReading(direction: .front))
+    XCTAssertEqual(compositor.cursorIndex, 0)
+    XCTAssertEqual(compositor.length, 2)
+    XCTAssertEqual(compositor.width, 2)
+    XCTAssertEqual(compositor.spans[0].maxLength, 2)
+    XCTAssertEqual(compositor.spans[0].nodeOf(length: 1)?.key, "b")
+    XCTAssertEqual(compositor.spans[0].nodeOf(length: 2)?.key, "b;c")
+    XCTAssertEqual(compositor.spans[1].maxLength, 1)
+    XCTAssertEqual(compositor.spans[1].nodeOf(length: 1)?.key, "c")
   }
 
-  // MARK: - Test Word Segmentation (SimpleLM)
+  func testSpanUnitInsertion() throws {
+    let compositor = Megrez.Compositor(lm: MockLM())
+    compositor.joinSeparator = ";"
+    compositor.insertReading("a")
+    compositor.insertReading("b")
+    compositor.insertReading("c")
+    compositor.cursorIndex = 1
+    compositor.insertReading("X")
+
+    XCTAssertEqual(compositor.cursorIndex, 2)
+    XCTAssertEqual(compositor.length, 4)
+    XCTAssertEqual(compositor.width, 4)
+    XCTAssertEqual(compositor.spans[0].maxLength, 4)
+    XCTAssertEqual(compositor.spans[0].nodeOf(length: 1)?.key, "a")
+    XCTAssertEqual(compositor.spans[0].nodeOf(length: 2)?.key, "a;X")
+    XCTAssertEqual(compositor.spans[0].nodeOf(length: 3)?.key, "a;X;b")
+    XCTAssertEqual(compositor.spans[0].nodeOf(length: 4)?.key, "a;X;b;c")
+    XCTAssertEqual(compositor.spans[1].maxLength, 3)
+    XCTAssertEqual(compositor.spans[1].nodeOf(length: 1)?.key, "X")
+    XCTAssertEqual(compositor.spans[1].nodeOf(length: 2)?.key, "X;b")
+    XCTAssertEqual(compositor.spans[1].nodeOf(length: 3)?.key, "X;b;c")
+    XCTAssertEqual(compositor.spans[2].maxLength, 2)
+    XCTAssertEqual(compositor.spans[2].nodeOf(length: 1)?.key, "b")
+    XCTAssertEqual(compositor.spans[2].nodeOf(length: 2)?.key, "b;c")
+    XCTAssertEqual(compositor.spans[3].maxLength, 1)
+    XCTAssertEqual(compositor.spans[3].nodeOf(length: 1)?.key, "c")
+  }
+
+  func testLongGridDeletion() throws {
+    let compositor = Megrez.Compositor(lm: MockLM())
+    compositor.joinSeparator = ""
+    compositor.insertReading("a")
+    compositor.insertReading("b")
+    compositor.insertReading("c")
+    compositor.insertReading("d")
+    compositor.insertReading("e")
+    compositor.insertReading("f")
+    compositor.insertReading("g")
+    compositor.insertReading("h")
+    compositor.insertReading("i")
+    compositor.insertReading("j")
+    compositor.insertReading("k")
+    compositor.insertReading("l")
+    compositor.insertReading("m")
+    compositor.insertReading("n")
+    compositor.cursorIndex = 7
+    XCTAssertTrue(compositor.dropReading(direction: .rear))
+    XCTAssertEqual(compositor.cursorIndex, 6)
+    XCTAssertEqual(compositor.length, 13)
+    XCTAssertEqual(compositor.width, 13)
+    XCTAssertEqual(compositor.spans[0].nodeOf(length: 6)?.key, "abcdef")
+    XCTAssertEqual(compositor.spans[1].nodeOf(length: 6)?.key, "bcdefh")
+    XCTAssertEqual(compositor.spans[1].nodeOf(length: 5)?.key, "bcdef")
+    XCTAssertEqual(compositor.spans[2].nodeOf(length: 6)?.key, "cdefhi")
+    XCTAssertEqual(compositor.spans[2].nodeOf(length: 5)?.key, "cdefh")
+    XCTAssertEqual(compositor.spans[3].nodeOf(length: 6)?.key, "defhij")
+    XCTAssertEqual(compositor.spans[4].nodeOf(length: 6)?.key, "efhijk")
+    XCTAssertEqual(compositor.spans[5].nodeOf(length: 6)?.key, "fhijkl")
+    XCTAssertEqual(compositor.spans[6].nodeOf(length: 6)?.key, "hijklm")
+    XCTAssertEqual(compositor.spans[7].nodeOf(length: 6)?.key, "ijklmn")
+    XCTAssertEqual(compositor.spans[8].nodeOf(length: 5)?.key, "jklmn")
+  }
+
+  func testLongGridInsertion() throws {
+    let compositor = Megrez.Compositor(lm: MockLM())
+    compositor.joinSeparator = ""
+    compositor.insertReading("a")
+    compositor.insertReading("b")
+    compositor.insertReading("c")
+    compositor.insertReading("d")
+    compositor.insertReading("e")
+    compositor.insertReading("f")
+    compositor.insertReading("g")
+    compositor.insertReading("h")
+    compositor.insertReading("i")
+    compositor.insertReading("j")
+    compositor.insertReading("k")
+    compositor.insertReading("l")
+    compositor.insertReading("m")
+    compositor.insertReading("n")
+    compositor.cursorIndex = 7
+    compositor.insertReading("X")
+    XCTAssertEqual(compositor.cursorIndex, 8)
+    XCTAssertEqual(compositor.length, 15)
+    XCTAssertEqual(compositor.width, 15)
+    XCTAssertEqual(compositor.spans[0].nodeOf(length: 6)?.key, "abcdef")
+    XCTAssertEqual(compositor.spans[1].nodeOf(length: 6)?.key, "bcdefg")
+    XCTAssertEqual(compositor.spans[2].nodeOf(length: 6)?.key, "cdefgX")
+    XCTAssertEqual(compositor.spans[3].nodeOf(length: 6)?.key, "defgXh")
+    XCTAssertEqual(compositor.spans[3].nodeOf(length: 5)?.key, "defgX")
+    XCTAssertEqual(compositor.spans[4].nodeOf(length: 6)?.key, "efgXhi")
+    XCTAssertEqual(compositor.spans[4].nodeOf(length: 5)?.key, "efgXh")
+    XCTAssertEqual(compositor.spans[4].nodeOf(length: 4)?.key, "efgX")
+    XCTAssertEqual(compositor.spans[4].nodeOf(length: 3)?.key, "efg")
+    XCTAssertEqual(compositor.spans[5].nodeOf(length: 6)?.key, "fgXhij")
+    XCTAssertEqual(compositor.spans[6].nodeOf(length: 6)?.key, "gXhijk")
+    XCTAssertEqual(compositor.spans[7].nodeOf(length: 6)?.key, "Xhijkl")
+    XCTAssertEqual(compositor.spans[8].nodeOf(length: 6)?.key, "hijklm")
+  }
 
   func testWordSegmentation() throws {
-    print("// 開始測試語句分節處理")
-    let lmTestSegmentation = SimpleLM(input: strSampleData, swapKeyValue: true)
-    let compositor = Megrez.Compositor(lm: lmTestSegmentation, separator: "")
+    let compositor = Megrez.Compositor(lm: SimpleLM(input: strSampleData, swapKeyValue: true))
+    compositor.joinSeparator = ""
+    for i in "高科技公司的年終獎金" {
+      compositor.insertReading(String(i))
+    }
+    XCTAssertEqual(compositor.walk().keys, ["高科技", "公司", "的", "年終", "獎金"])
+  }
 
-    compositor.insertReadingAtCursor(reading: "高")
-    compositor.insertReadingAtCursor(reading: "科")
-    compositor.insertReadingAtCursor(reading: "技")
-    compositor.insertReadingAtCursor(reading: "公")
-    compositor.insertReadingAtCursor(reading: "司")
-    compositor.insertReadingAtCursor(reading: "的")
-    compositor.insertReadingAtCursor(reading: "年")
-    compositor.insertReadingAtCursor(reading: "終")
-    compositor.insertReadingAtCursor(reading: "獎")
-    compositor.insertReadingAtCursor(reading: "金")
+  func testLanguageInput() throws {
+    let compositor = Megrez.Compositor(lm: SimpleLM(input: strSampleData))
+    compositor.joinSeparator = ""
+    compositor.insertReading("gao1")
+    compositor.insertReading("ji4")
+    compositor.cursorIndex = 1
+    compositor.insertReading("ke1")
+    compositor.cursorIndex = 0
+    compositor.dropReading(direction: .front)
+    compositor.insertReading("gao1")
+    compositor.cursorIndex = compositor.length
+    compositor.insertReading("gong1")
+    compositor.insertReading("si1")
+    compositor.insertReading("de5")
+    compositor.insertReading("nian2")
+    compositor.insertReading("zhong1")
+    compositor.insertReading("jiang3")
+    compositor.insertReading("jin1")
+    var result = compositor.walk()
+    XCTAssertEqual(result.values, ["高科技", "公司", "的", "年中", "獎金"])
+    XCTAssertEqual(compositor.length, 10)
+    compositor.cursorIndex = 7
+    compositor.fixNodeSelectedCandidate("年終", at: 7)
+    result = compositor.walk()
+    XCTAssertEqual(result.values, ["高科技", "公司", "的", "年終", "獎金"])
+  }
 
-    let walked = Array(compositor.reverseWalk(at: compositor.grid.width, score: 0.0).reversed())
+  func testOverrideOverlappingNodes() throws {
+    let compositor = Megrez.Compositor(lm: SimpleLM(input: strSampleData))
+    compositor.joinSeparator = ""
+    compositor.insertReading("gao1")
+    compositor.insertReading("ke1")
+    compositor.insertReading("ji4")
+    compositor.cursorIndex = 1
+    compositor.fixNodeSelectedCandidate("膏", at: compositor.cursorIndex)
+    var result = compositor.walk()
+    XCTAssertEqual(result.values, ["膏", "科技"])
+    compositor.fixNodeSelectedCandidate("高科技", at: 2)
+    result = compositor.walk()
+    XCTAssertEqual(result.values, ["高科技"])
+    compositor.fixNodeSelectedCandidate("膏", at: 1)
+    result = compositor.walk()
+    XCTAssertEqual(result.values, ["膏", "科技"])
 
-    var segmented: [String] = []
-    for phrase in walked {
-      if let key = phrase.node?.currentKeyValue.key {
-        segmented.append(key)
+    compositor.fixNodeSelectedCandidate("柯", at: 2)
+    result = compositor.walk()
+    XCTAssertEqual(result.values, ["膏", "柯", "際"])
+
+    compositor.fixNodeSelectedCandidate("暨", at: 3)
+    result = compositor.walk()
+    XCTAssertEqual(result.values, ["膏", "柯", "暨"])
+
+    compositor.fixNodeSelectedCandidate("高科技", at: 3)
+    result = compositor.walk()
+    XCTAssertEqual(result.values, ["高科技"])
+  }
+
+  func testOverrideReset() throws {
+    let compositor = Megrez.Compositor(
+      lm: SimpleLM(input: strSampleData + "zhong1jiang3 終講 -11.0\n" + "jiang3jin1 槳襟 -11.0\n"))
+    compositor.joinSeparator = ""
+    compositor.insertReading("nian2")
+    compositor.insertReading("zhong1")
+    compositor.insertReading("jiang3")
+    compositor.insertReading("jin1")
+    var result = compositor.walk()
+    XCTAssertEqual(result.values, ["年中", "獎金"])
+
+    compositor.fixNodeSelectedCandidate("終講", at: 2)
+    result = compositor.walk()
+    XCTAssertEqual(result.values, ["年", "終講", "金"])
+
+    compositor.fixNodeSelectedCandidate("槳襟", at: 3)
+    result = compositor.walk()
+    XCTAssertEqual(result.values, ["年中", "槳襟"])
+
+    compositor.fixNodeSelectedCandidate("年終", at: 1)
+    result = compositor.walk()
+    XCTAssertEqual(result.values, ["年終", "槳襟"])
+  }
+
+  func testCandidateDisambiguation() throws {
+    let compositor = Megrez.Compositor(lm: SimpleLM(input: strEmojiSampleData))
+    compositor.joinSeparator = ""
+    compositor.insertReading("gao1")
+    compositor.insertReading("re4")
+    compositor.insertReading("huo3")
+    compositor.insertReading("yan4")
+    compositor.insertReading("wei2")
+    compositor.insertReading("xian3")
+    var result = compositor.walk()
+    XCTAssertEqual(result.values, ["高熱", "火焰", "危險"])
+
+    compositor.fixNodeSelectedCandidatePair(.init(key: "huo3", value: "🔥"), at: 2)
+    result = compositor.walk()
+    XCTAssertEqual(result.values, ["高熱", "🔥", "焰", "危險"])
+
+    compositor.fixNodeSelectedCandidatePair(.init(key: "huo3yan4", value: "🔥"), at: 3)
+    result = compositor.walk()
+    XCTAssertEqual(result.values, ["高熱", "🔥", "危險"])
+  }
+
+  func testStressBenchmark_MachineGun() throws {
+    // 測試結果發現：只敲入完全雷同的某個漢字的話，想保證使用體驗就得讓一個組字區最多塞 20 字。
+    // 但是呢，日常敲字都是在敲人話，不會出現這種情形，所以組字區內塞 40 字都沒問題。
+    // 天權星引擎目前暫時沒有條件引入 Gramambular 2 的繁天頂（Vertex）算法，只能先這樣了。
+    // 竊以為「讓組字區內容無限擴張」是個偽需求，畢竟組字區太長了的話編輯起來也很麻煩。
+    NSLog("// Stress test preparation begins.")
+    let compositor = Megrez.Compositor(lm: SimpleLM(input: strStressData))
+    for _ in 0..<20 {  // 這個測試最多只能塞 20 字，否則會慢死。
+      compositor.insertReading("yi1")
+    }
+    NSLog("// Stress test started.")
+    let startTime = CFAbsoluteTimeGetCurrent()
+    _ = compositor.walk()
+    let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
+    NSLog("// Stress test elapsed: \(timeElapsed)s.")
+  }
+
+  func testStressBenchmark_SpeakLikeAHuman() throws {
+    // 與前一個測試相同，但這次測試的是正常人講話。可以看到在這種情況下目前的算法還是比較耐操的。
+    NSLog("// Stress test preparation begins.")
+    let compositor = Megrez.Compositor(lm: SimpleLM(input: strSampleData))
+    let testMaterial: [String] = ["gao1", "ke1", "ji4", "gong1", "si1", "de5", "nian2", "zhong1", "jiang3", "jin1"]
+    for _ in 0..<114 {  // 都敲出第一個野獸常數了，再不夠用就不像話了。
+      for neta in testMaterial {
+        compositor.insertReading(neta)
       }
     }
-    print(segmented)
-    let correctResult = ["高科技", "公司", "的", "年終", "獎金"]
-    print(" - 上述列印結果理應於下面這行一致：")
-    print(correctResult)
-
-    XCTAssertEqual(segmented, correctResult)
+    NSLog("// Stress test started.")
+    let startTime = CFAbsoluteTimeGetCurrent()
+    _ = compositor.walk()
+    let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
+    NSLog("// Stress test elapsed: \(timeElapsed)s.")
   }
 }
-
-// MARK: - 用以測試的語言模型（簡單範本型）
-
-class SimpleLM: Megrez.LanguageModel {
-  var mutDatabase: [String: [Megrez.Unigram]] = [:]
-  init(input: String, swapKeyValue: Bool = false) {
-    super.init()
-    let sstream = input.components(separatedBy: "\n")
-    for line in sstream {
-      if line.isEmpty || line.hasPrefix("#") {
-        continue
-      }
-      let linestream = line.split(separator: " ")
-      let col0 = String(linestream[0])
-      let col1 = String(linestream[1])
-      let col2 = Double(linestream[2]) ?? 0.0
-      var u = Megrez.Unigram(keyValue: Megrez.KeyValuePaired(), score: 0)
-      if swapKeyValue {
-        u.keyValue.key = col1
-        u.keyValue.value = col0
-      } else {
-        u.keyValue.key = col0
-        u.keyValue.value = col1
-      }
-      u.score = col2
-      mutDatabase[u.keyValue.key, default: []].append(u)
-    }
-  }
-
-  override func unigramsFor(key: String) -> [Megrez.Unigram] {
-    if let f = mutDatabase[key] {
-      return f
-    } else {
-      return [Megrez.Unigram]().sorted { $0.score > $1.score }
-    }
-  }
-
-  override func hasUnigramsFor(key: String) -> Bool {
-    mutDatabase.keys.contains(key)
-  }
-}
-
-// MARK: - 用以測試的詞頻數據
-
-private let strSampleData = #"""
-#
-# 下述詞頻資料取自 libTaBE 資料庫 (http://sourceforge.net/projects/libtabe/)
-# (2002 最終版). 該專案於 1999 年由 Pai-Hsiang Hsiao 發起、以 BSD 授權發行。
-#
-ni3 你 -6.000000 // Non-LibTaBE
-zhe4 這 -6.000000 // Non-LibTaBE
-yang4 樣 -6.000000 // Non-LibTaBE
-si1 絲 -9.495858
-si1 思 -9.006414
-si1 私 -99.000000
-si1 斯 -8.091803
-si1 司 -99.000000
-si1 嘶 -13.513987
-si1 撕 -12.259095
-gao1 高 -7.171551
-ke1 顆 -10.574273
-ke1 棵 -11.504072
-ke1 刻 -10.450457
-ke1 科 -7.171052
-ke1 柯 -99.000000
-gao1 膏 -11.928720
-gao1 篙 -13.624335
-gao1 糕 -12.390804
-de5 的 -3.516024
-di2 的 -3.516024
-di4 的 -3.516024
-zhong1 中 -5.809297
-de5 得 -7.427179
-gong1 共 -8.381971
-gong1 供 -8.501463
-ji4 既 -99.000000
-jin1 今 -8.034095
-gong1 紅 -8.858181
-ji4 際 -7.608341
-ji4 季 -99.000000
-jin1 金 -7.290109
-ji4 騎 -10.939895
-zhong1 終 -99.000000
-ji4 記 -99.000000
-ji4 寄 -99.000000
-jin1 斤 -99.000000
-ji4 繼 -9.715317
-ji4 計 -7.926683
-ji4 暨 -8.373022
-zhong1 鐘 -9.877580
-jin1 禁 -10.711079
-gong1 公 -7.877973
-gong1 工 -7.822167
-gong1 攻 -99.000000
-gong1 功 -99.000000
-gong1 宮 -99.000000
-zhong1 鍾 -9.685671
-ji4 繫 -10.425662
-gong1 弓 -99.000000
-gong1 恭 -99.000000
-ji4 劑 -8.888722
-ji4 祭 -10.204425
-jin1 浸 -11.378321
-zhong1 盅 -99.000000
-ji4 忌 -99.000000
-ji4 技 -8.450826
-jin1 筋 -11.074890
-gong1 躬 -99.000000
-ji4 冀 -12.045357
-zhong1 忠 -99.000000
-ji4 妓 -99.000000
-ji4 濟 -9.517568
-ji4 薊 -12.021587
-jin1 巾 -99.000000
-jin1 襟 -12.784206
-nian2 年 -6.086515
-jiang3 講 -9.164384
-jiang3 獎 -8.690941
-jiang3 蔣 -10.127828
-nian2 黏 -11.336864
-nian2 粘 -11.285740
-jiang3 槳 -12.492933
-gong1si1 公司 -6.299461
-ke1ji4 科技 -6.736613
-ji4gong1 濟公 -13.336653
-jiang3jin1 獎金 -10.344678
-nian2zhong1 年終 -11.668947
-nian2zhong1 年中 -11.373044
-gao1ke1ji4 高科技 -9.842421
-zhe4yang4 這樣 -6.000000 // Non-LibTaBE
-ni3zhe4 你這 -9.000000 // Non-LibTaBE
-jiao4 教 -3.676169
-jiao4 較 -3.24869962
-jiao4yu4 教育 -3.32220565
-yu4 育 -3.30192952
-"""#

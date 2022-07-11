@@ -17,7 +17,7 @@ Megrez Engine is a module made for processing lingual data of an input method. T
 
 以 KeyHandler 為例：
 ```swift
-class KeyHandler: NSObject {
+class KeyHandler {
   // 先設定好變數
   let compositor: Megrez.Compositor = .init()
   ...
@@ -40,7 +40,7 @@ class ctlInputMethod: IMKInputController {
 ```swift
   /// 組字器。
   /// - Parameters:
-  ///   - lm: 語言模型。可以是任何基於 Megrez.LanguageModel 的衍生型別。
+  ///   - lm: 語言模型。可以是任何基於 Megrez.LangModel 的衍生型別。
   ///   - length: 指定該組字器內可以允許的最大詞長，預設為 10 字。
   ///   - separator: 多字讀音鍵當中用以分割漢字讀音的記號，預設為空。
   let compositor: Megrez.Compositor = .init(lm: lmTest, length: 13, separator: "-")
@@ -52,10 +52,10 @@ class ctlInputMethod: IMKInputController {
 
 #### // 1. 準備用作語言模型的專用型別
 
-首先，Megrez 內建的 LanguageModel 型別是遠遠不夠用的，只能說是個類似於 protocol 一樣的存在。你需要自己單獨寫一個新的衍生型別：
+首先，Megrez 內建的 LangModel 型別是遠遠不夠用的，只能說是個類似於 protocol 一樣的存在。你需要自己單獨寫一個新的衍生型別：
 
 ```swift
-class ExampleLM: Megrez.LanguageModel {
+class ExampleLM: Megrez.LangModel {
 ...
   override func unigramsFor(key: String) -> [Megrez.Unigram] {
     ...
@@ -79,21 +79,16 @@ MegrezTests.swift 檔案內的 SimpleLM 可以作為範例。
 這裡只講幾個常用函式：
 
 - 游標位置 `compositor.cursorIndex` 是可以賦值與取值的動態變數，且會在賦值內容為超出位置範圍的數值時自動修正。初期值為 0。
-- `compositor.insertReadingAtCursor(reading: "gao1")` 可以在當前的游標位置插入讀音「gao1」。
-- `compositor.deleteReadingToTheFrontOfCursor()` 的作用是：朝著往文字輸入方向、砍掉一個與游標相鄰的讀音。反之，`deleteReadingAtTheRearOfCursor` 則朝著與文字輸入方向相反的方向、砍掉一個與游標相鄰的讀音。
+- `compositor.insertReading("gao1")` 可以在當前的游標位置插入讀音「gao1」。
+- `compositor.dropReading(direction: .front)` 的作用是：朝著往文字輸入方向、砍掉一個與游標相鄰的讀音。反之，`dropReading(direction: .rear)` 則朝著與文字輸入方向相反的方向、砍掉一個與游標相鄰的讀音。
   - 在威注音的術語體系當中，「文字輸入方向」為向前（Front）、與此相反的方向為向後（Rear）。
-- `compositor.grid.fixNodeSelectedCandidate(location: ?, value: "??")` 用來根據輸入法選中的候選字詞、據此更新當前游標位置選中的候選字詞節點當中的候選字詞。
+- `compositor.grid.fixNodeSelectedCandidate("??", at: ?)` 用來根據輸入法選中的候選字詞、據此更新當前游標位置選中的候選字詞節點當中的候選字詞。
 
 輸入完內容之後，可以聲明一個用來接收結果的變數：
 
 ```swift
   /// 對已給定的軌格按照給定的位置與條件進行正向爬軌。
-  /// - Parameters:
-  ///   - at: 開始爬軌的位置。
-  ///   - score: 給定累計權重，非必填參數。預設值為 0。
-  ///   - joinedPhrase: 用以統計累計長詞的內部參數，請勿主動使用。
-  ///   - longPhrases: 用以統計累計長詞的內部參數，請勿主動使用。
-  var walked = compositor.walk(at: 0, score: 0.0)
+  var walked = compositor.walk()
 ```
 
 MegrezTests.swift 是輸入了很多內容之後再 walk 的。實際上一款輸入法會在你每次插入讀音或刪除讀音的時候都重新 walk。那些處於候選字詞鎖定狀態的節點不會再受到之後的 walk 的行為的影響，但除此之外的節點會因為每次 walk 而可能各自的候選字詞會出現自動變化。如果給了 nodesLimit 一個非零的數值的話，則 walk 的範圍外的節點不會受到影響。
@@ -101,11 +96,15 @@ MegrezTests.swift 是輸入了很多內容之後再 walk 的。實際上一款�
 walk 之後的取值的方法及利用方法可以有很多種。這裡有其中的一個：
 
 ```swift
-    var composed: [String] = []
+    var composed: [String] = walked.map(\.node.currentPair.value)
+    print(composed)
+```
+
+類似於：
+
+```swift
     for phrase in walked {
-      if let node = phrase.node {
-        composed.append(node.currentKeyValue.value)
-      }
+        composed.append(phrase.node.currentKeyValue.value)
     }
     print(composed)
 ```

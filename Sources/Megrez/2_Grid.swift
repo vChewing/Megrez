@@ -192,13 +192,13 @@ extension Megrez {
       Array(Set(nodesBeginningAt(location: location) + nodesCrossingOrEndingAt(location: location)))
     }
 
-    /// 將給定位置的節點的候選字詞改為與給定的字串一致的候選字詞。
+    /// 使用給定的候選字字串，將給定位置的節點的候選字詞改為與給定的字串一致的候選字詞。
     ///
-    /// 該函式可以僅用作過程函式。
+    /// 該函式可以僅用作過程函式，但準確度不如用於處理候選字鍵值配對的 fixNodeWithCandidate()。
     /// - Parameters:
     ///   - location: 位置。
     ///   - value: 給定字串。
-    @discardableResult public func fixNodeSelectedCandidate(_ value: String, at location: Int) -> NodeAnchor {
+    @discardableResult public func fixNodeWithCandidateLiteral(_ value: String, at location: Int) -> NodeAnchor {
       let location = abs(location)  // 防呆
       var node = NodeAnchor()
       for theAnchor in nodesOverlappedAt(location: location) {
@@ -216,13 +216,13 @@ extension Megrez {
       return node
     }
 
-    /// 將給定位置的節點的候選字詞改為與給定的字串一致的候選字詞。
+    /// 使用給定的候選字鍵值配對，將給定位置的節點的候選字詞改為與給定的字串一致的候選字詞。
     ///
     /// 該函式可以僅用作過程函式。
     /// - Parameters:
     ///   - location: 位置。
-    ///   - value: 給定字串。
-    @discardableResult public func fixNodeSelectedCandidatePair(_ pair: KeyValuePaired, at location: Int) -> NodeAnchor
+    ///   - value: 給定候選字鍵值配對。
+    @discardableResult public func fixNodeWithCandidate(_ pair: KeyValuePaired, at location: Int) -> NodeAnchor
     {
       let location = abs(location)  // 防呆
       var node = NodeAnchor()

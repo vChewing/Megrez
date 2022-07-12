@@ -31,7 +31,7 @@ extension Megrez {
     /// 給被丟掉的節點路徑施加的負權重。
     private let kDroppedPathScore: Double = -999
     /// 該組字器的游標位置。
-    public var cursorIndex: Int = 0 { didSet { cursorIndex = max(0, min(cursorIndex, readings.count)) } }
+    public var cursor: Int = 0 { didSet { cursor = max(0, min(cursor, readings.count)) } }
     /// 該組字器的讀音陣列。
     private(set) var readings: [String] = []
     /// 該組字器所使用的語言模型。
@@ -57,7 +57,7 @@ extension Megrez {
     /// 組字器自我清空專用函式。
     override public func clear() {
       super.clear()
-      cursorIndex = 0
+      cursor = 0
       readings.removeAll()
     }
 
@@ -66,10 +66,10 @@ extension Megrez {
     ///   - reading: 要插入的讀音。
     @discardableResult public func insertReading(_ reading: String) -> Bool {
       guard !reading.isEmpty, langModel.hasUnigramsFor(key: reading) else { return false }
-      readings.insert(reading, at: cursorIndex)
-      expandGridByOneAt(location: cursorIndex)
+      readings.insert(reading, at: cursor)
+      expandGridByOneAt(location: cursor)
       build()
-      cursorIndex += 1
+      cursor += 1
       return true
     }
 
@@ -80,12 +80,12 @@ extension Megrez {
     /// - Returns: 該操作是否順利完成。
     @discardableResult public func dropReading(direction: TypingDirection) -> Bool {
       let isBackSpace = direction == .rear
-      if cursorIndex == (isBackSpace ? 0 : readings.count) {
+      if cursor == (isBackSpace ? 0 : readings.count) {
         return false
       }
-      readings.remove(at: cursorIndex - (isBackSpace ? 1 : 0))
-      cursorIndex -= (isBackSpace ? 1 : 0)
-      shrinkGridByOneAt(location: cursorIndex)
+      readings.remove(at: cursor - (isBackSpace ? 1 : 0))
+      cursor -= (isBackSpace ? 1 : 0)
+      shrinkGridByOneAt(location: cursor)
       build()
       return true
     }
@@ -101,8 +101,8 @@ extension Megrez {
       }
 
       for _ in 0..<count {
-        if cursorIndex > 0 {
-          cursorIndex -= 1
+        if cursor > 0 {
+          cursor -= 1
         }
         if !readings.isEmpty {
           readings.removeFirst()
@@ -224,8 +224,8 @@ extension Megrez {
 
     private func build() {
       let itrBegin: Int =
-        (cursorIndex < maxBuildSpanLength) ? 0 : cursorIndex - maxBuildSpanLength
-      let itrEnd: Int = min(cursorIndex + maxBuildSpanLength, readings.count)
+        (cursor < maxBuildSpanLength) ? 0 : cursor - maxBuildSpanLength
+      let itrEnd: Int = min(cursor + maxBuildSpanLength, readings.count)
 
       for p in itrBegin..<itrEnd {
         for q in 1..<maxBuildSpanLength {

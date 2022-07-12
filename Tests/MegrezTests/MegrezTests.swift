@@ -330,7 +330,7 @@ final class MegrezTests: XCTestCase {
     XCTAssertEqual(compositor.walk().keys, ["高科技", "公司", "的", "年終", "獎金"])
   }
 
-  func testLanguageInput() throws {
+  func testLanguageInputAndCursorJump() throws {
     let compositor = Megrez.Compositor(lm: SimpleLM(input: strSampleData))
     compositor.joinSeparator = ""
     compositor.insertReading("gao1")
@@ -348,13 +348,37 @@ final class MegrezTests: XCTestCase {
     compositor.insertReading("zhong1")
     compositor.insertReading("jiang3")
     compositor.insertReading("jin1")
-    var result = compositor.walk()
-    XCTAssertEqual(result.values, ["高科技", "公司", "的", "年中", "獎金"])
+    compositor.walk()
+    XCTAssertEqual(compositor.walkedAnchors.values, ["高科技", "公司", "的", "年中", "獎金"])
     XCTAssertEqual(compositor.length, 10)
-    compositor.cursor = 7
-    compositor.fixNodeWithCandidateLiteral("年終", at: 7)
-    result = compositor.walk()
-    XCTAssertEqual(result.values, ["高科技", "公司", "的", "年終", "獎金"])
+    XCTAssert(!compositor.fixNodeWithCandidate(.init(key: "nian2zhong1", value: "年終"), at: 6).isEmpty)
+    XCTAssert(!compositor.fixNodeWithCandidate(.init(key: "nian2zhong1", value: "年終"), at: 7).isEmpty)
+    compositor.cursor = 8
+    XCTAssert(!compositor.fixNodeWithCandidate(.init(key: "nian2zhong1", value: "年終"), at: compositor.cursor).isEmpty)
+    compositor.walk()
+    XCTAssertEqual(compositor.walkedAnchors.values, ["高科技", "公司", "的", "年終", "獎金"])
+    XCTAssertTrue(compositor.jumpCursorBySpan(to: .rear))
+    XCTAssertEqual(compositor.cursor, 6)
+    XCTAssertTrue(compositor.jumpCursorBySpan(to: .rear))
+    XCTAssertEqual(compositor.cursor, 5)
+    XCTAssertTrue(compositor.jumpCursorBySpan(to: .rear))
+    XCTAssertEqual(compositor.cursor, 3)
+    XCTAssertTrue(compositor.jumpCursorBySpan(to: .rear))
+    XCTAssertEqual(compositor.cursor, 0)
+    XCTAssertFalse(compositor.jumpCursorBySpan(to: .rear))
+    XCTAssertEqual(compositor.cursor, 0)
+    XCTAssertTrue(compositor.jumpCursorBySpan(to: .front))
+    XCTAssertEqual(compositor.cursor, 3)
+    XCTAssertTrue(compositor.jumpCursorBySpan(to: .front))
+    XCTAssertEqual(compositor.cursor, 5)
+    XCTAssertTrue(compositor.jumpCursorBySpan(to: .front))
+    XCTAssertEqual(compositor.cursor, 6)
+    XCTAssertTrue(compositor.jumpCursorBySpan(to: .front))
+    XCTAssertEqual(compositor.cursor, 8)
+    XCTAssertTrue(compositor.jumpCursorBySpan(to: .front))
+    XCTAssertEqual(compositor.cursor, 10)
+    XCTAssertFalse(compositor.jumpCursorBySpan(to: .front))
+    XCTAssertEqual(compositor.cursor, 10)
   }
 
   func testOverrideOverlappingNodes() throws {
@@ -432,7 +456,7 @@ final class MegrezTests: XCTestCase {
     compositor.fixNodeWithCandidate(.init(key: "huo3yan4", value: "🔥"), at: 3)
     result = compositor.walk()
     XCTAssertEqual(result.values, ["高熱", "🔥", "危險", "蜜蜂"])
-    
+
     compositor.cursor = compositor.width
 
     compositor.fixNodeWithCandidate(.init(key: "mi4feng1", value: "🐝"), at: compositor.cursor)

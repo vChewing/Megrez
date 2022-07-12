@@ -36,12 +36,49 @@ extension Megrez {
     private(set) var readings: [String] = []
     /// 該組字器所使用的語言模型。
     private var langModel: LangModelProtocol
+    /// 允許查詢當前游標位置屬於第幾個幅位座標（從 0 開始算）。
+    private(set) var cursorRegionMap: [Int: Int] = .init()
+    private(set) var walkedAnchors: [Megrez.NodeAnchor] = []  // 用以記錄爬過的節錨的陣列
 
     /// 公開：多字讀音鍵當中用以分割漢字讀音的記號，預設為空。
     public var joinSeparator: String = "-"
 
     /// 公開：該組字器的長度，也就是內建漢字讀音的數量（唯讀）。
     public var length: Int { readings.count }
+
+    /// 按幅位來前後移動游標。
+    /// - Parameter direction: 移動方向
+    /// - Returns: 該操作是否順利完成。
+    @discardableResult public func jumpCursorBySpan(to direction: TypingDirection) -> Bool {
+      switch direction {
+        case .front:
+          if cursor == width { return false }
+        case .rear:
+          if cursor == 0 { return false }
+      }
+      guard let currentRegion = cursorRegionMap[cursor] else { return false }
+
+      let aRegionForward = max(currentRegion - 1, 0)
+      let currentRegionBorderRear: Int = walkedAnchors[0..<currentRegion].map(\.spanLength).reduce(0, +)
+      switch cursor {
+        case currentRegionBorderRear:
+          switch direction {
+            case .front:
+              if currentRegion > walkedAnchors.count { cursor = readings.count }
+              else { cursor = walkedAnchors[0...currentRegion].map(\.spanLength).reduce(0, +) }
+            case .rear:
+              cursor = walkedAnchors[0..<aRegionForward].map(\.spanLength).reduce(0, +)
+          }
+        default:
+          switch direction {
+            case .front:
+              cursor = currentRegionBorderRear + walkedAnchors[currentRegion].spanLength
+            case .rear:
+              cursor = currentRegionBorderRear
+          }
+      }
+      return true
+    }
 
     /// 組字器。
     /// - Parameters:
@@ -59,6 +96,7 @@ extension Megrez {
       super.clear()
       cursor = 0
       readings.removeAll()
+      walkedAnchors.removeAll()
     }
 
     /// 在游標位置插入給定的讀音。
@@ -96,32 +134,28 @@ extension Megrez {
     /// 將該位置要溢出的敲字內容遞交之後、再執行這個函式。
     @discardableResult public func removeHeadReadings(count: Int) -> Bool {
       let count = abs(count)  // 防呆
-      if count > length {
-        return false
-      }
-
+      if count > length { return false }
       for _ in 0..<count {
-        if cursor > 0 {
-          cursor -= 1
-        }
+        cursor = max(cursor - 1, 0)
         if !readings.isEmpty {
           readings.removeFirst()
           resizeGridByOneAt(location: 0, to: .shrink)
         }
         build()
       }
-
       return true
     }
 
     /// 對已給定的軌格按照給定的位置與條件進行正向爬軌。
     /// - Returns: 一個包含有效結果的節錨陣列。
-    public func walk() -> [NodeAnchor] {
+    @discardableResult public func walk() -> [NodeAnchor] {
       let newLocation = width
       // 這裡把所有空節點都過濾掉。
-      return Array(
+      walkedAnchors = Array(
         reverseWalk(at: newLocation).reversed()
       ).lazy.filter { !$0.isEmpty }
+      updateCursorJumpingTables(walkedAnchors)
+      return walkedAnchors
     }
 
     // MARK: - Private functions
@@ -243,6 +277,20 @@ extension Megrez {
 
     private func join(slice arrSlice: ArraySlice<String>, separator: String) -> String {
       arrSlice.joined(separator: separator)
+    }
+
+    internal func updateCursorJumpingTables(_ anchors: [NodeAnchor]) {
+      var cursorRegionMapDict = [Int: Int]()
+      var counter = 0
+      for (i, anchor) in anchors.enumerated() {
+        for _ in 0..<anchor.spanLength {
+          cursorRegionMapDict[counter] = i
+          counter += 1
+        }
+      }
+      cursorRegionMapDict[counter] = anchors.count
+      cursorRegionMapDict[-1] = 0  // 防呆
+      cursorRegionMap = cursorRegionMapDict
     }
   }
 }

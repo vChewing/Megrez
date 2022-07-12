@@ -352,7 +352,7 @@ final class MegrezTests: XCTestCase {
     XCTAssertEqual(result.values, ["高科技", "公司", "的", "年中", "獎金"])
     XCTAssertEqual(compositor.length, 10)
     compositor.cursorIndex = 7
-    compositor.fixNodeSelectedCandidate("年終", at: 7)
+    compositor.fixNodeWithCandidateLiteral("年終", at: 7)
     result = compositor.walk()
     XCTAssertEqual(result.values, ["高科技", "公司", "的", "年終", "獎金"])
   }
@@ -364,25 +364,25 @@ final class MegrezTests: XCTestCase {
     compositor.insertReading("ke1")
     compositor.insertReading("ji4")
     compositor.cursorIndex = 1
-    compositor.fixNodeSelectedCandidate("膏", at: compositor.cursorIndex)
+    compositor.fixNodeWithCandidateLiteral("膏", at: compositor.cursorIndex)
     var result = compositor.walk()
     XCTAssertEqual(result.values, ["膏", "科技"])
-    compositor.fixNodeSelectedCandidate("高科技", at: 2)
+    compositor.fixNodeWithCandidateLiteral("高科技", at: 2)
     result = compositor.walk()
     XCTAssertEqual(result.values, ["高科技"])
-    compositor.fixNodeSelectedCandidate("膏", at: 1)
+    compositor.fixNodeWithCandidateLiteral("膏", at: 1)
     result = compositor.walk()
     XCTAssertEqual(result.values, ["膏", "科技"])
 
-    compositor.fixNodeSelectedCandidate("柯", at: 2)
+    compositor.fixNodeWithCandidateLiteral("柯", at: 2)
     result = compositor.walk()
     XCTAssertEqual(result.values, ["膏", "柯", "際"])
 
-    compositor.fixNodeSelectedCandidate("暨", at: 3)
+    compositor.fixNodeWithCandidateLiteral("暨", at: 3)
     result = compositor.walk()
     XCTAssertEqual(result.values, ["膏", "柯", "暨"])
 
-    compositor.fixNodeSelectedCandidate("高科技", at: 3)
+    compositor.fixNodeWithCandidateLiteral("高科技", at: 3)
     result = compositor.walk()
     XCTAssertEqual(result.values, ["高科技"])
   }
@@ -398,15 +398,15 @@ final class MegrezTests: XCTestCase {
     var result = compositor.walk()
     XCTAssertEqual(result.values, ["年中", "獎金"])
 
-    compositor.fixNodeSelectedCandidate("終講", at: 2)
+    compositor.fixNodeWithCandidateLiteral("終講", at: 2)
     result = compositor.walk()
     XCTAssertEqual(result.values, ["年", "終講", "金"])
 
-    compositor.fixNodeSelectedCandidate("槳襟", at: 3)
+    compositor.fixNodeWithCandidateLiteral("槳襟", at: 3)
     result = compositor.walk()
     XCTAssertEqual(result.values, ["年中", "槳襟"])
 
-    compositor.fixNodeSelectedCandidate("年終", at: 1)
+    compositor.fixNodeWithCandidateLiteral("年終", at: 1)
     result = compositor.walk()
     XCTAssertEqual(result.values, ["年終", "槳襟"])
   }
@@ -425,21 +425,21 @@ final class MegrezTests: XCTestCase {
     var result = compositor.walk()
     XCTAssertEqual(result.values, ["高熱", "火焰", "危險", "蜜蜂"])
 
-    compositor.fixNodeSelectedCandidatePair(.init(key: "huo3", value: "🔥"), at: 2)
+    compositor.fixNodeWithCandidate(.init(key: "huo3", value: "🔥"), at: 2)
     result = compositor.walk()
     XCTAssertEqual(result.values, ["高熱", "🔥", "焰", "危險", "蜜蜂"])
 
-    compositor.fixNodeSelectedCandidatePair(.init(key: "huo3yan4", value: "🔥"), at: 3)
+    compositor.fixNodeWithCandidate(.init(key: "huo3yan4", value: "🔥"), at: 3)
     result = compositor.walk()
     XCTAssertEqual(result.values, ["高熱", "🔥", "危險", "蜜蜂"])
     
     compositor.cursorIndex = compositor.width
 
-    compositor.fixNodeSelectedCandidatePair(.init(key: "mi4feng1", value: "🐝"), at: compositor.cursorIndex)
+    compositor.fixNodeWithCandidate(.init(key: "mi4feng1", value: "🐝"), at: compositor.cursorIndex)
     result = compositor.walk()
     XCTAssertEqual(result.values, ["高熱", "🔥", "危險", "🐝"])
 
-    compositor.fixNodeSelectedCandidatePair(.init(key: "feng1", value: "🐝"), at: compositor.cursorIndex)
+    compositor.fixNodeWithCandidate(.init(key: "feng1", value: "🐝"), at: compositor.cursorIndex)
     result = compositor.walk()
     XCTAssertEqual(result.values, ["高熱", "🔥", "危險", "蜜", "🐝"])
   }

@@ -26,6 +26,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 extension Megrez {
   /// 軌格，會被組字器作為原始型別來繼承。
   public class Grid {
+    /// 軌格增減行為。
+    public enum ResizeBehavior { case expand, shrink }
     /// 幅位陣列。
     private(set) var spans: [Megrez.SpanUnit]
 
@@ -82,29 +84,19 @@ extension Megrez {
       return n != nil && key == n?.key
     }
 
-    /// 在該軌格的指定位置擴增一個幅位。
+    /// 在該軌格的指定位置擴增或減少一個幅位。
     /// - Parameters:
     ///   - location: 位置。
-    public func expandGridByOneAt(location: Int) {
-      let location = abs(location)  // 防呆
-      spans.insert(SpanUnit(), at: location)
-      if location == 0 || location == spans.count { return }
-      for i in 0..<location {
-        // zaps overlapping spans
-        spans[i].dropNodesBeyond(length: location - i)
+    public func resizeGridByOneAt(location: Int, to behavior: ResizeBehavior) {
+      let location = max(0, min(width, location))  // 防呆
+      switch behavior {
+        case .expand:
+          spans.insert(SpanUnit(), at: location)
+          if [spans.count, 0].contains(location) { return }
+        case .shrink:
+          if location >= spans.count { return }
+          spans.remove(at: location)
       }
-    }
-
-    /// 在該軌格的指定位置減少一個幅位。
-    /// - Parameters:
-    ///   - location: 位置。
-    public func shrinkGridByOneAt(location: Int) {
-      let location = abs(location)  // 防呆
-      if location >= spans.count {
-        return
-      }
-
-      spans.remove(at: location)
       for i in 0..<location {
         // zaps overlapping spans
         spans[i].dropNodesBeyond(length: location - i)

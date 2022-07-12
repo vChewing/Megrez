@@ -67,7 +67,7 @@ extension Megrez {
     @discardableResult public func insertReading(_ reading: String) -> Bool {
       guard !reading.isEmpty, langModel.hasUnigramsFor(key: reading) else { return false }
       readings.insert(reading, at: cursor)
-      expandGridByOneAt(location: cursor)
+      resizeGridByOneAt(location: cursor, to: .expand)
       build()
       cursor += 1
       return true
@@ -85,7 +85,7 @@ extension Megrez {
       }
       readings.remove(at: cursor - (isBackSpace ? 1 : 0))
       cursor -= (isBackSpace ? 1 : 0)
-      shrinkGridByOneAt(location: cursor)
+      resizeGridByOneAt(location: cursor, to: .shrink)
       build()
       return true
     }
@@ -106,7 +106,7 @@ extension Megrez {
         }
         if !readings.isEmpty {
           readings.removeFirst()
-          shrinkGridByOneAt(location: 0)
+          resizeGridByOneAt(location: 0, to: .shrink)
         }
         build()
       }

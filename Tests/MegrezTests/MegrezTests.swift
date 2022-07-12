@@ -64,11 +64,11 @@ final class MegrezTests: XCTestCase {
     let compositor = Megrez.Compositor(lm: MockLM())
     compositor.joinSeparator = ""
     XCTAssertEqual(compositor.joinSeparator, "")
-    XCTAssertEqual(compositor.cursorIndex, 0)
+    XCTAssertEqual(compositor.cursor, 0)
     XCTAssertEqual(compositor.length, 0)
 
     XCTAssertTrue(compositor.insertReading("a"))
-    XCTAssertEqual(compositor.cursorIndex, 1)
+    XCTAssertEqual(compositor.cursor, 1)
     XCTAssertEqual(compositor.length, 1)
     XCTAssertEqual(compositor.width, 1)
     XCTAssertEqual(compositor.spans[0].maxLength, 1)
@@ -78,8 +78,8 @@ final class MegrezTests: XCTestCase {
     XCTAssertEqual(zeroNode.key, "a")
 
     XCTAssertTrue(compositor.dropReading(direction: .rear))
-    XCTAssertEqual(compositor.cursorIndex, 0)
-    XCTAssertEqual(compositor.cursorIndex, 0)
+    XCTAssertEqual(compositor.cursor, 0)
+    XCTAssertEqual(compositor.cursor, 0)
     XCTAssertEqual(compositor.width, 0)
   }
 
@@ -107,7 +107,7 @@ final class MegrezTests: XCTestCase {
     XCTAssertTrue(compositor.dropReading(direction: .rear))
     XCTAssertEqual(compositor.length, 0)
     compositor.insertReading("foo")
-    compositor.cursorIndex = 0
+    compositor.cursor = 0
     XCTAssertTrue(compositor.dropReading(direction: .front))
     XCTAssertEqual(compositor.length, 0)
   }
@@ -115,15 +115,15 @@ final class MegrezTests: XCTestCase {
   func testDeleteToTheFrontOfCursor() throws {
     let compositor = Megrez.Compositor(lm: MockLM())
     compositor.insertReading("a")
-    compositor.cursorIndex = 0
-    XCTAssertEqual(compositor.cursorIndex, 0)
+    compositor.cursor = 0
+    XCTAssertEqual(compositor.cursor, 0)
     XCTAssertEqual(compositor.length, 1)
     XCTAssertEqual(compositor.width, 1)
     XCTAssertFalse(compositor.dropReading(direction: .rear))
-    XCTAssertEqual(compositor.cursorIndex, 0)
+    XCTAssertEqual(compositor.cursor, 0)
     XCTAssertEqual(compositor.length, 1)
     XCTAssertTrue(compositor.dropReading(direction: .front))
-    XCTAssertEqual(compositor.cursorIndex, 0)
+    XCTAssertEqual(compositor.cursor, 0)
     XCTAssertEqual(compositor.length, 0)
     XCTAssertEqual(compositor.width, 0)
   }
@@ -134,7 +134,7 @@ final class MegrezTests: XCTestCase {
     compositor.insertReading("a")
     compositor.insertReading("b")
     compositor.insertReading("c")
-    XCTAssertEqual(compositor.cursorIndex, 3)
+    XCTAssertEqual(compositor.cursor, 3)
     XCTAssertEqual(compositor.length, 3)
     XCTAssertEqual(compositor.width, 3)
     XCTAssertEqual(compositor.spans[0].maxLength, 3)
@@ -156,7 +156,7 @@ final class MegrezTests: XCTestCase {
     compositor.insertReading("c")
     XCTAssertFalse(compositor.dropReading(direction: .front))
     XCTAssertTrue(compositor.dropReading(direction: .rear))
-    XCTAssertEqual(compositor.cursorIndex, 2)
+    XCTAssertEqual(compositor.cursor, 2)
     XCTAssertEqual(compositor.length, 2)
     XCTAssertEqual(compositor.width, 2)
     XCTAssertEqual(compositor.spans[0].maxLength, 2)
@@ -172,10 +172,10 @@ final class MegrezTests: XCTestCase {
     compositor.insertReading("a")
     compositor.insertReading("b")
     compositor.insertReading("c")
-    compositor.cursorIndex = 2
+    compositor.cursor = 2
 
     XCTAssertTrue(compositor.dropReading(direction: .rear))
-    XCTAssertEqual(compositor.cursorIndex, 1)
+    XCTAssertEqual(compositor.cursor, 1)
     XCTAssertEqual(compositor.length, 2)
     XCTAssertEqual(compositor.width, 2)
     XCTAssertEqual(compositor.spans[0].maxLength, 2)
@@ -188,10 +188,10 @@ final class MegrezTests: XCTestCase {
     compositor.insertReading("a")
     compositor.insertReading("b")
     compositor.insertReading("c")
-    compositor.cursorIndex = 1
+    compositor.cursor = 1
 
     XCTAssertTrue(compositor.dropReading(direction: .front))
-    XCTAssertEqual(compositor.cursorIndex, 1)
+    XCTAssertEqual(compositor.cursor, 1)
     XCTAssertEqual(compositor.length, 2)
     XCTAssertEqual(compositor.width, 2)
     XCTAssertEqual(compositor.spans[0].maxLength, 2)
@@ -207,11 +207,11 @@ final class MegrezTests: XCTestCase {
     compositor.insertReading("a")
     compositor.insertReading("b")
     compositor.insertReading("c")
-    compositor.cursorIndex = 0
+    compositor.cursor = 0
 
     XCTAssertFalse(compositor.dropReading(direction: .rear))
     XCTAssertTrue(compositor.dropReading(direction: .front))
-    XCTAssertEqual(compositor.cursorIndex, 0)
+    XCTAssertEqual(compositor.cursor, 0)
     XCTAssertEqual(compositor.length, 2)
     XCTAssertEqual(compositor.width, 2)
     XCTAssertEqual(compositor.spans[0].maxLength, 2)
@@ -227,10 +227,10 @@ final class MegrezTests: XCTestCase {
     compositor.insertReading("a")
     compositor.insertReading("b")
     compositor.insertReading("c")
-    compositor.cursorIndex = 1
+    compositor.cursor = 1
     compositor.insertReading("X")
 
-    XCTAssertEqual(compositor.cursorIndex, 2)
+    XCTAssertEqual(compositor.cursor, 2)
     XCTAssertEqual(compositor.length, 4)
     XCTAssertEqual(compositor.width, 4)
     XCTAssertEqual(compositor.spans[0].maxLength, 4)
@@ -266,9 +266,9 @@ final class MegrezTests: XCTestCase {
     compositor.insertReading("l")
     compositor.insertReading("m")
     compositor.insertReading("n")
-    compositor.cursorIndex = 7
+    compositor.cursor = 7
     XCTAssertTrue(compositor.dropReading(direction: .rear))
-    XCTAssertEqual(compositor.cursorIndex, 6)
+    XCTAssertEqual(compositor.cursor, 6)
     XCTAssertEqual(compositor.length, 13)
     XCTAssertEqual(compositor.width, 13)
     XCTAssertEqual(compositor.spans[0].nodeOf(length: 6)?.key, "abcdef")
@@ -301,9 +301,9 @@ final class MegrezTests: XCTestCase {
     compositor.insertReading("l")
     compositor.insertReading("m")
     compositor.insertReading("n")
-    compositor.cursorIndex = 7
+    compositor.cursor = 7
     compositor.insertReading("X")
-    XCTAssertEqual(compositor.cursorIndex, 8)
+    XCTAssertEqual(compositor.cursor, 8)
     XCTAssertEqual(compositor.length, 15)
     XCTAssertEqual(compositor.width, 15)
     XCTAssertEqual(compositor.spans[0].nodeOf(length: 6)?.key, "abcdef")
@@ -330,17 +330,17 @@ final class MegrezTests: XCTestCase {
     XCTAssertEqual(compositor.walk().keys, ["高科技", "公司", "的", "年終", "獎金"])
   }
 
-  func testLanguageInput() throws {
+  func testLanguageInputAndCursorJump() throws {
     let compositor = Megrez.Compositor(lm: SimpleLM(input: strSampleData))
     compositor.joinSeparator = ""
     compositor.insertReading("gao1")
     compositor.insertReading("ji4")
-    compositor.cursorIndex = 1
+    compositor.cursor = 1
     compositor.insertReading("ke1")
-    compositor.cursorIndex = 0
+    compositor.cursor = 0
     compositor.dropReading(direction: .front)
     compositor.insertReading("gao1")
-    compositor.cursorIndex = compositor.length
+    compositor.cursor = compositor.length
     compositor.insertReading("gong1")
     compositor.insertReading("si1")
     compositor.insertReading("de5")
@@ -348,13 +348,37 @@ final class MegrezTests: XCTestCase {
     compositor.insertReading("zhong1")
     compositor.insertReading("jiang3")
     compositor.insertReading("jin1")
-    var result = compositor.walk()
-    XCTAssertEqual(result.values, ["高科技", "公司", "的", "年中", "獎金"])
+    compositor.walk()
+    XCTAssertEqual(compositor.walkedAnchors.values, ["高科技", "公司", "的", "年中", "獎金"])
     XCTAssertEqual(compositor.length, 10)
-    compositor.cursorIndex = 7
-    compositor.fixNodeWithCandidateLiteral("年終", at: 7)
-    result = compositor.walk()
-    XCTAssertEqual(result.values, ["高科技", "公司", "的", "年終", "獎金"])
+    XCTAssert(!compositor.fixNodeWithCandidate(.init(key: "nian2zhong1", value: "年終"), at: 6).isEmpty)
+    XCTAssert(!compositor.fixNodeWithCandidate(.init(key: "nian2zhong1", value: "年終"), at: 7).isEmpty)
+    compositor.cursor = 8
+    XCTAssert(!compositor.fixNodeWithCandidate(.init(key: "nian2zhong1", value: "年終"), at: compositor.cursor).isEmpty)
+    compositor.walk()
+    XCTAssertEqual(compositor.walkedAnchors.values, ["高科技", "公司", "的", "年終", "獎金"])
+    XCTAssertTrue(compositor.jumpCursorBySpan(to: .rear))
+    XCTAssertEqual(compositor.cursor, 6)
+    XCTAssertTrue(compositor.jumpCursorBySpan(to: .rear))
+    XCTAssertEqual(compositor.cursor, 5)
+    XCTAssertTrue(compositor.jumpCursorBySpan(to: .rear))
+    XCTAssertEqual(compositor.cursor, 3)
+    XCTAssertTrue(compositor.jumpCursorBySpan(to: .rear))
+    XCTAssertEqual(compositor.cursor, 0)
+    XCTAssertFalse(compositor.jumpCursorBySpan(to: .rear))
+    XCTAssertEqual(compositor.cursor, 0)
+    XCTAssertTrue(compositor.jumpCursorBySpan(to: .front))
+    XCTAssertEqual(compositor.cursor, 3)
+    XCTAssertTrue(compositor.jumpCursorBySpan(to: .front))
+    XCTAssertEqual(compositor.cursor, 5)
+    XCTAssertTrue(compositor.jumpCursorBySpan(to: .front))
+    XCTAssertEqual(compositor.cursor, 6)
+    XCTAssertTrue(compositor.jumpCursorBySpan(to: .front))
+    XCTAssertEqual(compositor.cursor, 8)
+    XCTAssertTrue(compositor.jumpCursorBySpan(to: .front))
+    XCTAssertEqual(compositor.cursor, 10)
+    XCTAssertFalse(compositor.jumpCursorBySpan(to: .front))
+    XCTAssertEqual(compositor.cursor, 10)
   }
 
   func testOverrideOverlappingNodes() throws {
@@ -363,8 +387,8 @@ final class MegrezTests: XCTestCase {
     compositor.insertReading("gao1")
     compositor.insertReading("ke1")
     compositor.insertReading("ji4")
-    compositor.cursorIndex = 1
-    compositor.fixNodeWithCandidateLiteral("膏", at: compositor.cursorIndex)
+    compositor.cursor = 1
+    compositor.fixNodeWithCandidateLiteral("膏", at: compositor.cursor)
     var result = compositor.walk()
     XCTAssertEqual(result.values, ["膏", "科技"])
     compositor.fixNodeWithCandidateLiteral("高科技", at: 2)
@@ -432,14 +456,14 @@ final class MegrezTests: XCTestCase {
     compositor.fixNodeWithCandidate(.init(key: "huo3yan4", value: "🔥"), at: 3)
     result = compositor.walk()
     XCTAssertEqual(result.values, ["高熱", "🔥", "危險", "蜜蜂"])
-    
-    compositor.cursorIndex = compositor.width
 
-    compositor.fixNodeWithCandidate(.init(key: "mi4feng1", value: "🐝"), at: compositor.cursorIndex)
+    compositor.cursor = compositor.width
+
+    compositor.fixNodeWithCandidate(.init(key: "mi4feng1", value: "🐝"), at: compositor.cursor)
     result = compositor.walk()
     XCTAssertEqual(result.values, ["高熱", "🔥", "危險", "🐝"])
 
-    compositor.fixNodeWithCandidate(.init(key: "feng1", value: "🐝"), at: compositor.cursorIndex)
+    compositor.fixNodeWithCandidate(.init(key: "feng1", value: "🐝"), at: compositor.cursor)
     result = compositor.walk()
     XCTAssertEqual(result.values, ["高熱", "🔥", "危險", "蜜", "🐝"])
   }

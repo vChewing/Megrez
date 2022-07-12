@@ -420,16 +420,28 @@ final class MegrezTests: XCTestCase {
     compositor.insertReading("yan4")
     compositor.insertReading("wei2")
     compositor.insertReading("xian3")
+    compositor.insertReading("mi4")
+    compositor.insertReading("feng1")
     var result = compositor.walk()
-    XCTAssertEqual(result.values, ["高熱", "火焰", "危險"])
+    XCTAssertEqual(result.values, ["高熱", "火焰", "危險", "蜜蜂"])
 
     compositor.fixNodeSelectedCandidatePair(.init(key: "huo3", value: "🔥"), at: 2)
     result = compositor.walk()
-    XCTAssertEqual(result.values, ["高熱", "🔥", "焰", "危險"])
+    XCTAssertEqual(result.values, ["高熱", "🔥", "焰", "危險", "蜜蜂"])
 
     compositor.fixNodeSelectedCandidatePair(.init(key: "huo3yan4", value: "🔥"), at: 3)
     result = compositor.walk()
-    XCTAssertEqual(result.values, ["高熱", "🔥", "危險"])
+    XCTAssertEqual(result.values, ["高熱", "🔥", "危險", "蜜蜂"])
+    
+    compositor.cursorIndex = compositor.width
+
+    compositor.fixNodeSelectedCandidatePair(.init(key: "mi4feng1", value: "🐝"), at: compositor.cursorIndex)
+    result = compositor.walk()
+    XCTAssertEqual(result.values, ["高熱", "🔥", "危險", "🐝"])
+
+    compositor.fixNodeSelectedCandidatePair(.init(key: "feng1", value: "🐝"), at: compositor.cursorIndex)
+    result = compositor.walk()
+    XCTAssertEqual(result.values, ["高熱", "🔥", "危險", "蜜", "🐝"])
   }
 
   func testStressBenchmark_MachineGun() throws {

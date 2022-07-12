@@ -82,7 +82,7 @@ MegrezTests.swift 檔案內的 SimpleLM 可以作為範例。
 - `compositor.insertReading("gao1")` 可以在當前的游標位置插入讀音「gao1」。
 - `compositor.dropReading(direction: .front)` 的作用是：朝著往文字輸入方向、砍掉一個與游標相鄰的讀音。反之，`dropReading(direction: .rear)` 則朝著與文字輸入方向相反的方向、砍掉一個與游標相鄰的讀音。
   - 在威注音的術語體系當中，「文字輸入方向」為向前（Front）、與此相反的方向為向後（Rear）。
-- `compositor.grid.fixNodeSelectedCandidate("??", at: ?)` 用來根據輸入法選中的候選字詞、據此更新當前游標位置選中的候選字詞節點當中的候選字詞。
+- `compositor.fixNodeWithCandidate(.init(key: "讀音", value: "候選字"), at: 游標位置)` 用來根據輸入法選中的候選字詞、據此更新當前游標位置選中的候選字詞節點當中的候選字詞。
 
 輸入完內容之後，可以聲明一個用來接收結果的變數：
 

@@ -38,7 +38,12 @@ extension Megrez {
     private var langModel: LangModelProtocol
     /// 允許查詢當前游標位置屬於第幾個幅位座標（從 0 開始算）。
     private(set) var cursorRegionMap: [Int: Int] = .init()
-    private(set) var walkedAnchors: [Megrez.NodeAnchor] = []  // 用以記錄爬過的節錨的陣列
+    /// 用以記錄爬過的節錨的陣列
+    private(set) var walkedAnchors: [NodeAnchor] = []
+    /// 該函式用以更新爬過的節錨的陣列
+    public func updateWalkedAnchors(with nodes: [Node]) {
+      walkedAnchors = nodes.map { Megrez.NodeAnchor(node: $0) }
+    }
 
     /// 公開：多字讀音鍵當中用以分割漢字讀音的記號，預設為空。
     public var joinSeparator: String = "-"
@@ -64,8 +69,9 @@ extension Megrez {
         case currentRegionBorderRear:
           switch direction {
             case .front:
-              if currentRegion > walkedAnchors.count { cursor = readings.count }
-              else { cursor = walkedAnchors[0...currentRegion].map(\.spanLength).reduce(0, +) }
+              cursor =
+                (currentRegion > walkedAnchors.count)
+                ? readings.count : walkedAnchors[0...currentRegion].map(\.spanLength).reduce(0, +)
             case .rear:
               cursor = walkedAnchors[0..<aRegionForward].map(\.spanLength).reduce(0, +)
           }

@@ -28,7 +28,7 @@ import Megrez
 // MARK: - 用以測試的語言模型（簡單範本型）
 
 class SimpleLM: LangModelProtocol {
-  func bigramsForKeys(precedingKey _: String, key _: String) -> [Megrez.Bigram] {
+  func bigramsFor(precedingKey _: String, key _: String) -> [Megrez.Bigram] {
     .init()
   }
 
@@ -65,7 +65,7 @@ class SimpleLM: LangModelProtocol {
 }
 
 class MockLM: LangModelProtocol {
-  func bigramsForKeys(precedingKey _: String, key _: String) -> [Megrez.Bigram] {
+  func bigramsFor(precedingKey _: String, key _: String) -> [Megrez.Bigram] {
     .init()
   }
 

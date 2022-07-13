@@ -85,7 +85,7 @@ final class MegrezTests: XCTestCase {
 
   func testInvalidOperations() throws {
     class TestLM: LangModelProtocol {
-      func bigramsForKeys(precedingKey _: String, key _: String) -> [Megrez.Bigram] {
+      func bigramsFor(precedingKey _: String, key _: String) -> [Megrez.Bigram] {
         .init()
       }
 
@@ -334,24 +334,34 @@ final class MegrezTests: XCTestCase {
     let compositor = Megrez.Compositor(lm: SimpleLM(input: strSampleData))
     compositor.joinSeparator = ""
     compositor.insertReading("gao1")
+    compositor.walk()
     compositor.insertReading("ji4")
+    compositor.walk()
     compositor.cursor = 1
     compositor.insertReading("ke1")
+    compositor.walk()
     compositor.cursor = 0
     compositor.dropReading(direction: .front)
+    compositor.walk()
     compositor.insertReading("gao1")
+    compositor.walk()
     compositor.cursor = compositor.length
     compositor.insertReading("gong1")
+    compositor.walk()
     compositor.insertReading("si1")
+    compositor.walk()
     compositor.insertReading("de5")
+    compositor.walk()
     compositor.insertReading("nian2")
+    compositor.walk()
     compositor.insertReading("zhong1")
+    compositor.walk()
     compositor.insertReading("jiang3")
+    compositor.walk()
     compositor.insertReading("jin1")
     compositor.walk()
     XCTAssertEqual(compositor.walkedAnchors.values, ["高科技", "公司", "的", "年中", "獎金"])
     XCTAssertEqual(compositor.length, 10)
-    XCTAssert(!compositor.fixNodeWithCandidate(.init(key: "nian2zhong1", value: "年終"), at: 6).isEmpty)
     XCTAssert(!compositor.fixNodeWithCandidate(.init(key: "nian2zhong1", value: "年終"), at: 7).isEmpty)
     compositor.cursor = 8
     XCTAssert(!compositor.fixNodeWithCandidate(.init(key: "nian2zhong1", value: "年終"), at: compositor.cursor).isEmpty)
@@ -379,6 +389,8 @@ final class MegrezTests: XCTestCase {
     XCTAssertEqual(compositor.cursor, 10)
     XCTAssertFalse(compositor.jumpCursorBySpan(to: .front))
     XCTAssertEqual(compositor.cursor, 10)
+    compositor.walk()
+    XCTAssertEqual(compositor.walkedAnchors.values, ["高科技", "公司", "的", "年終", "獎金"])
   }
 
   func testOverrideOverlappingNodes() throws {
@@ -449,11 +461,11 @@ final class MegrezTests: XCTestCase {
     var result = compositor.walk()
     XCTAssertEqual(result.values, ["高熱", "火焰", "危險", "蜜蜂"])
 
-    compositor.fixNodeWithCandidate(.init(key: "huo3", value: "🔥"), at: 2)
+    compositor.fixNodeWithCandidate(.init(key: "huo3", value: "🔥"), at: 3)
     result = compositor.walk()
     XCTAssertEqual(result.values, ["高熱", "🔥", "焰", "危險", "蜜蜂"])
 
-    compositor.fixNodeWithCandidate(.init(key: "huo3yan4", value: "🔥"), at: 3)
+    compositor.fixNodeWithCandidate(.init(key: "huo3yan4", value: "🔥"), at: 4)
     result = compositor.walk()
     XCTAssertEqual(result.values, ["高熱", "🔥", "危險", "蜜蜂"])
 
@@ -471,23 +483,22 @@ final class MegrezTests: XCTestCase {
   func testStressBenchmark_MachineGun() throws {
     // 測試結果發現：只敲入完全雷同的某個漢字的話，想保證使用體驗就得讓一個組字區最多塞 20 字。
     // 但是呢，日常敲字都是在敲人話，不會出現這種情形，所以組字區內塞 40 字都沒問題。
-    // 天權星引擎目前暫時沒有條件引入 Gramambular 2 的繁天頂（Vertex）算法，只能先這樣了。
     // 竊以為「讓組字區內容無限擴張」是個偽需求，畢竟組字區太長了的話編輯起來也很麻煩。
-    NSLog("// Stress test preparation begins.")
+    NSLog("// Normal walk: Machine-Gun Stress test preparation begins.")
     let compositor = Megrez.Compositor(lm: SimpleLM(input: strStressData))
     for _ in 0..<20 {  // 這個測試最多只能塞 20 字，否則會慢死。
       compositor.insertReading("yi1")
     }
-    NSLog("// Stress test started.")
+    NSLog("// Normal walk: Machine-Gun Stress test started.")
     let startTime = CFAbsoluteTimeGetCurrent()
-    _ = compositor.walk()
+    compositor.walk()
     let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
-    NSLog("// Stress test elapsed: \(timeElapsed)s.")
+    NSLog("// Normal walk: Machine-Gun Stress test elapsed: \(timeElapsed)s.")
   }
 
   func testStressBenchmark_SpeakLikeAHuman() throws {
     // 與前一個測試相同，但這次測試的是正常人講話。可以看到在這種情況下目前的算法還是比較耐操的。
-    NSLog("// Stress test preparation begins.")
+    NSLog("// Normal walk: Stress test preparation begins.")
     let compositor = Megrez.Compositor(lm: SimpleLM(input: strSampleData))
     let testMaterial: [String] = ["gao1", "ke1", "ji4", "gong1", "si1", "de5", "nian2", "zhong1", "jiang3", "jin1"]
     for _ in 0..<114 {  // 都敲出第一個野獸常數了，再不夠用就不像話了。
@@ -495,10 +506,10 @@ final class MegrezTests: XCTestCase {
         compositor.insertReading(neta)
       }
     }
-    NSLog("// Stress test started.")
+    NSLog("// Normal walk: Stress test started.")
     let startTime = CFAbsoluteTimeGetCurrent()
-    _ = compositor.walk()
+    compositor.walk()
     let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
-    NSLog("// Stress test elapsed: \(timeElapsed)s.")
+    NSLog("// Normal walk: Stress test elapsed: \(timeElapsed)s.")
   }
 }

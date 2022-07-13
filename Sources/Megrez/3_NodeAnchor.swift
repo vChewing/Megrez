@@ -42,10 +42,6 @@ extension Megrez {
     public var bigrams: [Bigram] { node.bigrams }
     /// 鍵。
     public var key: String { node.key }
-    /// 索引鍵的長度。
-    public var keyLength: Int {
-      isEmpty ? node.key.count : 0
-    }
 
     /// 初期化一個節錨。
     public init(node: Node = .init(), mass: Double? = nil) {

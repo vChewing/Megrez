@@ -175,7 +175,7 @@ extension Megrez {
     @discardableResult public func fixNodeWithCandidateLiteral(_ value: String, at location: Int) -> NodeAnchor {
       let location = abs(location)  // 防呆
       var node = NodeAnchor()
-      for theAnchor in nodesOverlappedAt(location: location) {
+      for theAnchor in nodesCrossingOrEndingAt(location: location) {
         let candidates = theAnchor.node.candidates
         // 將該位置的所有節點的候選字詞鎖定狀態全部重設。
         theAnchor.node.resetCandidate()
@@ -199,7 +199,7 @@ extension Megrez {
     @discardableResult public func fixNodeWithCandidate(_ pair: KeyValuePaired, at location: Int) -> NodeAnchor {
       let location = abs(location)  // 防呆
       var node = NodeAnchor()
-      for theAnchor in nodesOverlappedAt(location: location) {
+      for theAnchor in nodesCrossingOrEndingAt(location: location) {
         let candidates = theAnchor.node.candidates
         // 將該位置的所有節點的候選字詞鎖定狀態全部重設。
         theAnchor.node.resetCandidate()

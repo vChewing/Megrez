@@ -93,7 +93,7 @@ extension Megrez {
     ///   - separator: 多字讀音鍵當中用以分割漢字讀音的記號，預設為空。
     public init(lm: LangModelProtocol, length: Int = 10, separator: String = "-") {
       langModel = lm
-      super.init(spanLength: abs(length))  // 防呆
+      super.init(spanLengthLimit: abs(length))  // 防呆
       joinSeparator = separator
     }
 

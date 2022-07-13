@@ -30,7 +30,7 @@ extension Megrez {
       lhs.key == rhs.key && lhs.score == rhs.score && lhs.unigrams == rhs.unigrams && lhs.bigrams == rhs.bigrams
         && lhs.candidates == rhs.candidates && lhs.valueUnigramIndexMap == rhs.valueUnigramIndexMap
         && lhs.precedingBigramMap == rhs.precedingBigramMap && lhs.isCandidateFixed == rhs.isCandidateFixed
-        && lhs.selectedUnigramIndex == rhs.selectedUnigramIndex
+        && lhs.selectedUnigramIndex == rhs.selectedUnigramIndex && lhs.spanLength == rhs.spanLength
     }
 
     public func hash(into hasher: inout Hasher) {
@@ -38,6 +38,7 @@ extension Megrez {
       hasher.combine(score)
       hasher.combine(unigrams)
       hasher.combine(bigrams)
+      hasher.combine(spanLength)
       hasher.combine(candidates)
       hasher.combine(valueUnigramIndexMap)
       hasher.combine(precedingBigramMap)
@@ -53,6 +54,8 @@ extension Megrez {
     private var unigrams: [Unigram]
     /// 雙元圖陣列。
     private var bigrams: [Bigram]
+    /// 指定的幅位長度。
+    public var spanLength: Int = 0
     /// 候選字詞陣列，以鍵值陣列的形式存在。
     private(set) var candidates: [KeyValuePaired] = []
     /// 專門「用單元圖資料值來調查索引值」的辭典。
@@ -83,10 +86,11 @@ extension Megrez {
     ///   - key: 索引鍵。
     ///   - unigrams: 單元圖陣列。
     ///   - bigrams: 雙元圖陣列（非必填）。
-    public init(key: String = "", unigrams: [Megrez.Unigram] = [], bigrams: [Megrez.Bigram] = []) {
+    public init(key: String = "", spanLength: Int = 0, unigrams: [Megrez.Unigram] = [], bigrams: [Megrez.Bigram] = []) {
       self.key = key
       self.unigrams = unigrams
       self.bigrams = bigrams
+      self.spanLength = spanLength
 
       self.unigrams.sort {
         $0.score > $1.score

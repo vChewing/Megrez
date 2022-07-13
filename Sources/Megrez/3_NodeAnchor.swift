@@ -33,7 +33,7 @@ extension Megrez {
     /// 節锚所在的位置。
     public var location: Int = 0
     /// 指定的幅位長度。
-    public var spanLength: Int = 0
+    public var spanLength: Int = 0 { didSet { node.spanLength = spanLength } }
     /// 累計權重。
     public var mass: Double = 0.0
     /// 索引鍵的長度。

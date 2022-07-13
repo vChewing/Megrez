@@ -26,7 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 extension Megrez {
   /// 組字器。
   public class Compositor: Grid {
-    /// 文字輸入方向
+    /// 就文字輸入方向而言的方向。
     public enum TypingDirection { case front, rear }
     /// 給被丟掉的節點路徑施加的負權重。
     private let kDroppedPathScore: Double = -999
@@ -38,9 +38,11 @@ extension Megrez {
     private var langModel: LangModelProtocol
     /// 允許查詢當前游標位置屬於第幾個幅位座標（從 0 開始算）。
     private(set) var cursorRegionMap: [Int: Int] = .init()
-    /// 用以記錄爬過的節錨的陣列
+    /// 用以記錄爬過的節錨的陣列。
     private(set) var walkedAnchors: [NodeAnchor] = []
-    /// 該函式用以更新爬過的節錨的陣列
+    
+    /// 該函式用以更新爬過的節錨的陣列。
+    /// - Parameter nodes: 傳入的節點陣列。
     public func updateWalkedAnchors(with nodes: [Node]) {
       walkedAnchors = nodes.map { Megrez.NodeAnchor(node: $0) }
     }
@@ -52,7 +54,7 @@ extension Megrez {
     public var length: Int { readings.count }
 
     /// 按幅位來前後移動游標。
-    /// - Parameter direction: 移動方向
+    /// - Parameter direction: 移動方向。
     /// - Returns: 該操作是否順利完成。
     @discardableResult public func jumpCursorBySpan(to direction: TypingDirection) -> Bool {
       switch direction {

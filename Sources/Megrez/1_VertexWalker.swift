@@ -50,10 +50,10 @@ extension Megrez {
     ///   - u: 參照頂點，會在必要時成為 v 的前述頂點。
     ///   - v: 要影響的頂點。
     static func relax(u: Vertex, v: inout Vertex) {
-      /// 從 u 到 W 的距離，也就是 v 的權重。
+      /// 從 u 到 w 的距離，也就是 v 的權重。
       let w: Double = v.node.score
       /// 我們正在計算最大權重：
-      /// 如果 v 目前的距離值小於「u 的距離值＋w（w 是 u 到 W 的距離，也就是 v 的權重）」，
+      /// 如果 v 目前的距離值小於「u 的距離值＋w（w 是 u 到 w 的距離，也就是 v 的權重）」，
       /// 我們就更新 v 的距離及其前述頂點。
       if v.distance < u.distance + w {
         v.distance = u.distance + w

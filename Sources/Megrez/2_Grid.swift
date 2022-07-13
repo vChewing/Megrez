@@ -114,14 +114,7 @@ extension Megrez {
       let span = spans[location]
       for i in 1...maxBuildSpanLength {
         if let np = span.nodeOf(length: i) {
-          np.spanLength = i
-          results.append(
-            .init(
-              node: np,
-              location: location,
-              spanLength: i
-            )
-          )
+          results.append(.init(node: np))
         }
       }
       return results  // 已證實不會有空節點產生。
@@ -138,14 +131,7 @@ extension Megrez {
         let span = spans[i]
         if i + span.maxLength < location { continue }
         if let np = span.nodeOf(length: location - i) {
-          np.spanLength = location - i
-          results.append(
-            .init(
-              node: np,
-              location: i,
-              spanLength: location - i
-            )
-          )
+          results.append(.init(node: np))
         }
       }
       return results  // 已證實不會有空節點產生。
@@ -164,14 +150,7 @@ extension Megrez {
         for j in 1...span.maxLength {
           if i + j < location { continue }
           if let np = span.nodeOf(length: j) {
-            np.spanLength = location - i
-            results.append(
-              .init(
-                node: np,
-                location: i,
-                spanLength: location - i
-              )
-            )
+            results.append(.init(node: np))
           }
         }
       }

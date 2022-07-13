@@ -43,7 +43,6 @@ extension Megrez {
     ///   - length: 給定的節點長度。
     mutating func insert(node: Node, length: Int) {
       let length = abs(length)  // 防呆
-      node.spanLength = length
       lengthNodeMap[length] = node
       maxLength = max(maxLength, length)
     }

@@ -51,9 +51,9 @@ extension Megrez {
     /// 當前節點的當前被選中的候選字詞「在該節點內的」目前的權重。
     private(set) var score: Double = 0
     /// 單元圖陣列。
-    private var unigrams: [Unigram]
+    private(set) var unigrams: [Unigram]
     /// 雙元圖陣列。
-    private var bigrams: [Bigram]
+    private(set) var bigrams: [Bigram]
     /// 指定的幅位長度。
     public var spanLength: Int = 0
     /// 候選字詞陣列，以鍵值陣列的形式存在。

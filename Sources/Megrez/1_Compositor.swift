@@ -186,7 +186,7 @@ extension Megrez {
 
       var paths = [[NodeAnchor]]()
       let nodes = nodesEndingAt(location: location).stableSorted {
-        $0.scoreForSort > $1.scoreForSort
+        $0.node.score > $1.node.score
       }
 
       guard !nodes.isEmpty else { return .init() }  // 防止下文出現範圍外索引的錯誤
@@ -275,7 +275,7 @@ extension Megrez {
           if hasMatchedNode(location: p, spanLength: q, key: combinedReading) { continue }
           let unigrams: [Unigram] = langModel.unigramsFor(key: combinedReading)
           if unigrams.isEmpty { continue }
-          let n = Node(key: combinedReading, unigrams: unigrams)
+          let n: Node = .init(key: combinedReading, spanLength: q, unigrams: unigrams)
           insertNode(node: n, location: p, spanLength: q)
         }
       }

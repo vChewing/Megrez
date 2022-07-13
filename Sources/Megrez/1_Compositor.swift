@@ -38,7 +38,12 @@ extension Megrez {
     private var langModel: LangModelProtocol
     /// 允許查詢當前游標位置屬於第幾個幅位座標（從 0 開始算）。
     private(set) var cursorRegionMap: [Int: Int] = .init()
-    private(set) var walkedAnchors: [Megrez.NodeAnchor] = []  // 用以記錄爬過的節錨的陣列
+    /// 用以記錄爬過的節錨的陣列
+    private(set) var walkedAnchors: [NodeAnchor] = []
+    /// 該函式用以更新爬過的節錨的陣列
+    public func updateWalkedAnchors(with nodes: [Node]) {
+      walkedAnchors = nodes.map { Megrez.NodeAnchor(node: $0) }
+    }
 
     /// 公開：多字讀音鍵當中用以分割漢字讀音的記號，預設為空。
     public var joinSeparator: String = "-"
@@ -64,8 +69,9 @@ extension Megrez {
         case currentRegionBorderRear:
           switch direction {
             case .front:
-              if currentRegion > walkedAnchors.count { cursor = readings.count }
-              else { cursor = walkedAnchors[0...currentRegion].map(\.spanLength).reduce(0, +) }
+              cursor =
+                (currentRegion > walkedAnchors.count)
+                ? readings.count : walkedAnchors[0...currentRegion].map(\.spanLength).reduce(0, +)
             case .rear:
               cursor = walkedAnchors[0..<aRegionForward].map(\.spanLength).reduce(0, +)
           }
@@ -87,7 +93,7 @@ extension Megrez {
     ///   - separator: 多字讀音鍵當中用以分割漢字讀音的記號，預設為空。
     public init(lm: LangModelProtocol, length: Int = 10, separator: String = "-") {
       langModel = lm
-      super.init(spanLength: abs(length))  // 防呆
+      super.init(spanLengthLimit: abs(length))  // 防呆
       joinSeparator = separator
     }
 
@@ -180,7 +186,7 @@ extension Megrez {
 
       var paths = [[NodeAnchor]]()
       let nodes = nodesEndingAt(location: location).stableSorted {
-        $0.scoreForSort > $1.scoreForSort
+        $0.node.score > $1.node.score
       }
 
       guard !nodes.isEmpty else { return .init() }  // 防止下文出現範圍外索引的錯誤
@@ -269,7 +275,7 @@ extension Megrez {
           if hasMatchedNode(location: p, spanLength: q, key: combinedReading) { continue }
           let unigrams: [Unigram] = langModel.unigramsFor(key: combinedReading)
           if unigrams.isEmpty { continue }
-          let n = Node(key: combinedReading, unigrams: unigrams)
+          let n: Node = .init(key: combinedReading, spanLength: q, unigrams: unigrams)
           insertNode(node: n, location: p, spanLength: q)
         }
       }

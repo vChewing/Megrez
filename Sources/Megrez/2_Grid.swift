@@ -41,8 +41,8 @@ extension Megrez {
     public var isEmpty: Bool { spans.isEmpty }
 
     /// 初期化轨格。
-    public init(spanLength: Int = 10) {
-      maxBuildSpanLength = spanLength
+    public init(spanLengthLimit: Int = 10) {
+      maxBuildSpanLength = spanLengthLimit
       spans = [Megrez.SpanUnit]()
     }
 
@@ -114,13 +114,7 @@ extension Megrez {
       let span = spans[location]
       for i in 1...maxBuildSpanLength {
         if let np = span.nodeOf(length: i) {
-          results.append(
-            .init(
-              node: np,
-              location: location,
-              spanLength: i
-            )
-          )
+          results.append(.init(node: np))
         }
       }
       return results  // 已證實不會有空節點產生。
@@ -137,13 +131,7 @@ extension Megrez {
         let span = spans[i]
         if i + span.maxLength < location { continue }
         if let np = span.nodeOf(length: location - i) {
-          results.append(
-            .init(
-              node: np,
-              location: i,
-              spanLength: location - i
-            )
-          )
+          results.append(.init(node: np))
         }
       }
       return results  // 已證實不會有空節點產生。
@@ -162,13 +150,7 @@ extension Megrez {
         for j in 1...span.maxLength {
           if i + j < location { continue }
           if let np = span.nodeOf(length: j) {
-            results.append(
-              .init(
-                node: np,
-                location: i,
-                spanLength: location - i
-              )
-            )
+            results.append(.init(node: np))
           }
         }
       }

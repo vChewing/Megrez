@@ -7,11 +7,14 @@ the Software without restriction, including without limitation the rights to
 use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
 the Software, and to permit persons to whom the Software is furnished to do so,
 subject to the following conditions:
+
 1. The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
+
 2. No trademark license is granted to use the trade names, trademarks, service
 marks, or product names of Contributor, except as required to fulfill notice
 requirements above.
+
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
 FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
@@ -36,7 +39,7 @@ extension Megrez {
     /// 我們實際上是在計算具有最大權重的路徑，因此距離的初始值是負無窮的。
     /// 如果我們要計算最短的權重/距離，我們會將其初期值設為正無窮。
     public var distance = -(Double.infinity)
-    /// Used during topological-sort.
+    /// 在進行進行位相幾何排序時會用到的狀態標記。
     public var topologicallySorted = false
     public var node: Node
     public init(node: Node) {
@@ -52,7 +55,7 @@ extension Megrez {
     static func relax(u: Vertex, v: inout Vertex) {
       /// 從 u 到 w 的距離，也就是 v 的權重。
       let w: Double = v.node.score
-      /// 我們正在計算最大權重：
+      /// 這裡計算最大權重：
       /// 如果 v 目前的距離值小於「u 的距離值＋w（w 是 u 到 w 的距離，也就是 v 的權重）」，
       /// 我們就更新 v 的距離及其前述頂點。
       if v.distance < u.distance + w {
@@ -67,14 +70,14 @@ extension Megrez {
     /// 這裡使用我們自己的堆棧和狀態定義實現了一個非遞迴版本，
     /// 這樣我們就不會受到當前線程的堆棧大小的限制。以下是等價的原始算法。
     /// ```
-    ///  func topologicalSort(Vertex* vertex) {
+    ///  func topologicalSort(vertex: Vertex) {
     ///    for vertexNode in vertex.edges {
     ///      if !vertexNode.topologicallySorted {
     ///        dfs(vertexNode, result)
+    ///        vertexNode.topologicallySorted = true
     ///      }
+    ///      result.append(vertexNode)
     ///    }
-    ///    v.topologicallySorted = true
-    ///    result.append(v)
     ///  }
     /// ```
     /// 至於遞迴版本則類似於 Cormen 在 2001 年的著作「Introduction to Algorithms」當中的樣子。
@@ -111,9 +114,10 @@ extension Megrez {
   }
 }
 
-extension Megrez.Compositor {
-  // MARK: - Fast Walker
+// MARK: - Fast Walker
 
+extension Megrez.Compositor {
+  /// 爬軌結果。
   public struct WalkResult {
     var nodes: [Megrez.Node]
     var vertices: Int
@@ -123,7 +127,7 @@ extension Megrez.Compositor {
     }
 
     var keys: [String] {
-      nodes.map(\.key)
+      nodes.map(\.currentPair.key)
     }
   }
 
@@ -165,7 +169,7 @@ extension Megrez.Compositor {
       }
     }
 
-    let terminal = Megrez.Vertex(node: .init(key: "_TERMINAL_", spanLength: 0, unigrams: .init()))
+    let terminal = Megrez.Vertex(node: .init(key: "_TERMINAL_"))
 
     for (i, vertexSpan) in vertexSpans.enumerated() {
       for vertex in vertexSpan {
@@ -181,7 +185,7 @@ extension Megrez.Compositor {
       }
     }
 
-    let root = Megrez.Vertex(node: .init(key: "_ROOT_", spanLength: 0, unigrams: .init()))
+    let root = Megrez.Vertex(node: .init(key: "_ROOT_"))
     root.distance = 0
     root.edges.append(contentsOf: vertexSpans[0])
 
@@ -194,6 +198,7 @@ extension Megrez.Compositor {
       ordered[j] = neta
     }
 
+    // 接下來這段處理可能有問題需要修正。
     var walked = [Megrez.Node]()
     var totalReadingLength = 0
     while totalReadingLength < readings.count + 2, let lastEdge = ordered.reversed()[totalReadingLength].edges.last {

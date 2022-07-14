@@ -85,7 +85,7 @@ final class MegrezTests: XCTestCase {
 
   func testInvalidOperations() throws {
     class TestLM: LangModelProtocol {
-      func bigramsForKeys(precedingKey _: String, key _: String) -> [Megrez.Bigram] {
+      func bigramsFor(precedingKey _: String, key _: String) -> [Megrez.Bigram] {
         .init()
       }
 

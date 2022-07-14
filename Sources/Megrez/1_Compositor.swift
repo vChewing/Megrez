@@ -40,7 +40,7 @@ extension Megrez {
     private(set) var cursorRegionMap: [Int: Int] = .init()
     /// 用以記錄爬過的節錨的陣列。
     private(set) var walkedAnchors: [NodeAnchor] = []
-    
+
     /// 該函式用以更新爬過的節錨的陣列。
     /// - Parameter nodes: 傳入的節點陣列。
     public func updateWalkedAnchors(with nodes: [Node]) {
@@ -289,6 +289,7 @@ extension Megrez {
 
     internal func updateCursorJumpingTables(_ anchors: [NodeAnchor]) {
       var cursorRegionMapDict = [Int: Int]()
+      cursorRegionMapDict[-1] = 0  // 防呆
       var counter = 0
       for (i, anchor) in anchors.enumerated() {
         for _ in 0..<anchor.spanLength {
@@ -297,7 +298,6 @@ extension Megrez {
         }
       }
       cursorRegionMapDict[counter] = anchors.count
-      cursorRegionMapDict[-1] = 0  // 防呆
       cursorRegionMap = cursorRegionMapDict
     }
   }

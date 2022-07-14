@@ -98,7 +98,7 @@ extension Megrez {
           spans.remove(at: location)
       }
       for i in 0..<location {
-        // zaps overlapping spans
+        // 處理掉被損毀的或者重複的幅位。
         spans[i].dropNodesBeyond(length: location - i)
       }
     }

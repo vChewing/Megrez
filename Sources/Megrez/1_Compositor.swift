@@ -54,6 +54,8 @@ extension Megrez {
       cursor = 0
       keys.removeAll()
       spans.removeAll()
+      walkedNodes.removeAll()
+      cursorRegionMap.removeAll()
     }
 
     /// 在游標位置插入給定的索引鍵。

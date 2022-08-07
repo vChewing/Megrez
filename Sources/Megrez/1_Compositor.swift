@@ -29,7 +29,7 @@ extension Megrez {
     /// 公開：組字器內已經插入的單筆索引鍵的數量。
     public var width: Int { keys.count }
     /// 公開：最近一次爬軌結果。
-    public var walkedNodes: [Node] = []
+    private(set) var walkedNodes: [Node] = []
     /// 公開：該組字器的長度，也就是內建漢字讀音的數量（唯讀）。
     public var length: Int { keys.count }
     /// 公開：組字器是否為空。
@@ -54,6 +54,8 @@ extension Megrez {
       cursor = 0
       keys.removeAll()
       spans.removeAll()
+      walkedNodes.removeAll()
+      cursorRegionMap.removeAll()
     }
 
     /// 在游標位置插入給定的索引鍵。

@@ -42,6 +42,8 @@ extension Megrez.Compositor {
       didSet { currentUnigramIndex = min(max(0, currentUnigramIndex), unigrams.count - 1) }
     }
 
+    public var currentPair: Megrez.Compositor.Candidate { .init(key: key, value: value) }
+
     public func hash(into hasher: inout Hasher) {
       hasher.combine(key)
       hasher.combine(spanLength)

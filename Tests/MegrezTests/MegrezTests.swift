@@ -393,7 +393,6 @@ final class MegrezTests: XCTestCase {
     XCTAssertTrue(compositor.overrideCandidateLiteral("年終", at: 7))
     result = compositor.walk().0
     XCTAssertEqual(result.values, ["高科技", "公司", "的", "年終", "獎金"])
-    let candidatesAll = compositor.fetchCandidates(at: 3).map(\.value)
     let candidatesBeginAt = compositor.fetchCandidates(at: 3, filter: .beginAt).map(\.value)
     let candidatesEndAt = compositor.fetchCandidates(at: 3, filter: .endAt).map(\.value)
     XCTAssertFalse(candidatesBeginAt.contains("濟公"))

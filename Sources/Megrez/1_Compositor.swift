@@ -46,8 +46,9 @@ extension Megrez {
 
     /// 初期化一個組字器。
     /// - Parameter langModel: 要對接的語言模組。
-    public init(with langModel: LangModelProtocol) {
+    public init(with langModel: LangModelProtocol, separator: String = "-") {
       self.langModel = .init(withLM: langModel)
+      self.separator = separator
     }
 
     public func clear() {

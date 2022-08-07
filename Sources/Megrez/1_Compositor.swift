@@ -121,6 +121,31 @@ extension Megrez {
       }
       return true
     }
+
+    /// 生成用以交給 GraphViz 診斷的資料檔案內容，純文字。
+    public var dumpDOT: String {
+      var strOutput = "digraph {\ngraph [ rankdir=LR ];\nBOS;\n"
+      for (p, span) in spans.enumerated() {
+        for ni in 0...(span.maxLength) {
+          guard let np = span.nodeOf(length: ni) else { continue }
+          if p == 0 {
+            strOutput += "BOS -> \(np.value);\n"
+          }
+          strOutput += "\(np.value);\n"
+          if (p + ni) < spans.count {
+            let destinationSpan = spans[p + ni]
+            for q in 0...(destinationSpan.maxLength) {
+              guard let dn = destinationSpan.nodeOf(length: q) else { continue }
+              strOutput += np.value + " -> " + dn.value + ";\n"
+            }
+          }
+          guard (p + ni) == spans.count else { continue }
+          strOutput += np.value + " -> EOS;\n"
+        }
+      }
+      strOutput += "EOS;\n}\n"
+      return strOutput
+    }
   }
 }
 

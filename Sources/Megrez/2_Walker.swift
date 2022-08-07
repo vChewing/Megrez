@@ -32,8 +32,7 @@ extension Megrez.Compositor {
       }
     }
 
-    let terminal = Vertex(
-      node: .init(keyArray: ["_TERMINAL_"], spanLength: 0, unigrams: .init(), keySeparator: separator))
+    let terminal = Vertex(node: .init(keyArray: ["_TERMINAL_"], keySeparator: separator))
 
     for (i, vertexSpan) in vertexSpans.enumerated() {
       for vertex in vertexSpan {
@@ -48,7 +47,7 @@ extension Megrez.Compositor {
       }
     }
 
-    let root = Vertex(node: .init(keyArray: ["_ROOT_"], spanLength: 0, unigrams: .init(), keySeparator: separator))
+    let root = Vertex(node: .init(keyArray: ["_ROOT_"], keySeparator: separator))
     root.distance = 0
     root.edges.append(contentsOf: vertexSpans[0])
 

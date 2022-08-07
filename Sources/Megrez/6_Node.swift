@@ -58,7 +58,9 @@ extension Megrez.Compositor {
         && lhs.unigrams == rhs.unigrams && lhs.overrideType == rhs.overrideType
     }
 
-    public init(keyArray: [String] = [], spanLength: Int, unigrams: [Megrez.Unigram] = [], keySeparator: String = "") {
+    public init(
+      keyArray: [String] = [], spanLength: Int = 0, unigrams: [Megrez.Unigram] = [], keySeparator: String = ""
+    ) {
       key = keyArray.joined(separator: keySeparator)
       self.keyArray = keyArray
       self.spanLength = spanLength

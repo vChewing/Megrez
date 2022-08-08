@@ -76,14 +76,12 @@ extension Megrez.Compositor {
           case .all:
             // 得加上這道篩選，所以會出現很多無效結果。
             if !theNode.keyArray.contains(keyAtCursor) { continue }
-            result.append(.init(key: theNode.key, value: gram.value))
           case .beginAt:
             if theNode.keyArray[0] != keyAtCursor { continue }
-            result.append(.init(key: theNode.key, value: gram.value))
           case .endAt:
             if theNode.keyArray.reversed()[0] != keyAtCursor { continue }
-            result.append(.init(key: theNode.key, value: gram.value))
         }
+        result.append(.init(key: theNode.key, value: gram.value))
       }
     }
     return result

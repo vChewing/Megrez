@@ -133,10 +133,10 @@ extension Megrez.Compositor {
     let location = max(min(location, keys.count), 0)  // 防呆
     var arrOverlappedNodes: [NodeAnchor] = fetchOverlappingNodes(at: min(keys.count - 1, location))
     var overridden: NodeAnchor?
-    for nis in arrOverlappedNodes {
-      if let key = key, nis.node.key != key { continue }
-      if nis.node.selectOverrideUnigram(value: value, type: type) {
-        overridden = nis
+    for anchor in arrOverlappedNodes {
+      if let key = key, anchor.node.key != key { continue }
+      if anchor.node.selectOverrideUnigram(value: value, type: type) {
+        overridden = anchor
         break
       }
     }
@@ -148,9 +148,9 @@ extension Megrez.Compositor {
       /// 且 A 與 BC 都是被覆寫的結果，然後使用者現在在與 A 相同的幅位座標位置
       /// 選了「DEF」，那麼 BC 的覆寫狀態就有必要重設（但 A 不用重設）。
       arrOverlappedNodes = fetchOverlappingNodes(at: i)
-      for nis in arrOverlappedNodes {
-        if nis.node == overridden.node { continue }
-        nis.node.reset()
+      for anchor in arrOverlappedNodes {
+        if anchor.node == overridden.node { continue }
+        anchor.node.reset()
       }
     }
     return true

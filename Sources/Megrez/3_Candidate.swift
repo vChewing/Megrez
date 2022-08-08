@@ -132,7 +132,7 @@ extension Megrez.Compositor {
   internal func overrideCandidateAgainst(key: String?, at location: Int, value: String, type: Node.OverrideType)
     -> Bool
   {
-    let location = max(min(location, keys.count - 1), 0)  // 防呆
+    let location = max(min(location, keys.count), 0)  // 防呆
     var arrOverlappedNodes: [NodeAnchor] = fetchOverlappingNodes(at: min(keys.count - 1, location))
     var overridden: NodeAnchor?
     for nis in arrOverlappedNodes {

@@ -13,13 +13,13 @@ Megrez Engine is a module made for processing lingual data of an input method. T
 
 ### §1. 初期化
 
-在你的 ctlInputMethod (InputMethodController) 或者 KeyHandler 內初期化一份 Megrez.Compositor 組字器副本（這裡將該副本命名為「`compositor`」）。由於 Megrez.Compositor 的型別是 Class 型別，所以其副本可以用 let 來宣告。
+在你的 ctlInputMethod (InputMethodController) 或者 KeyHandler 內初期化一份 Megrez.Compositor 組字器副本（這裡將該副本命名為「`compositor`」）。由於 Megrez.Compositor 的型別是 Struct 型別（為了讓 Compositor 可以 deep copy），所以其副本可以用 var 來宣告。
 
 以 KeyHandler 為例：
 ```swift
 class KeyHandler {
   // 先設定好變數
-  let compositor: Megrez.Compositor = .init()
+  var compositor: Megrez.Compositor = .init()
   ...
 }
 ```
@@ -29,7 +29,7 @@ class KeyHandler {
 @objc(ctlInputMethod)  // 根據 info.plist 內的情況來確定型別的命名
 class ctlInputMethod: IMKInputController {
   // 先設定好變數
-  let compositor: Megrez.Compositor = .init()
+  var compositor: Megrez.Compositor = .init()
   ...
 }
 ```
@@ -43,7 +43,7 @@ class ctlInputMethod: IMKInputController {
   ///   - lm: 語言模型。可以是任何基於 Megrez.LangModel 的衍生型別。
   ///   - length: 指定該組字器內可以允許的最大詞長，預設為 10 字。
   ///   - separator: 多字讀音鍵當中用以分割漢字讀音的記號，預設為空。
-  let compositor: Megrez.Compositor = .init(lm: lmTest, length: 13, separator: "-")
+  var compositor: Megrez.Compositor = .init(lm: lmTest, length: 13, separator: "-")
 ```
 
 ### §2. 使用範例

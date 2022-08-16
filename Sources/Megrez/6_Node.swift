@@ -139,4 +139,45 @@ extension Array where Element == Megrez.Compositor.Node {
 
   /// 從一個節點陣列當中取出目前的索引鍵陣列。
   public var keys: [String] { map(\.key) }
+
+  /// 在陣列內以給定游標位置找出對應的節點。
+  /// - Parameters:
+  ///   - cursor: 給定游標位置。
+  ///   - outCursorPastNode: 找出的節點的前端位置。
+  /// - Returns: 查找結果。
+  public func findNode(at cursor: Int, target outCursorPastNode: inout Int) -> Megrez.Compositor.Node? {
+    guard !isEmpty else { return nil }
+    let cursor = Swift.max(0, Swift.min(cursor, keys.count))
+
+    if cursor == 0, let theFirst = first {
+      outCursorPastNode = theFirst.spanLength
+      return theFirst
+    }
+
+    // 同時應對「游標在右端」與「游標離右端還差一個位置」的情形。
+    if cursor >= keys.count - 1, let theLast = last {
+      outCursorPastNode = keys.count
+      return theLast
+    }
+
+    var accumulated = 0
+    for neta in self {
+      accumulated += neta.spanLength
+      if accumulated > cursor {
+        outCursorPastNode = accumulated
+        return neta
+      }
+    }
+
+    // 下述情形本不應該出現。
+    return nil
+  }
+
+  /// 在陣列內以給定游標位置找出對應的節點。
+  /// - Parameter cursor: 給定游標位置。
+  /// - Returns: 查找結果。
+  public func findNode(at cursor: Int) -> Megrez.Compositor.Node? {
+    var useless = 0
+    return findNode(at: cursor, target: &useless)
+  }
 }

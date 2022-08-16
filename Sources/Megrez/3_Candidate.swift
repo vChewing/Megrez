@@ -57,7 +57,7 @@ extension Megrez.Compositor {
 
   /// 返回在當前位置的所有候選字詞（以詞音配對的形式）。如果組字器內有幅位、且游標
   /// 位於組字器的（文字輸入順序的）最前方（也就是游標位置的數值是最大合規數值）的
-  /// 話，那麼這裡會用到 location - 1、以免去在呼叫該函數後再處理的麻煩。
+  /// 話，那麼這裡會用到 location - 1、以免去在呼叫該函式後再處理的麻煩。
   /// - Parameter location: 游標位置。
   /// - Returns: 候選字音配對陣列。
   public func fetchCandidates(at location: Int, filter: CandidateFetchFilter = .all) -> [Candidate] {
@@ -105,7 +105,7 @@ extension Megrez.Compositor {
 
   /// 使用給定的候選字詞字串，將給定位置的節點的候選字詞改為與之一致的候選字詞。
   ///
-  /// 注意：如果有多個「單元圖資料值雷同、卻讀音不同」的節點的話，該函數的行為結果不可控。
+  /// 注意：如果有多個「單元圖資料值雷同、卻讀音不同」的節點的話，該函式的行為結果不可控。
   /// - Parameters:
   ///   - candidate: 指定用來覆寫為的候選字（字串）。
   ///   - location: 游標位置。
@@ -144,13 +144,17 @@ extension Megrez.Compositor {
     guard let overridden = overridden else { return false }  // 啥也不覆寫。
 
     for i in overridden.spanIndex..<min(spans.count, overridden.spanIndex + overridden.node.spanLength) {
-      /// 咱們還得重設所有在相同的幅位座標的節點。舉例說之前爬軌的結果是「A BC」
+      /// 咱們還得弱化所有在相同的幅位座標的節點的複寫權重。舉例說之前爬軌的結果是「A BC」
       /// 且 A 與 BC 都是被覆寫的結果，然後使用者現在在與 A 相同的幅位座標位置
       /// 選了「DEF」，那麼 BC 的覆寫狀態就有必要重設（但 A 不用重設）。
       arrOverlappedNodes = fetchOverlappingNodes(at: i)
       for anchor in arrOverlappedNodes {
         if anchor.node == overridden.node { continue }
-        anchor.node.reset()
+        if !overridden.node.key.contains(anchor.node.key) || !overridden.node.value.contains(anchor.node.value) {
+          anchor.node.reset()
+          continue
+        }
+        anchor.node.overridingScore /= 2
       }
     }
     return true

@@ -17,8 +17,8 @@ extension Megrez.Compositor {
     ///  [("a", -114), ("b", -514), ("c", -1919)] 的話，指定該覆寫行為則會導致該節
     ///  點返回的結果為 ("c", -114)。該覆寫行為多用於諸如使用者半衰記憶模組的建議
     ///  行為。被覆寫的這個節點的狀態可能不會再被爬軌行為擅自改回。該覆寫行為無法
-    ///  防止其它節點被爬軌函式所支配。這種情況下就需要用到 kOverridingScore
-    /// - withHighScore: 將該節點權重覆寫為 kOverridingScore，使其被爬軌函式所青睞。
+    ///  防止其它節點被爬軌函式所支配。這種情況下就需要用到 overridingScore
+    /// - withHighScore: 將該節點權重覆寫為 overridingScore，使其被爬軌函式所青睞。
     public enum OverrideType: Int {
       case withNoOverrides = 0
       case withTopUnigramScore = 1
@@ -32,7 +32,7 @@ extension Megrez.Compositor {
     /// 找出「A->bc」的爬軌途徑（尤其是當 A 和 B 使用「0」作為複寫數值的情況下）。這樣
     /// 一來，「A-B」就不一定始終會是爬軌函式的青睞結果了。所以，這裡一定要用大於 0 的
     /// 數（比如野獸常數），以讓「c」更容易單獨被選中。
-    public static let kOverridingScore: Double = 114_514
+    public var overridingScore: Double = 114_514
 
     private(set) var key: String
     private(set) var keyArray: [String]
@@ -81,7 +81,7 @@ extension Megrez.Compositor {
     public var score: Double {
       guard !unigrams.isEmpty else { return 0 }
       switch overrideType {
-        case .withHighScore: return Megrez.Compositor.Node.kOverridingScore
+        case .withHighScore: return overridingScore
         case .withTopUnigramScore: return unigrams[0].score
         default: return currentUnigram.score
       }

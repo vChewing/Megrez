@@ -140,6 +140,40 @@ extension Array where Element == Megrez.Compositor.Node {
   /// 從一個節點陣列當中取出目前的索引鍵陣列。
   public var keys: [String] { map(\.key) }
 
+  /// 返回一連串的節點起點。結果為 (Result A, Result B) 辭典陣列
+  /// Result A 以索引查座標，Result B 以座標查索引。
+  public var nodeBorderPointDictPair: ([Int: Int], [Int: Int]) {
+    // Result A 以索引查座標，Result B 以座標查索引。
+    var resultA = [Int: Int]()
+    var resultB = [Int: Int]()
+    var i = 0
+    for (j, neta) in enumerated() {
+      resultA[j] = i
+      neta.keyArray.forEach { _ in
+        resultB[i] = j
+        i += 1
+      }
+    }
+    resultA[resultA.count] = i
+    resultB[i] = resultB.count
+    return (resultA, resultB)
+  }
+
+  /// 總讀音單元數量，也就是總幅位長度。
+  public var totalKeyCount: Int { map(\.keyArray.count).reduce(0, +) }
+
+  /// 根據給定的游標，返回其前後最近的邊界點。
+  /// - Parameter cursor: 給定的游標。
+  public func contextRange(ofGivenCursor cursor: Int) -> Range<Int> {
+    let nilReturn = (totalKeyCount - 1)..<totalKeyCount
+    if cursor == totalKeyCount { return nilReturn }
+    let cursor = Swift.min(Swift.max(0, cursor), totalKeyCount - 1)  // 防呆
+    guard let rearNodeID = nodeBorderPointDictPair.1[cursor] else { return nilReturn }
+    guard let rearIndex = nodeBorderPointDictPair.0[rearNodeID] else { return nilReturn }
+    guard let frontIndex = nodeBorderPointDictPair.0[rearNodeID + 1] else { return nilReturn }
+    return rearIndex..<frontIndex
+  }
+
   /// 在陣列內以給定游標位置找出對應的節點。
   /// - Parameters:
   ///   - cursor: 給定游標位置。

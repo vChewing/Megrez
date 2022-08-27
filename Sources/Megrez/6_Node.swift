@@ -165,12 +165,15 @@ extension Array where Element == Megrez.Compositor.Node {
   /// 根據給定的游標，返回其前後最近的邊界點。
   /// - Parameter cursor: 給定的游標。
   public func contextRange(ofGivenCursor cursor: Int) -> Range<Int> {
-    let nilReturn = (totalKeyCount - 1)..<totalKeyCount
-    if cursor == totalKeyCount { return nilReturn }
-    let cursor = Swift.min(Swift.max(0, cursor), totalKeyCount - 1)  // 防呆
-    guard let rearNodeID = nodeBorderPointDictPair.1[cursor] else { return nilReturn }
-    guard let rearIndex = nodeBorderPointDictPair.0[rearNodeID] else { return nilReturn }
-    guard let frontIndex = nodeBorderPointDictPair.0[rearNodeID + 1] else { return nilReturn }
+    guard !isEmpty else { return 0..<0 }
+    let lastSpanningLength = reversed()[0].keyArray.count
+    var nilReturn = (totalKeyCount - lastSpanningLength)..<totalKeyCount
+    if cursor >= totalKeyCount { return nilReturn }  // 防呆
+    let cursor = Swift.max(0, cursor)  // 防呆
+    nilReturn = cursor..<cursor
+    guard let rearNodeID = nodeBorderPointDictPair.1[cursor] else { return nilReturn }  // 應該不會出現 nilReturn
+    guard let rearIndex = nodeBorderPointDictPair.0[rearNodeID] else { return nilReturn }  // 應該不會出現 nilReturn
+    guard let frontIndex = nodeBorderPointDictPair.0[rearNodeID + 1] else { return nilReturn }  // 應該不會出現 nilReturn
     return rearIndex..<frontIndex
   }
 
@@ -181,30 +184,11 @@ extension Array where Element == Megrez.Compositor.Node {
   /// - Returns: 查找結果。
   public func findNode(at cursor: Int, target outCursorPastNode: inout Int) -> Megrez.Compositor.Node? {
     guard !isEmpty else { return nil }
-    let cursor = Swift.max(0, Swift.min(cursor, keys.count))
-
-    if cursor == 0, let theFirst = first {
-      outCursorPastNode = theFirst.spanLength
-      return theFirst
-    }
-
-    // 同時應對「游標在右端」與「游標離右端還差一個位置」的情形。
-    if cursor >= keys.count - 1, let theLast = last {
-      outCursorPastNode = keys.count
-      return theLast
-    }
-
-    var accumulated = 0
-    for neta in self {
-      accumulated += neta.spanLength
-      if accumulated > cursor {
-        outCursorPastNode = accumulated
-        return neta
-      }
-    }
-
-    // 下述情形本不應該出現。
-    return nil
+    let cursor = Swift.min(Swift.max(0, cursor), totalKeyCount - 1)  // 防呆
+    let range = contextRange(ofGivenCursor: cursor)
+    outCursorPastNode = range.upperBound
+    guard let rearNodeID = nodeBorderPointDictPair.1[cursor] else { return nil }
+    return count - 1 >= rearNodeID ? self[rearNodeID] : nil
   }
 
   /// 在陣列內以給定游標位置找出對應的節點。

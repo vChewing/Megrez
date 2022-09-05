@@ -154,7 +154,7 @@ extension Megrez.Compositor {
           anchor.node.reset()
           continue
         }
-        anchor.node.overridingScore /= 2
+        anchor.node.overridingScore /= 4
       }
     }
     return true

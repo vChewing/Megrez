@@ -44,13 +44,13 @@ extension Megrez {
     public var isEmpty: Bool { spans.isEmpty && keys.isEmpty }
 
     /// 該組字器的索引鍵陣列。
-    private(set) var keys = [String]()
+    public private(set) var keys = [String]()
     /// 該組字器的幅位陣列。
-    private(set) var spans = [Span]()
+    public private(set) var spans = [Span]()
     /// 該組字器所使用的語言模型（被 LangModelRanked 所封裝）。
-    private(set) var langModel: LangModelRanked
+    public var langModel: LangModelRanked
     /// 允許查詢當前游標位置屬於第幾個幅位座標（從 0 開始算）。
-    private(set) var cursorRegionMap: [Int: Int] = .init()
+    public private(set) var cursorRegionMap: [Int: Int] = .init()
 
     /// 初期化一個組字器。
     /// - Parameter langModel: 要對接的語言模組。

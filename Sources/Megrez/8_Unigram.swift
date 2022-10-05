@@ -38,3 +38,19 @@ extension Megrez {
     }
   }
 }
+
+// MARK: - Array Extensions.
+
+extension Array where Element == Megrez.Unigram {
+  /// 給定過濾清單，讓單元圖陣列自我過濾。
+  public mutating func consolidate(filter theFilter: Set<String> = .init()) {
+    var inserted: [String: Double] = [:]
+    var insertedArray: [Megrez.Unigram] = []
+    for neta in filter({ !theFilter.contains($0.value) }) {
+      if inserted.keys.contains(neta.value) { continue }
+      inserted[neta.value] = neta.score
+      insertedArray.append(neta)
+    }
+    self = insertedArray
+  }
+}

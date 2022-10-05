@@ -34,11 +34,11 @@ extension Megrez.Compositor {
     /// 數（比如野獸常數），以讓「c」更容易單獨被選中。
     public var overridingScore: Double = 114_514
 
-    private(set) var key: String
-    private(set) var keyArray: [String]
-    private(set) var spanLength: Int
-    private(set) var unigrams: [Megrez.Unigram]
-    private(set) var currentUnigramIndex: Int = 0 {
+    public private(set) var key: String
+    public private(set) var keyArray: [String]
+    public private(set) var spanLength: Int
+    public private(set) var unigrams: [Megrez.Unigram]
+    public private(set) var currentUnigramIndex: Int = 0 {
       didSet { currentUnigramIndex = min(max(0, currentUnigramIndex), unigrams.count - 1) }
     }
 
@@ -53,7 +53,7 @@ extension Megrez.Compositor {
       hasher.combine(overrideType)
     }
 
-    private(set) var overrideType: Node.OverrideType
+    public private(set) var overrideType: Node.OverrideType
 
     public static func == (lhs: Node, rhs: Node) -> Bool {
       lhs.key == rhs.key && lhs.spanLength == rhs.spanLength

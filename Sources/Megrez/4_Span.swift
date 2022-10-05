@@ -7,7 +7,7 @@ extension Megrez.Compositor {
   /// 幅位乃指一組共享起點的節點。
   public class Span {
     private var nodes: [Node?] = []
-    private(set) var maxLength = 0
+    public private(set) var maxLength = 0
     private var maxSpanLength: Int { Megrez.Compositor.maxSpanLength }
     public init() {
       clear()
@@ -57,7 +57,7 @@ extension Megrez.Compositor {
 
     public func nodeOf(length: Int) -> Node? {
       guard (1...maxSpanLength).contains(length) else { return nil }
-      return nodes[length - 1] ?? nil
+      return nodes[length - 1]
     }
   }
 

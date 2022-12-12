@@ -87,7 +87,7 @@ extension Megrez.Compositor {
     }
     let keyAtCursor = keys[location]
     for theNode in anchors.map(\.node) {
-      if theNode.keyArray.joined(separator: separator).isEmpty { continue }
+      if theNode.keyArray.isEmpty { continue }
       for gram in theNode.unigrams {
         switch filter {
           case .all:
@@ -171,8 +171,8 @@ extension Megrez.Compositor {
       arrOverlappedNodes = fetchOverlappingNodes(at: i)
       for anchor in arrOverlappedNodes {
         if anchor.node == overridden.node { continue }
-        if !overridden.node.keyArray.joined(separator: separator).contains(
-          anchor.node.keyArray.joined(separator: separator)) || !overridden.node.value.contains(anchor.node.value)
+        if !overridden.node.joinedKey(by: "\t").contains(anchor.node.joinedKey(by: "\t"))
+          || !overridden.node.value.contains(anchor.node.value)
         {
           anchor.node.reset()
           continue

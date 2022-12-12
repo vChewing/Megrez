@@ -50,23 +50,23 @@ extension Megrez.Compositor {
     }
 
     public static func < (lhs: KeyValuePaired, rhs: KeyValuePaired) -> Bool {
-      (lhs.keyArray.joined().count < rhs.keyArray.joined().count)
-        || (lhs.keyArray.joined().count == rhs.keyArray.joined().count && lhs.value < rhs.value)
+      (lhs.keyArray.count < rhs.keyArray.count)
+        || (lhs.keyArray.count == rhs.keyArray.count && lhs.value < rhs.value)
     }
 
     public static func > (lhs: KeyValuePaired, rhs: KeyValuePaired) -> Bool {
-      (lhs.keyArray.joined().count > rhs.keyArray.joined().count)
-        || (lhs.keyArray.joined().count == rhs.keyArray.joined().count && lhs.value > rhs.value)
+      (lhs.keyArray.count > rhs.keyArray.count)
+        || (lhs.keyArray.count == rhs.keyArray.count && lhs.value > rhs.value)
     }
 
     public static func <= (lhs: KeyValuePaired, rhs: KeyValuePaired) -> Bool {
-      (lhs.keyArray.joined().count <= rhs.keyArray.joined().count)
-        || (lhs.keyArray.joined().count == rhs.keyArray.joined().count && lhs.value <= rhs.value)
+      (lhs.keyArray.count <= rhs.keyArray.count)
+        || (lhs.keyArray.count == rhs.keyArray.count && lhs.value <= rhs.value)
     }
 
     public static func >= (lhs: KeyValuePaired, rhs: KeyValuePaired) -> Bool {
-      (lhs.keyArray.joined().count >= rhs.keyArray.joined().count)
-        || (lhs.keyArray.joined().count == rhs.keyArray.joined().count && lhs.value >= rhs.value)
+      (lhs.keyArray.count >= rhs.keyArray.count)
+        || (lhs.keyArray.count == rhs.keyArray.count && lhs.value >= rhs.value)
     }
   }
 

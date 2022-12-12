@@ -207,7 +207,7 @@ extension Array where Element == Megrez.Compositor.Node {
   /// - Returns: 查找結果。
   public func findNode(at cursor: Int, target outCursorPastNode: inout Int) -> Megrez.Compositor.Node? {
     guard !isEmpty else { return nil }
-    let cursor = Swift.min(Swift.max(0, cursor), totalKeyCount - 1)  // 防呆
+    let cursor = Swift.max(0, Swift.min(cursor, totalKeyCount - 1))  // 防呆
     let range = contextRange(ofGivenCursor: cursor)
     outCursorPastNode = range.upperBound
     guard let rearNodeID = nodeBorderPointDictPair.1[cursor] else { return nil }

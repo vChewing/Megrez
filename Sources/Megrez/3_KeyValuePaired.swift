@@ -151,15 +151,10 @@ extension Megrez.Compositor {
     var arrOverlappedNodes: [NodeAnchor] = fetchOverlappingNodes(at: min(keys.count - 1, location))
     var overridden: NodeAnchor?
     for anchor in arrOverlappedNodes {
-      if let keyArray = keyArray,
-        anchor.node.keyArray.joined(separator: separator) != keyArray.joined(separator: separator)
-      {
-        continue
-      }
-      if anchor.node.selectOverrideUnigram(value: value, type: type) {
-        overridden = anchor
-        break
-      }
+      if keyArray != nil, anchor.node.keyArray != keyArray { continue }
+      if !anchor.node.selectOverrideUnigram(value: value, type: type) { continue }
+      overridden = anchor
+      break
     }
 
     guard let overridden = overridden else { return false }  // 啥也不覆寫。

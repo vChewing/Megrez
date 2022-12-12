@@ -3,6 +3,8 @@
 // ====================
 // This code is released under the MIT license (SPDX-License-Identifier: MIT)
 
+import Foundation
+
 extension Megrez {
   /// 一個組字器用來在給定一系列的索引鍵的情況下（藉由一系列的觀測行為）返回一套資料值。
   ///
@@ -39,11 +41,9 @@ extension Megrez {
       }
     }
 
-    /// 公開：組字器內已經插入的單筆索引鍵的數量。
-    public var width: Int { keys.count }
     /// 公開：最近一次爬軌結果。
     public var walkedNodes: [Node] = []
-    /// 公開：該組字器的長度，也就是內建漢字讀音的數量（唯讀）。
+    /// 公開：該組字器的長度，組字器內已經插入的單筆索引鍵的數量，也就是內建漢字讀音的數量（唯讀）。
     public var length: Int { keys.count }
     /// 公開：組字器是否為空。
     public var isEmpty: Bool { spans.isEmpty && keys.isEmpty }
@@ -53,7 +53,10 @@ extension Megrez {
     /// 該組字器的幅位陣列。
     public private(set) var spans = [Span]()
     /// 該組字器所使用的語言模型（被 LangModelRanked 所封裝）。
-    public var langModel: LangModelRanked
+    public var langModel: LangModelRanked {
+      didSet { clear() }
+    }
+
     /// 允許查詢當前游標位置屬於第幾個幅位座標（從 0 開始算）。
     public private(set) var cursorRegionMap: [Int: Int] = .init()
 
@@ -66,6 +69,7 @@ extension Megrez {
 
     public mutating func clear() {
       cursor = 0
+      marker = 0
       keys.removeAll()
       spans.removeAll()
       walkedNodes.removeAll()
@@ -117,7 +121,7 @@ extension Megrez {
       var target = isMarker ? marker : cursor
       switch direction {
         case .front:
-          if target == width { return false }
+          if target == length { return false }
         case .rear:
           if target == 0 { return false }
       }
@@ -152,27 +156,28 @@ extension Megrez {
 
     /// 生成用以交給 GraphViz 診斷的資料檔案內容，純文字。
     public var dumpDOT: String {
-      var strOutput = "digraph {\ngraph [ rankdir=LR ];\nBOS;\n"
+      // C# StringBuilder 與 Swift NSMutableString 能提供爆發性的效能。
+      let strOutput: NSMutableString = .init(string: "digraph {\ngraph [ rankdir=LR ];\nBOS;\n")
       for (p, span) in spans.enumerated() {
         for ni in 0...(span.maxLength) {
           guard let np = span.nodeOf(length: ni) else { continue }
           if p == 0 {
-            strOutput += "BOS -> \(np.value);\n"
+            strOutput.append("BOS -> \(np.value);\n")
           }
-          strOutput += "\(np.value);\n"
+          strOutput.append("\(np.value);\n")
           if (p + ni) < spans.count {
             let destinationSpan = spans[p + ni]
             for q in 0...(destinationSpan.maxLength) {
               guard let dn = destinationSpan.nodeOf(length: q) else { continue }
-              strOutput += np.value + " -> " + dn.value + ";\n"
+              strOutput.append(np.value + " -> " + dn.value + ";\n")
             }
           }
           guard (p + ni) == spans.count else { continue }
-          strOutput += np.value + " -> EOS;\n"
+          strOutput.append(np.value + " -> EOS;\n")
         }
       }
-      strOutput += "EOS;\n}\n"
-      return strOutput
+      strOutput.append("EOS;\n}\n")
+      return strOutput.description
     }
   }
 }
@@ -241,12 +246,6 @@ extension Megrez.Compositor {
     }
   }
 
-  @discardableResult mutating func insertNode(_ node: Node, at location: Int) -> Bool {
-    let location = max(min(location, spans.count - 1), 0)  // 防呆
-    spans[location].append(node: node)
-    return true
-  }
-
   func getJoinedKeyArray(range: Range<Int>) -> [String] {
     // 下面這句不能用 contains，不然會要求至少 macOS 13 Ventura。
     guard range.upperBound <= keys.count, range.lowerBound >= 0 else { return [] }
@@ -283,9 +282,8 @@ extension Megrez.Compositor {
         }
         let unigrams = langModel.unigramsFor(keyArray: joinedKeyArray)
         guard !unigrams.isEmpty else { continue }
-        insertNode(
-          .init(keyArray: joinedKeyArray, spanLength: theLength, unigrams: unigrams),
-          at: position
+        spans[position].append(
+          node: .init(keyArray: joinedKeyArray, spanLength: theLength, unigrams: unigrams)
         )
         nodesChanged += 1
       }
@@ -293,12 +291,12 @@ extension Megrez.Compositor {
     return nodesChanged
   }
 
-  mutating func updateCursorJumpingTables(_ walkedNodes: [Node]) {
+  mutating func updateCursorJumpingTables() {
     var cursorRegionMapDict = [Int: Int]()
     cursorRegionMapDict[-1] = 0  // 防呆
     var counter = 0
-    for (i, anchor) in walkedNodes.enumerated() {
-      for _ in 0..<anchor.spanLength {
+    for (i, theNode) in walkedNodes.enumerated() {
+      for _ in 0..<theNode.spanLength {
         cursorRegionMapDict[counter] = i
         counter += 1
       }

@@ -19,7 +19,7 @@ extension Megrez.Compositor {
     }
     guard !spans.isEmpty else { return (result, true) }
 
-    var vertexSpans = [VertexSpan]()
+    var vertexSpans = [[Vertex]]()
     for _ in spans {
       vertexSpans.append(.init())
     }

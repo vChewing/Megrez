@@ -37,13 +37,10 @@ extension Megrez.Compositor {
     /// 這裡計算最大權重：
     /// 如果 v 目前的距離值小於「u 的距離值＋w（w 是 u 到 w 的距離，也就是 v 的權重）」，
     /// 我們就更新 v 的距離及其前述頂點。
-    if v.distance < u.distance + w {
-      v.distance = u.distance + w
-      v.prev = u
-    }
+    if v.distance >= u.distance + w { return }
+    v.distance = u.distance + w
+    v.prev = u
   }
-
-  typealias VertexSpan = [Vertex]
 
   /// 對持有單個根頂點的有向無環圖進行位相幾何排序（topological
   /// sort）、且將排序結果以頂點陣列的形式給出。

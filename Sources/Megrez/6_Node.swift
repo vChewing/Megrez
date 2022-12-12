@@ -51,7 +51,7 @@ extension Megrez.Compositor {
       hasher.combine(unigrams)
       hasher.combine(currentUnigramIndex)
       hasher.combine(spanLength)
-      hasher.combine(overrideType)
+      hasher.combine(currentOverrideType)
     }
 
     /// 置換掉該節點內的單元圖陣列資料。
@@ -66,18 +66,18 @@ extension Megrez.Compositor {
       if oldCurrentValue != newCurrentValue { currentUnigramIndex = 0 }
     }
 
-    public private(set) var overrideType: Node.OverrideType
+    public private(set) var currentOverrideType: Node.OverrideType
 
     public static func == (lhs: Node, rhs: Node) -> Bool {
       lhs.keyArray == rhs.keyArray && lhs.spanLength == rhs.spanLength
-        && lhs.unigrams == rhs.unigrams && lhs.overrideType == rhs.overrideType
+        && lhs.unigrams == rhs.unigrams && lhs.currentOverrideType == rhs.currentOverrideType
     }
 
     public init(keyArray: [String] = [], spanLength: Int = 0, unigrams: [Megrez.Unigram] = []) {
       self.keyArray = keyArray
       self.spanLength = spanLength
       self.unigrams = unigrams
-      overrideType = .withNoOverrides
+      currentOverrideType = .withNoOverrides
     }
 
     /// 檢查當前節點是否「讀音字長與候選字字長不一致」。
@@ -94,7 +94,7 @@ extension Megrez.Compositor {
 
     public var score: Double {
       guard !unigrams.isEmpty else { return 0 }
-      switch overrideType {
+      switch currentOverrideType {
         case .withHighScore: return overridingScore
         case .withTopUnigramScore: return unigrams[0].score
         default: return currentUnigram.score
@@ -102,12 +102,12 @@ extension Megrez.Compositor {
     }
 
     public var isOverriden: Bool {
-      overrideType != .withNoOverrides
+      currentOverrideType != .withNoOverrides
     }
 
     public func reset() {
       currentUnigramIndex = 0
-      overrideType = .withNoOverrides
+      currentOverrideType = .withNoOverrides
     }
 
     public func joinedKey(by separator: String = Megrez.Compositor.theSeparator) -> String {
@@ -121,7 +121,7 @@ extension Megrez.Compositor {
       for (i, gram) in unigrams.enumerated() {
         if value != gram.value { continue }
         currentUnigramIndex = i
-        overrideType = type
+        currentOverrideType = type
         return true
       }
       return false

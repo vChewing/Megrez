@@ -9,6 +9,7 @@ extension Megrez.Compositor {
     public var nodes: [Node?] = []
     public private(set) var maxLength = 0
     private var maxSpanLength: Int { Megrez.Compositor.maxSpanLength }
+    private var allowedLengths: ClosedRange<Int> { 1...maxSpanLength }
     public init() {
       clear()
     }
@@ -25,7 +26,7 @@ extension Megrez.Compositor {
     /// - Parameter node: 要塞入的節點。
     /// - Returns: 該操作是否成功執行。
     @discardableResult public func append(node: Node) -> Bool {
-      guard (1...maxSpanLength).contains(node.spanLength) else {
+      guard allowedLengths.contains(node.spanLength) else {
         return false
       }
       nodes[node.spanLength - 1] = node
@@ -37,7 +38,7 @@ extension Megrez.Compositor {
     /// - Parameter length: 給定的幅位長度。
     /// - Returns: 該操作是否成功執行。
     @discardableResult public func dropNodesOfOrBeyond(length: Int) -> Bool {
-      guard (1...maxSpanLength).contains(length) else {
+      guard allowedLengths.contains(length) else {
         return false
       }
       for i in length...maxSpanLength {
@@ -47,16 +48,15 @@ extension Megrez.Compositor {
       guard length > 1 else { return false }
       let maxR = length - 2
       for i in 0...maxR {
-        if nodes[maxR - i] != nil {
-          maxLength = maxR - i + 1
-          break
-        }
+        if nodes[maxR - i] == nil { continue }
+        maxLength = maxR - i + 1
+        break
       }
       return true
     }
 
     public func nodeOf(length: Int) -> Node? {
-      guard (1...maxSpanLength).contains(length) else { return nil }
+      guard allowedLengths.contains(length) else { return nil }
       return nodes[length - 1]
     }
   }

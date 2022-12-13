@@ -51,7 +51,7 @@ extension Megrez {
     /// 該組字器的索引鍵陣列。
     public private(set) var keys = [String]()
     /// 該組字器的幅位陣列。
-    public private(set) var spans = [Span]()
+    public private(set) var spans = [SpanUnit]()
     /// 該組字器所使用的語言模型（被 LangModelRanked 所封裝）。
     public var langModel: LangModelRanked {
       didSet { clear() }
@@ -195,7 +195,7 @@ extension Megrez.Compositor {
     let location = max(min(location, spans.count), 0)  // 防呆
     switch action {
       case .expand:
-        spans.insert(Span(), at: location)
+        spans.insert(SpanUnit(), at: location)
         if [0, spans.count].contains(location) { return }
       case .shrink:
         if spans.count == location { return }

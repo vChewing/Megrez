@@ -5,7 +5,7 @@
 
 extension Megrez.Compositor {
   /// 幅位乃指一組共享起點的節點。
-  public class Span {
+  public class SpanUnit {
     public var nodes: [Node?] = []
     public private(set) var maxLength = 0
     private var maxSpanLength: Int { Megrez.Compositor.maxSpanLength }

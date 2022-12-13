@@ -57,7 +57,7 @@ extension Megrez.Compositor {
     /// 置換掉該節點內的單元圖陣列資料。
     /// 如果此時影響到了 currentUnigramIndex 所指的內容的話，則將其重設為 0。
     /// - Parameter source: 新的單元圖陣列資料，必須不能為空（否則必定崩潰）。
-    public func resetUnigrams(using source: [Megrez.Unigram]) {
+    public func syncingUnigrams(from source: [Megrez.Unigram]) {
       let oldCurrentValue = unigrams[currentUnigramIndex].value
       unigrams = source
       // if unigrams.isEmpty { unigrams.append(.init(value: key, score: -114.514)) }  // 保險，請按需啟用。

@@ -275,7 +275,7 @@ extension Megrez.Compositor {
             if theNode.keyArray.count == 1 { continue }
             spans[position].nodes.removeAll { $0 == theNode }
           } else {
-            theNode.resetUnigrams(using: unigrams)
+            theNode.syncingUnigrams(from: unigrams)
           }
           nodesChanged += 1
           continue

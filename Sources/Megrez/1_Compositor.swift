@@ -253,7 +253,7 @@ extension Megrez.Compositor {
   }
 
   func getNode(at location: Int, length: Int, keyArray: [String]) -> Node? {
-    let location = max(min(location, spans.count), 0)  // 防呆
+    let location = max(min(location, spans.count - 1), 0)  // 防呆
     guard let node = spans[location].nodeOf(length: length) else { return nil }
     return keyArray == node.keyArray ? node : nil
   }

@@ -1,13 +1,14 @@
-// Swiftified by (c) 2022 and onwards The vChewing Project (MIT License).
-// Rebranded from (c) Lukhnos Liu's C++ library "Gramambular 2" (MIT License).
+// Swiftified and further development by (c) 2022 and onwards The vChewing Project (MIT License).
+// Was initially rebranded from (c) Lukhnos Liu's C++ library "Gramambular 2" (MIT License).
 // ====================
 // This code is released under the MIT license (SPDX-License-Identifier: MIT)
 
 import Foundation
 
 extension Megrez.Compositor {
+  /// 鍵值配對，乃索引鍵陣列與讀音的配對單元。
   public struct KeyValuePaired: Equatable, Hashable, Comparable, CustomStringConvertible {
-    /// 鍵陣列。一般情況下用來放置讀音等可以用來作為索引的內容。
+    /// 索引鍵陣列。一般情況下用來放置讀音等可以用來作為索引的內容。
     public var keyArray: [String]
     /// 資料值。
     public var value: String
@@ -20,7 +21,7 @@ extension Megrez.Compositor {
 
     /// 初期化一組鍵值配對。
     /// - Parameters:
-    ///   - key: 鍵陣列。一般情況下用來放置讀音等可以用來作為索引的內容。
+    ///   - keyArray: 索引鍵陣列。一般情況下用來放置讀音等可以用來作為索引的內容。
     ///   - value: 資料值。
     public init(keyArray: [String], value: String = "N/A") {
       self.keyArray = keyArray.isEmpty ? ["N/A"] : keyArray
@@ -29,13 +30,15 @@ extension Megrez.Compositor {
 
     /// 初期化一組鍵值配對。
     /// - Parameters:
-    ///   - key: 鍵。一般情況下用來放置讀音等可以用來作為索引的內容。
+    ///   - key: 索引鍵。一般情況下用來放置讀音等可以用來作為索引的內容。
     ///   - value: 資料值。
     public init(key: String = "N/A", value: String = "N/A") {
       keyArray = key.isEmpty ? ["N/A"] : key.components(separatedBy: Megrez.Compositor.theSeparator)
       self.value = value.isEmpty ? "N/A" : value
     }
 
+    /// 做為預設雜湊函式。
+    /// - Parameter hasher: 目前物件的雜湊碼。
     public func hash(into hasher: inout Hasher) {
       hasher.combine(keyArray)
       hasher.combine(value)
@@ -70,6 +73,10 @@ extension Megrez.Compositor {
     }
   }
 
+  /// 規定候選字陣列內容的獲取範圍類型：
+  /// - all: 不只包含其它兩類結果，還允許游標穿插候選字。
+  /// - beginAt: 僅獲取從當前游標位置開始的節點內的候選字。
+  /// - endAt 僅獲取在當前游標位置結束的節點內的候選字。
   public enum CandidateFetchFilter { case all, beginAt, endAt }
 
   /// 返回在當前位置的所有候選字詞（以詞音配對的形式）。如果組字器內有幅位、且游標
@@ -82,7 +89,7 @@ extension Megrez.Compositor {
     guard !keys.isEmpty else { return result }
     let location = max(min(location, keys.count - 1), 0)  // 防呆
     let anchors: [NodeAnchor] = fetchOverlappingNodes(at: location).stableSorted {
-      // 按照讀音的長度來給節點排序。
+      // 按照讀音的長度（幅位長度）來給節點排序。
       $0.spanLength > $1.spanLength
     }
     let keyAtCursor = keys[location]
@@ -106,9 +113,9 @@ extension Megrez.Compositor {
 
   /// 使用給定的候選字（詞音配對），將給定位置的節點的候選字詞改為與之一致的候選字詞。
   ///
-  /// 該函式可以僅用作過程函式。
+  /// 該函式僅用作過程函式。
   /// - Parameters:
-  ///   - candidate: 指定用來覆寫為的候選字（詞音配對）。
+  ///   - candidate: 指定用來覆寫為的候選字（詞音鍵值配對）。
   ///   - location: 游標位置。
   ///   - overrideType: 指定覆寫行為。
   /// - Returns: 該操作是否成功執行。
@@ -139,7 +146,7 @@ extension Megrez.Compositor {
 
   /// 使用給定的候選字（詞音配對）、或給定的候選字詞字串，將給定位置的節點的候選字詞改為與之一致的候選字詞。
   /// - Parameters:
-  ///   - key: 索引鍵，也就是詞音配對當中的讀音。
+  ///   - keyArray: 索引鍵陣列，也就是詞音配對當中的讀音。
   ///   - location: 游標位置。
   ///   - value: 資料值。
   ///   - type: 指定覆寫行為。

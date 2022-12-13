@@ -1,19 +1,28 @@
-// Swiftified by (c) 2022 and onwards The vChewing Project (MIT License).
-// Rebranded from (c) Lukhnos Liu's C++ library "Gramambular 2" (MIT License).
+// Swiftified and further development by (c) 2022 and onwards The vChewing Project (MIT License).
+// Was initially rebranded from (c) Lukhnos Liu's C++ library "Gramambular 2" (MIT License).
 // ====================
 // This code is released under the MIT license (SPDX-License-Identifier: MIT)
 
 extension Megrez.Compositor {
-  /// 幅位乃指一組共享起點的節點。
+  /// 幅位單元乃指一組共享起點的節點。
   public class SpanUnit {
+    /// 節點陣列。每個位置上的節點可能是 nil。
     public var nodes: [Node?] = []
+    /// 該幅位單元內的所有節點當中持有最長幅位的節點長度。
+    /// 該變數受該幅位的自身操作函式而被動更新。
     public private(set) var maxLength = 0
+
+    /// （該變數為捷徑，代傳 Megrez.Compositor.maxSpanLength。）
     private var maxSpanLength: Int { Megrez.Compositor.maxSpanLength }
+    /// 該幅位單元內的節點的幅位長度上限。
     private var allowedLengths: ClosedRange<Int> { 1...maxSpanLength }
+
+    /// 幅位乃指一組共享起點的節點。
     public init() {
       clear()
     }
 
+    /// 清除該幅位單元的全部的節點，且重設最長節點長度為 0，然後再在節點陣列內預留空位。
     public func clear() {
       nodes.removeAll()
       for _ in 0..<maxSpanLength {
@@ -55,6 +64,9 @@ extension Megrez.Compositor {
       return true
     }
 
+    /// 以給定的幅位長度，在當前幅位單元內找出對應的節點。
+    /// - Parameter length: 給定的幅位長度。
+    /// - Returns: 查詢結果。
     public func nodeOf(length: Int) -> Node? {
       guard allowedLengths.contains(length) else { return nil }
       return nodes[length - 1]

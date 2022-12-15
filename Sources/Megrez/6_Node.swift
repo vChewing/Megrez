@@ -254,4 +254,25 @@ extension Array where Element == Megrez.Compositor.Node {
     var useless = 0
     return findNode(at: cursor, target: &useless)
   }
+
+  /// 提供一組逐字的字音配對陣列（不使用 Megrez 的 KeyValuePaired 類型），但字音不匹配的節點除外。
+  public var smashedPairs: [(key: String, value: String)] {
+    var arrData = [(key: String, value: String)]()
+    let separator = Megrez.Compositor.theSeparator
+    forEach { node in
+      if node.isReadingMismatched {
+        var newKey = node.joinedKey()
+        if !separator.isEmpty, newKey != separator, newKey.contains(separator) {
+          newKey = newKey.replacingOccurrences(of: separator, with: "\t")
+        }
+        arrData.append((key: newKey, value: node.value))
+        return
+      }
+      let arrValueChars = node.value.map(\.description)
+      node.keyArray.enumerated().forEach { i, key in
+        arrData.append((key: key, value: arrValueChars[i]))
+      }
+    }
+    return arrData
+  }
 }

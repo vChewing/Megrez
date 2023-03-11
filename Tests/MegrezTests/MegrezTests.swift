@@ -559,4 +559,17 @@ final class MegrezTests: XCTestCase {
     let resultB = compositorB.walk().walkedNodes
     XCTAssertEqual(resultA, resultB)
   }
+
+  func test22_Compositor_preventNodeCrossing() throws {
+    let theLM = SimpleLM(input: strSampleData)
+    let rawReadings = "ke1 ke1 jin1"
+    var compositor = Megrez.Compositor(with: theLM)
+    rawReadings.split(separator: " ").forEach { key in
+      compositor.insertKey(key.description)
+    }
+    let maxCandidateLengthA = compositor.fetchCandidates(at: 1, filter: .beginAt).map(\.keyArray.count).max() ?? 0
+    let maxCandidateLengthB = compositor.fetchCandidates(at: 1, filter: .endAt).map(\.keyArray.count).max() ?? 0
+    XCTAssertEqual(maxCandidateLengthA, 1)
+    XCTAssertEqual(maxCandidateLengthB, 1)
+  }
 }

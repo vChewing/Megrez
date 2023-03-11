@@ -93,32 +93,18 @@ public extension Megrez.Compositor {
   /// 返回在當前位置的所有候選字詞（以詞音配對的形式）。如果組字器內有幅位、且游標
   /// 位於組字器的（文字輸入順序的）最前方（也就是游標位置的數值是最大合規數值）的
   /// 話，那麼這裡會用到 location - 1、以免去在呼叫該函式後再處理的麻煩。
-  /// - Parameter location: 游標位置。
+  /// - Parameters:
+  ///   - location: 游標位置。
+  ///   - filter: 指定內容保留類型（是在游標前方還是在後方）。
   /// - Returns: 候選字音配對陣列。
   func fetchCandidates(at location: Int, filter: CandidateFetchFilter = .all) -> [Megrez.KeyValuePaired] {
-    var result = [Megrez.KeyValuePaired]()
-    guard !keys.isEmpty else { return result }
+    guard !keys.isEmpty else { return [] }
     let location = max(min(location, keys.count - 1), 0) // 防呆
-    let anchors: [NodeAnchor] = fetchOverlappingNodes(at: location).stableSorted {
-      // 按照讀音的長度（幅位長度）來給節點排序。
-      $0.spanLength > $1.spanLength
+    return fetchOverlappingNodes(at: location, filter: filter).stableSorted {
+      $0.spanLength > $1.spanLength // 按照讀音的長度（幅位長度）來給節點排序。
+    }.map(\.node).flatMap { theNode in
+      theNode.unigrams.compactMap { .init(keyArray: theNode.keyArray, value: $0.value) }
     }
-    let keyAtCursor = keys[location]
-    anchors.map(\.node).filter(\.keyArray.isEmpty.negative).forEach { theNode in
-      theNode.unigrams.forEach { gram in
-        switch filter {
-        case .all:
-          // 得加上這道篩選，不然會出現很多無效結果。
-          if !theNode.keyArray.contains(keyAtCursor) { return }
-        case .beginAt:
-          if theNode.keyArray[0] != keyAtCursor { return }
-        case .endAt:
-          if theNode.keyArray.reversed()[0] != keyAtCursor { return }
-        }
-        result.append(.init(keyArray: theNode.keyArray, value: gram.value))
-      }
-    }
-    return result
   }
 
   /// 使用給定的候選字（詞音配對），將給定位置的節點的候選字詞改為與之一致的候選字詞。
@@ -217,10 +203,4 @@ private extension Sequence {
       }
       .map(\.element)
   }
-}
-
-// MARK: - Bool Extension (Private)
-
-extension Bool {
-  var negative: Bool { !self }
 }

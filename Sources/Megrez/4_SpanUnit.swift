@@ -62,29 +62,47 @@ public extension Megrez.SpanUnit {
 
 extension Megrez.Compositor {
   /// 找出所有與該位置重疊的節點。其返回值為一個節錨陣列（包含節點、以及其起始位置）。
-  /// - Parameter location: 游標位置。
+  /// - Parameters:
+  ///   - givenLocation: 游標位置。
+  ///   - filter: 指定內容保留類型（是在游標前方還是在後方、還是包含交叉節點在內的全部結果）。
   /// - Returns: 一個包含所有與該位置重疊的節點的陣列。
-  func fetchOverlappingNodes(at givenLocation: Int) -> [NodeAnchor] {
-    var results = [NodeAnchor]()
-    guard !spans.isEmpty, givenLocation < spans.count else { return results }
-
-    // 先獲取該位置的所有單字節點。
+  func fetchOverlappingNodes(at givenLocation: Int, filter: CandidateFetchFilter = .all) -> [NodeAnchor] {
+    var resultsOfSingleAt = Set<NodeAnchor>()
+    var resultsBeginAt = Set<NodeAnchor>()
+    var resultsEndAt = Set<NodeAnchor>()
+    var resultsCrossingAt = Set<NodeAnchor>()
+    guard !spans.isEmpty, (0 ..< spans.count).contains(givenLocation) else { return [] }
     (1 ... max(spans[givenLocation].maxLength, 1)).forEach { theSpanLength in
       guard let node = spans[givenLocation][theSpanLength] else { return }
-      results.append(.init(node: node, spanIndex: givenLocation))
+      guard !node.keyArray.isEmpty, !node.keyArray.joined().isEmpty else { return }
+      if node.spanLength == 1 {
+        resultsOfSingleAt.insert(.init(node: node, spanIndex: givenLocation))
+      } else {
+        resultsBeginAt.insert(.init(node: node, spanIndex: givenLocation))
+      }
     }
-
-    // 再獲取以當前位置結尾或開頭的節點。
     let begin: Int = givenLocation - min(givenLocation, Megrez.Compositor.maxSpanLength - 1)
     (begin ..< givenLocation).forEach { theLocation in
       let (A, B): (Int, Int) = (givenLocation - theLocation + 1, spans[theLocation].maxLength)
       guard A <= B else { return }
       (A ... B).forEach { theLength in
+        let isEndAt: Bool = theLength <= givenLocation - begin
         guard let node = spans[theLocation][theLength] else { return }
-        results.append(.init(node: node, spanIndex: theLocation))
+        guard !node.keyArray.isEmpty, !node.keyArray.joined().isEmpty else { return }
+        let theAnchor = NodeAnchor(node: node, spanIndex: theLocation + 1)
+        if resultsOfSingleAt.contains(theAnchor) || resultsBeginAt.contains(theAnchor) { return }
+        if isEndAt {
+          resultsEndAt.insert(theAnchor)
+        } else {
+          // 有 NodeCrossing 的節點是用來給權重覆寫函式專門使用的，平時得過濾掉。
+          resultsCrossingAt.insert(theAnchor)
+        }
       }
     }
-
-    return results
+    switch filter {
+    case .beginAt: return Array(resultsOfSingleAt.union(resultsBeginAt))
+    case .endAt: return Array(resultsOfSingleAt.union(resultsEndAt))
+    default: return Array(resultsOfSingleAt.union(resultsEndAt).union(resultsBeginAt).union(resultsCrossingAt))
+    }
   }
 }

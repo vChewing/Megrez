@@ -65,7 +65,7 @@ extension Megrez.Compositor {
   /// 這樣我們就不會受到當前線程的堆棧大小的限制。以下是等價的原始算法。
   /// ```
   ///  func topologicalSort(vertex: Vertex) {
-  ///    vertex.edges.forEach {vertexNode in
+  ///    vertex.edges.forEach { vertexNode in
   ///      if !vertexNode.topologicallySorted {
   ///        dfs(vertexNode, result)
   ///        vertexNode.topologicallySorted = true

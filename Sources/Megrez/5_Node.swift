@@ -3,8 +3,6 @@
 // ====================
 // This code is released under the MIT license (SPDX-License-Identifier: MIT)
 
-import Foundation
-
 public extension Megrez {
   /// 字詞節點。
   ///
@@ -289,14 +287,9 @@ public extension Array where Element == Megrez.Node {
   /// 提供一組逐字的字音配對陣列（不使用 Megrez 的 KeyValuePaired 類型），但字音不匹配的節點除外。
   var smashedPairs: [(key: String, value: String)] {
     var arrData = [(key: String, value: String)]()
-    let separator = Megrez.Compositor.theSeparator
     forEach { node in
-      if node.isReadingMismatched {
-        var newKey = node.joinedKey()
-        if !separator.isEmpty, newKey != separator, newKey.contains(separator) {
-          newKey = newKey.replacingOccurrences(of: separator, with: "\t")
-        }
-        arrData.append((key: newKey, value: node.value))
+      if node.isReadingMismatched, !node.keyArray.joined().isEmpty {
+        arrData.append((key: node.keyArray.joined(separator: "\t"), value: node.value))
         return
       }
       let arrValueChars = node.value.map(\.description)

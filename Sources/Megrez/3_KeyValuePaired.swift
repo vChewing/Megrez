@@ -3,8 +3,6 @@
 // ====================
 // This code is released under the MIT license (SPDX-License-Identifier: MIT)
 
-import Foundation
-
 public extension Megrez {
   /// 鍵值配對，乃索引鍵陣列與讀音的配對單元。
   class KeyValuePaired: Unigram, Comparable {
@@ -46,7 +44,7 @@ public extension Megrez {
     ///   - score: 權重（雙精度小數）。
     public init(key: String = "N/A", value: String = "N/A", score: Double = 0) {
       super.init(value: value.isEmpty ? "N/A" : value, score: score)
-      keyArray = key.isEmpty ? ["N/A"] : key.components(separatedBy: Megrez.Compositor.theSeparator)
+      keyArray = key.isEmpty ? ["N/A"] : key.sliced(by: Megrez.Compositor.theSeparator)
     }
 
     /// 做為預設雜湊函式。
@@ -197,9 +195,9 @@ public extension Megrez.Compositor {
       arrOverlappedNodes = fetchOverlappingNodes(at: i)
       arrOverlappedNodes.forEach { anchor in
         if anchor.node == overridden.node { return }
-        if !overridden.node.joinedKey(by: "\t").contains(anchor.node.joinedKey(by: "\t"))
-          || !overridden.node.value.contains(anchor.node.value)
-        {
+        let anchorNodeKeyJoined = anchor.node.joinedKey(by: "\t")
+        let overriddenNodeKeyJoined = overridden.node.joinedKey(by: "\t")
+        if !overriddenNodeKeyJoined.has(string: anchorNodeKeyJoined) || !overridden.node.value.has(string: anchor.node.value) {
           anchor.node.reset()
           return
         }

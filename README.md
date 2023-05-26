@@ -13,7 +13,9 @@ Megrez Engine is a module made for processing lingual data of an input method. T
 
 ### §1. 初期化
 
-在你的 IMKInputController 或者 InputHandler 內初期化一份 Megrez.Compositor 組字器副本（這裡將該副本命名為「`compositor`」）。由於 Megrez.Compositor 的型別是 Struct 型別（為了讓 Compositor 可以 deep copy），所以其副本可以用 var 來宣告。
+在你的 IMKInputController 或者 InputHandler 內初期化一份 Megrez.Compositor 組字器副本（這裡將該副本命名為「`compositor`」）。由於 Megrez.Compositor 的型別是 Class 型別，所以其副本可以用 let 來宣告。
+
+> 如果要製作副本的話，可以用「`.hardCopy`」。
 
 以 InputHandler 為例：
 ```swift

@@ -75,7 +75,7 @@ final class MegrezTests: XCTestCase {
   }
 
   func test03_Compositor_BasicTests() throws {
-    let compositor = Megrez.Compositor(with: MockLM())
+    var compositor = Megrez.Compositor(with: MockLM())
     XCTAssertEqual(compositor.separator, Megrez.Compositor.theSeparator)
     XCTAssertEqual(compositor.cursor, 0)
     XCTAssertEqual(compositor.length, 0)
@@ -105,7 +105,7 @@ final class MegrezTests: XCTestCase {
       }
     }
 
-    let compositor = Megrez.Compositor(with: TestLM())
+    var compositor = Megrez.Compositor(with: TestLM())
     compositor.separator = ";"
     XCTAssertFalse(compositor.insertKey("bar"))
     XCTAssertFalse(compositor.insertKey(""))
@@ -123,7 +123,7 @@ final class MegrezTests: XCTestCase {
   }
 
   func test05_Compositor_DeleteToTheFrontOfCursor() throws {
-    let compositor = Megrez.Compositor(with: MockLM())
+    var compositor = Megrez.Compositor(with: MockLM())
     compositor.insertKey("a")
     compositor.cursor = 0
     XCTAssertEqual(compositor.cursor, 0)
@@ -140,7 +140,7 @@ final class MegrezTests: XCTestCase {
   }
 
   func test06_Compositor_MultipleSpans() throws {
-    let compositor = Megrez.Compositor(with: MockLM())
+    var compositor = Megrez.Compositor(with: MockLM())
     compositor.separator = ";"
     compositor.insertKey("a")
     compositor.insertKey("b")
@@ -160,7 +160,7 @@ final class MegrezTests: XCTestCase {
   }
 
   func test07_Compositor_SpanDeletionFromFront() throws {
-    let compositor = Megrez.Compositor(with: MockLM())
+    var compositor = Megrez.Compositor(with: MockLM())
     compositor.separator = ";"
     compositor.insertKey("a")
     compositor.insertKey("b")
@@ -178,7 +178,7 @@ final class MegrezTests: XCTestCase {
   }
 
   func test08_Compositor_SpanDeletionFromMiddle() throws {
-    let compositor = Megrez.Compositor(with: MockLM())
+    var compositor = Megrez.Compositor(with: MockLM())
     compositor.separator = ";"
     compositor.insertKey("a")
     compositor.insertKey("b")
@@ -213,7 +213,7 @@ final class MegrezTests: XCTestCase {
   }
 
   func test09_Compositor_SpanDeletionFromRear() throws {
-    let compositor = Megrez.Compositor(with: MockLM())
+    var compositor = Megrez.Compositor(with: MockLM())
     compositor.separator = ";"
     compositor.insertKey("a")
     compositor.insertKey("b")
@@ -233,7 +233,7 @@ final class MegrezTests: XCTestCase {
   }
 
   func test10_Compositor_SpanInsertion() throws {
-    let compositor = Megrez.Compositor(with: MockLM())
+    var compositor = Megrez.Compositor(with: MockLM())
     compositor.separator = ";"
     compositor.insertKey("a")
     compositor.insertKey("b")
@@ -261,7 +261,7 @@ final class MegrezTests: XCTestCase {
   }
 
   func test11_Compositor_LongGridDeletion() throws {
-    let compositor = Megrez.Compositor(with: MockLM())
+    var compositor = Megrez.Compositor(with: MockLM())
     compositor.separator = ""
     compositor.insertKey("a")
     compositor.insertKey("b")
@@ -296,7 +296,7 @@ final class MegrezTests: XCTestCase {
   }
 
   func test12_Compositor_LongGridInsertion() throws {
-    let compositor = Megrez.Compositor(with: MockLM())
+    var compositor = Megrez.Compositor(with: MockLM())
     compositor.separator = ""
     compositor.insertKey("a")
     compositor.insertKey("b")
@@ -334,7 +334,7 @@ final class MegrezTests: XCTestCase {
 
   func test13_Compositor_StressBench() throws {
     NSLog("// Stress test preparation begins.")
-    let compositor = Megrez.Compositor(with: SimpleLM(input: strStressData))
+    var compositor = Megrez.Compositor(with: SimpleLM(input: strStressData))
     (0 ..< 1919).forEach { _ in
       compositor.insertKey("yi")
     }
@@ -346,7 +346,7 @@ final class MegrezTests: XCTestCase {
   }
 
   func test14_Compositor_WordSegmentation() throws {
-    let compositor = Megrez.Compositor(with: SimpleLM(input: strSampleData, swapKeyValue: true))
+    var compositor = Megrez.Compositor(with: SimpleLM(input: strSampleData, swapKeyValue: true))
     compositor.separator = ""
     "高科技公司的年終獎金".forEach { i in
       compositor.insertKey(i.description)
@@ -356,7 +356,7 @@ final class MegrezTests: XCTestCase {
   }
 
   func test15_Compositor_InputTestAndCursorJump() throws {
-    let compositor = Megrez.Compositor(with: SimpleLM(input: strSampleData))
+    var compositor = Megrez.Compositor(with: SimpleLM(input: strSampleData))
     compositor.separator = ""
     compositor.insertKey("gao1")
     compositor.walk()
@@ -431,7 +431,7 @@ final class MegrezTests: XCTestCase {
   }
 
   func test16_Compositor_InputTest2() throws {
-    let compositor = Megrez.Compositor(with: SimpleLM(input: strSampleData))
+    var compositor = Megrez.Compositor(with: SimpleLM(input: strSampleData))
     compositor.separator = ""
     compositor.insertKey("gao1")
     compositor.insertKey("ke1")
@@ -445,7 +445,7 @@ final class MegrezTests: XCTestCase {
   }
 
   func test17_Compositor_OverrideOverlappingNodes() throws {
-    let compositor = Megrez.Compositor(with: SimpleLM(input: strSampleData))
+    var compositor = Megrez.Compositor(with: SimpleLM(input: strSampleData))
     compositor.separator = ""
     compositor.insertKey("gao1")
     compositor.insertKey("ke1")
@@ -477,7 +477,7 @@ final class MegrezTests: XCTestCase {
   }
 
   func test18_Compositor_OverrideReset() throws {
-    let compositor = Megrez.Compositor(
+    var compositor = Megrez.Compositor(
       with: SimpleLM(input: strSampleData + "zhong1jiang3 終講 -11.0\n" + "jiang3jin1 槳襟 -11.0\n"))
     compositor.separator = ""
     compositor.insertKey("nian2")
@@ -501,7 +501,7 @@ final class MegrezTests: XCTestCase {
   }
 
   func test19_Compositor_CandidateDisambiguation() throws {
-    let compositor = Megrez.Compositor(with: SimpleLM(input: strEmojiSampleData))
+    var compositor = Megrez.Compositor(with: SimpleLM(input: strEmojiSampleData))
     compositor.separator = ""
     compositor.insertKey("gao1")
     compositor.insertKey("re4")
@@ -524,7 +524,7 @@ final class MegrezTests: XCTestCase {
 
   func test20_Compositor_UpdateUnigramData() throws {
     let theLM = SimpleLM(input: strSampleData)
-    let compositor = Megrez.Compositor(with: theLM)
+    var compositor = Megrez.Compositor(with: theLM)
     compositor.separator = ""
     compositor.insertKey("nian2")
     compositor.insertKey("zhong1")
@@ -550,11 +550,11 @@ final class MegrezTests: XCTestCase {
   func test21_Compositor_HardCopy() throws {
     let theLM = SimpleLM(input: strSampleData)
     let rawReadings = "gao1 ke1 ji4 gong1 si1 de5 nian2 zhong1 jiang3 jin1"
-    let compositorA = Megrez.Compositor(with: theLM)
+    var compositorA = Megrez.Compositor(with: theLM)
     rawReadings.split(separator: " ").forEach { key in
       compositorA.insertKey(key.description)
     }
-    let compositorB = compositorA.hardCopy
+    var compositorB = compositorA.hardCopy
     let resultA = compositorA.walk()
     let resultB = compositorB.walk()
     XCTAssertEqual(resultA, resultB)
@@ -563,7 +563,7 @@ final class MegrezTests: XCTestCase {
   func test22_Compositor_SanitizingNodeCrossing() throws {
     let theLM = SimpleLM(input: strSampleData)
     let rawReadings = "ke1 ke1"
-    let compositor = Megrez.Compositor(with: theLM)
+    var compositor = Megrez.Compositor(with: theLM)
     rawReadings.split(separator: " ").forEach { key in
       compositor.insertKey(key.description)
     }
@@ -584,7 +584,7 @@ final class MegrezTests: XCTestCase {
   func test23_Compositor_CheckGetCandidates() throws {
     let theLM = SimpleLM(input: strSampleData)
     let rawReadings = "gao1 ke1 ji4 gong1 si1 de5 nian2 zhong1 jiang3 jin1"
-    let compositor = Megrez.Compositor(with: theLM)
+    var compositor = Megrez.Compositor(with: theLM)
     rawReadings.split(separator: " ").forEach { key in
       compositor.insertKey(key.description)
     }

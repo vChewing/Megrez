@@ -12,6 +12,10 @@ public extension Megrez.Compositor {
   /// 的路徑（所以要找最大的權重），因為在對數概率下，較大的數值意味著較大的概率。
   /// 對於 `G = (V, E)`，該算法的運行次數為 `O(|V|+|E|)`，其中 `G` 是一個有向無環圖。
   /// 這意味著，即使軌格很大，也可以用很少的算力就可以爬軌。
+  ///
+  /// - Remark: 利用該數學方法進行輸入法智能組句的（已知可考的）最開始的案例是
+  /// 郭家寶（ByVoid）的《[基於統計語言模型的拼音輸入法](https://byvoid.com/zht/blog/slm_based_pinyin_ime/) 》；
+  /// 再後來則是 2022 年中時期劉燈的 Gramambular 2 組字引擎。
   /// - Returns: 爬軌結果＋該過程是否順利執行。
   @discardableResult mutating func walk() -> [Megrez.Node] {
     defer { Self.reinitVertexNetwork() }

@@ -5,6 +5,17 @@
 
 extension Megrez.Compositor {
   /// 爬軌函式，會更新當前組字器的 walkedNodes。
+  /// - Returns: 爬軌結果＋該過程是否順利執行。
+  @discardableResult
+  public mutating func walk(useDAG: Bool = false) -> [Megrez.Node] {
+    useDAG ? walkUsingDAG() : walkUsingDijkstra()
+  }
+}
+
+// MARK: - Walker (DAG Vertex-Relax Approach).
+
+extension Megrez.Compositor {
+  /// 爬軌函式，會更新當前組字器的 walkedNodes。
   ///
   /// 找到軌格陣圖內權重最大的路徑。該路徑代表了可被觀測到的最可能的隱藏事件鏈。
   /// 這裡使用 Cormen 在 2001 年出版的教材當中提出的「有向無環圖的最短路徑」的
@@ -18,7 +29,7 @@ extension Megrez.Compositor {
   /// 再後來則是 2022 年中時期劉燈的 Gramambular 2 組字引擎。
   /// - Returns: 爬軌結果＋該過程是否順利執行。
   @discardableResult
-  public mutating func walk() -> [Megrez.Node] {
+  public mutating func walkUsingDAG() -> [Megrez.Node] {
     defer { Self.reinitVertexNetwork() }
     walkedNodes.removeAll()
     sortAndRelax()
@@ -126,5 +137,155 @@ extension Megrez.Compositor {
     guard v.distance < u.distance + w else { return }
     v.distance = u.distance + w
     v.prev = u
+  }
+}
+
+// MARK: - Walker (Dijkstra Approach).
+
+extension Megrez.Compositor {
+  /// 爬軌函式，會以 Dijkstra 算法更新當前組字器的 walkedNodes。
+  ///
+  /// 該算法會在圖中尋找具有最高分數的路徑，即最可能的字詞組合。
+  ///
+  /// - Returns: 爬軌結果（已選字詞陣列）。
+  @discardableResult
+  public mutating func walkUsingDijkstra() -> [Megrez.Node] {
+    walkedNodes.removeAll()
+    guard !spans.isEmpty else { return [] }
+
+    // 初始化資料結構。
+    var openSet = HybridPriorityQueue<PrioritizedState>(reversed: true)
+    var visited = Set<SearchState>()
+    var bestScore = [Int: Double]() // 追蹤每個位置的最佳分數
+
+    // 初始化起始狀態。
+    let leadingNode = Megrez.Node(keyArray: ["$LEADING"])
+    let start = SearchState(
+      node: leadingNode,
+      position: 0,
+      prev: nil,
+      distance: 0
+    )
+    openSet.enqueue(PrioritizedState(state: start, distance: 0))
+    bestScore[0] = 0
+
+    // 追蹤最佳結果。
+    var bestFinalState: SearchState?
+    var bestFinalScore = Double(Int32.min)
+
+    // 主要 Dijkstra 迴圈。
+    while !openSet.isEmpty {
+      guard let current = openSet.dequeue()?.state else { break }
+
+      // 如果已經訪問過具有更好分數的狀態，則跳過。
+      if visited.contains(current) { continue }
+      visited.insert(current)
+
+      // 檢查是否已到達終點。
+      if current.position >= keys.count {
+        if current.distance > bestFinalScore {
+          bestFinalScore = current.distance
+          bestFinalState = current
+        }
+        continue
+      }
+
+      // 處理下一個可能的節點。
+      for (length, nextNode) in spans[current.position] {
+        let nextPos = current.position + length
+
+        // 計算新的權重分數。
+        let newScore = current.distance + nextNode.score
+
+        // 如果該位置已有更優的權重分數，則跳過。
+        guard (bestScore[nextPos] ?? .init(Int32.min)) < newScore else { continue }
+
+        let nextState = SearchState(
+          node: nextNode,
+          position: nextPos,
+          prev: current,
+          distance: newScore
+        )
+
+        bestScore[nextPos] = newScore
+        openSet.enqueue(PrioritizedState(state: nextState, distance: newScore))
+      }
+    }
+
+    // 從最佳終止狀態重建路徑。
+    guard let finalState = bestFinalState else { return [] }
+    var pathNodes: [Megrez.Node] = []
+    var current: SearchState? = finalState
+
+    while let state = current {
+      // 排除起始和結束的虛擬節點。
+      if state.node !== leadingNode {
+        pathNodes.insert(state.node, at: 0)
+      }
+      current = state.prev
+    }
+    walkedNodes = pathNodes.map(\.copy)
+    return walkedNodes
+  }
+}
+
+// MARK: - 搜尋狀態相關定義
+
+extension Megrez.Compositor {
+  /// 用於追蹤搜尋過程中的狀態。
+  final private class SearchState: Hashable {
+    // MARK: Lifecycle
+
+    /// 初始化搜尋狀態。
+    /// - Parameters:
+    ///   - node: 當前節點。
+    ///   - position: 在輸入串中的位置。
+    ///   - prev: 前一個狀態。
+    ///   - distance: 到達此狀態的累計分數。
+    init(
+      node: Megrez.Node,
+      position: Int,
+      prev: SearchState?,
+      distance: Double = Double(Int.min)
+    ) {
+      self.node = node
+      self.position = position
+      self.prev = prev
+      self.distance = distance
+    }
+
+    // MARK: Internal
+
+    let node: Megrez.Node // 當前節點
+    let position: Int // 在輸入串中的位置
+    let prev: SearchState? // 前一個狀態
+    var distance: Double // 累計分數
+
+    // MARK: - Hashable 協定實作
+
+    static func == (lhs: SearchState, rhs: SearchState) -> Bool {
+      lhs.node === rhs.node && lhs.position == rhs.position
+    }
+
+    func hash(into hasher: inout Hasher) {
+      hasher.combine(node)
+      hasher.combine(position)
+    }
+  }
+
+  /// 用於優先序列的狀態包裝結構
+  private struct PrioritizedState: Comparable {
+    let state: SearchState
+    let distance: Double
+
+    // MARK: - Comparable 協定實作
+
+    static func < (lhs: PrioritizedState, rhs: PrioritizedState) -> Bool {
+      lhs.distance < rhs.distance
+    }
+
+    static func == (lhs: PrioritizedState, rhs: PrioritizedState) -> Bool {
+      lhs.distance == rhs.distance && lhs.state == rhs.state
+    }
   }
 }

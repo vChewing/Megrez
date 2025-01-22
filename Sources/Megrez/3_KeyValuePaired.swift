@@ -7,7 +7,7 @@
 
 extension Megrez {
   /// 鍵值配對，乃索引鍵陣列與讀音的配對單元。
-  public struct KeyValuePaired: Equatable, CustomStringConvertible, Hashable, Comparable {
+  public struct KeyValuePaired: Equatable, CustomStringConvertible, Hashable, Comparable, Codable {
     // MARK: Lifecycle
 
     /// 初期化一組鍵值配對。

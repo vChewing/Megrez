@@ -193,7 +193,7 @@ extension Megrez {
         if target == 0 { return false }
       }
       guard let currentRegion = walkedNodes.cursorRegionMap[target] else { return false }
-
+      let guardedCurrentRegion = min(walkedNodes.count - 1, currentRegion)
       let aRegionForward = max(currentRegion - 1, 0)
       let currentRegionBorderRear: Int = walkedNodes[0 ..< currentRegion].map(\.spanLength).reduce(
         0,
@@ -205,14 +205,14 @@ extension Megrez {
         case .front:
           target =
             (currentRegion > walkedNodes.count)
-              ? keys.count : walkedNodes[0 ... currentRegion].map(\.spanLength).reduce(0, +)
+              ? keys.count : walkedNodes[0 ... guardedCurrentRegion].map(\.spanLength).reduce(0, +)
         case .rear:
           target = walkedNodes[0 ..< aRegionForward].map(\.spanLength).reduce(0, +)
         }
       default:
         switch direction {
         case .front:
-          target = currentRegionBorderRear + walkedNodes[currentRegion].spanLength
+          target = currentRegionBorderRear + walkedNodes[guardedCurrentRegion].spanLength
         case .rear:
           target = currentRegionBorderRear
         }

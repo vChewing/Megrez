@@ -193,6 +193,7 @@ extension Megrez {
         if target == 0 { return false }
       }
       guard let currentRegion = walkedNodes.cursorRegionMap[target] else { return false }
+      guard currentRegion < walkedNodes.count else { return false } // 篩除末端邊緣座標。
 
       let aRegionForward = max(currentRegion - 1, 0)
       let currentRegionBorderRear: Int = walkedNodes[0 ..< currentRegion].map(\.spanLength).reduce(

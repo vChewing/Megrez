@@ -255,7 +255,7 @@ extension Array where Element == Megrez.Node {
   /// 總讀音單元數量。在絕大多數情況下，可視為總幅位長度。
   public var totalKeyCount: Int { map(\.keyArray.count).reduce(0, +) }
 
-  /// 根據給定的游標，返回其前後最近的邊界點。
+  /// 根據給定的游標，返回其前後最近的節點邊界。
   /// - Parameter cursor: 給定的游標。
   public func contextRange(ofGivenCursor cursor: Int) -> Range<Int> {
     guard !isEmpty else { return 0 ..< 0 }

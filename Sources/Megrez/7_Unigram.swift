@@ -7,7 +7,7 @@
 
 extension Megrez {
   /// 單元圖。
-  public struct Unigram: Equatable, CustomStringConvertible, Hashable {
+  public struct Unigram: Equatable, CustomStringConvertible, Hashable, Codable {
     // MARK: Lifecycle
 
     /// 初期化一筆「單元圖」。一筆單元圖由一筆資料值與一筆權重數值組成。

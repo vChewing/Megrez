@@ -13,7 +13,7 @@ extension Megrez {
   /// 的詞，組字器會將多個讀音索引鍵合併為一個讀音索引鍵、據此向語言模組請求對應的
   /// 單元圖結果陣列。舉例說，如果一個詞有兩個漢字組成的話，那麼讀音也是有兩個、其
   /// 索引鍵也是由兩個讀音組成的，那麼這個節點的幅位長度就是 2。
-  public class Node: Equatable, Hashable {
+  public class Node: Equatable, Hashable, Codable {
     // MARK: Lifecycle
 
     /// 生成一個字詞節點。
@@ -58,7 +58,7 @@ extension Megrez {
     ///  行為。被覆寫的這個節點的狀態可能不會再被爬軌行為擅自改回。該覆寫行為無法
     ///  防止其它節點被爬軌函式所支配。這種情況下就需要用到 overridingScore。
     /// - withHighScore: 將該節點權重覆寫為 overridingScore，使其被爬軌函式所青睞。
-    public enum OverrideType: Int {
+    public enum OverrideType: Int, Codable {
       case withNoOverrides = 0
       case withTopUnigramScore = 1
       case withHighScore = 2
@@ -198,7 +198,7 @@ extension Megrez {
     ///
     /// 我們實際上是在計算具有最大權重的路徑，因此距離的初始值是負無窮的。
     /// 如果我們要計算最短的權重/距離，我們會將其初期值設為正無窮。
-    internal var distance = -(Double.infinity)
+    internal var distance: Double = .init(Int32.min)
     /// 在進行進行位相幾何排序時會用到的狀態標記。
     internal var topologicallySorted = false
 
@@ -210,7 +210,7 @@ extension Megrez {
       prev = nil
       edges.forEach { $0.destroyVertex() }
       edges.removeAll()
-      distance = -(Double.infinity)
+      distance = Double(Int32.min)
       topologicallySorted = false
     }
   }

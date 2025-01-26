@@ -44,6 +44,24 @@ extension Megrez.Compositor {
   }
 }
 
+// MARK: - ClassPtr
+
+class ClassPtr<T: Any> {
+  // MARK: Lifecycle
+
+  init(obj: T) {
+    self.obj = obj
+  }
+
+  // MARK: Internal
+
+  var obj: T
+}
+
+extension Megrez.Compositor {
+  var asPtr: ClassPtr<Self> { .init(obj: self) }
+}
+
 extension Megrez.CompositorConfig {
   public var encodedJSON: String {
     let encoder = JSONEncoder()
@@ -66,4 +84,115 @@ extension Megrez.CompositorConfig {
 
 extension Megrez.Compositor {
   public var encodedJSON: String { config.encodedJSON }
+}
+
+extension ClassPtr<Megrez.Compositor> {
+  // MARK: - Instance Properties
+
+  /// 組字器設定。
+  var config: Megrez.CompositorConfig { obj.config }
+  /// 最近一次爬軌結果。
+  var walkedNodes: [Megrez.Node] { obj.walkedNodes }
+  /// 該組字器已經插入的的索引鍵，以陣列的形式存放。
+  var keys: [String] { obj.keys }
+  /// 該組字器的幅位單元陣列。
+  var spans: [Megrez.SpanUnit] { obj.spans }
+  /// 該組字器的敲字游標位置。
+  var cursor: Int { get { obj.cursor } set { obj.cursor = newValue } }
+  /// 該組字器的標記器（副游標）位置。
+  var marker: Int { obj.marker }
+  /// 多字讀音鍵當中用以分割漢字讀音的記號，預設為「-」。
+  var separator: String { get { obj.separator } set { obj.separator = newValue } }
+  /// 該組字器的長度，組字器內已經插入的單筆索引鍵的數量。
+  var length: Int { obj.length }
+  /// 組字器是否為空。
+  var isEmpty: Bool { obj.isEmpty }
+  /// 該組字器所使用的語言模型（被 LangModelRanked 所封裝）。
+  var langModel: Megrez.Compositor.LangModelRanked { obj.langModel }
+  /// 該組字器的硬拷貝。
+  var hardCopiedPtr: ClassPtr<Megrez.Compositor> { obj.hardCopy.asPtr }
+  /// 生成用以交給 GraphViz 診斷的資料檔案內容。
+  var dumpDOT: String { obj.dumpDOT }
+
+  // MARK: - Initialization
+
+  /// 初期化一個組字器。
+  convenience init(with langModel: LangModelProtocol, separator: String) {
+    self.init(obj: Megrez.Compositor(with: langModel, separator: separator))
+  }
+
+  /// 以指定組字器生成拷貝。
+  convenience init(from target: ClassPtr<Megrez.Compositor>) {
+    self.init(obj: Megrez.Compositor(from: target.obj))
+  }
+
+  // MARK: - Instance Methods
+
+  /// 重置包括游標在內的各項參數，且清空各種由組字器生成的內部資料。
+  func clear() { obj.clear() }
+
+  /// 在游標位置插入給定的索引鍵。
+  @discardableResult
+  func insertKey(_ key: String) -> Bool { obj.insertKey(key) }
+
+  /// 朝著指定方向砍掉一個與游標相鄰的讀音。
+  @discardableResult
+  func dropKey(direction: Megrez.Compositor.TypingDirection) -> Bool { obj
+    .dropKey(direction: direction)
+  }
+
+  /// 按幅位來前後移動游標。
+  @discardableResult
+  func jumpCursorBySpan(
+    to direction: Megrez.Compositor.TypingDirection,
+    isMarker: Bool = false
+  )
+    -> Bool {
+    obj.jumpCursorBySpan(to: direction, isMarker: isMarker)
+  }
+
+  /// 根據當前狀況更新整個組字器的節點文脈。
+  @discardableResult
+  func update(updateExisting: Bool) -> Int {
+    obj.update(updateExisting: updateExisting)
+  }
+
+  /// 爬軌函式，會更新當前組字器的 walkedNodes。
+  @discardableResult
+  func walk() -> [Megrez.Node] {
+    obj.walk()
+  }
+
+  @discardableResult
+  public func overrideCandidateLiteral(
+    _ candidate: String,
+    at location: Int, overrideType: Megrez.Node.OverrideType = .withHighScore
+  )
+    -> Bool {
+    obj.overrideCandidateLiteral(candidate, at: location)
+  }
+
+  @discardableResult
+  public func overrideCandidate(
+    _ candidate: Megrez.KeyValuePaired, at location: Int,
+    overrideType: Megrez.Node.OverrideType = .withHighScore
+  )
+    -> Bool {
+    obj.overrideCandidate(candidate, at: location, overrideType: overrideType)
+  }
+
+  public func fetchCandidates(
+    at givenLocation: Int? = nil, filter givenFilter: Megrez.Compositor.CandidateFetchFilter = .all
+  )
+    -> [Megrez.KeyValuePaired] {
+    obj.fetchCandidates(at: givenLocation, filter: givenFilter)
+  }
+
+  public func fetchCandidatesDeprecated(
+    at location: Int,
+    filter: Megrez.Compositor.CandidateFetchFilter = .all
+  )
+    -> [Megrez.KeyValuePaired] {
+    obj.fetchCandidatesDeprecated(at: location, filter: filter)
+  }
 }

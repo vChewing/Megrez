@@ -76,20 +76,72 @@ extension Megrez.Compositor {
     }
 
     // 從最佳終止狀態重建路徑。
-    guard let finalState = bestFinalState else { return [] }
+    guard let finalState = bestFinalState else {
+      // 即使沒有找到最佳狀態，也需要清理所有建立的 SearchState 物件
+      Self.batchCleanAllSearchStates(
+        visited: visited,
+        openSet: &openSet,
+        leadingState: start
+      )
+      return []
+    }
+
     var pathNodes: [Megrez.Node] = []
     var current: SearchState? = finalState
 
     while let state = current {
       // 排除起始和結束的虛擬節點。
-      if state.node !== leadingNode {
-        pathNodes.insert(state.node, at: 0)
+      if let stateNode = state.node, stateNode !== leadingNode {
+        pathNodes.insert(stateNode, at: 0)
       }
       current = state.prev
       // 備註：此處不需要手動 ASAN，因為沒有參據循環（Retain Cycle）。
     }
     walkedNodes = pathNodes.map(\.copy)
+
+    // 手動 ASAN：批次清理所有 SearchState 物件以防止記憶體洩漏
+    // 包括 visited set 中的所有狀態、openSet 中剩餘的狀態，以及 leadingState
+    Self.batchCleanAllSearchStates(
+      visited: visited,
+      openSet: &openSet,
+      leadingState: start
+    )
     return walkedNodes
+  }
+
+  /// 批次清理所有 SearchState 物件以防止記憶體洩漏
+  /// - Parameters:
+  ///   - visited: 已訪問的狀態集合
+  ///   - openSet: 優先序列中剩餘的狀態
+  ///   - leadingState: 初始狀態
+  private static func batchCleanAllSearchStates(
+    visited: Set<SearchState>,
+    openSet: inout HybridPriorityQueue<PrioritizedState>,
+    leadingState: SearchState
+  ) {
+    // 收集所有需要清理的 SearchState 物件
+    var allStates = Set<SearchState>()
+
+    // 1. 新增 visited set 中的所有狀態
+    for state in visited {
+      allStates.insert(state)
+    }
+
+    // 2. 新增 openSet 中剩餘的所有狀態
+    while !openSet.isEmpty {
+      if let prioritizedState = openSet.dequeue() {
+        allStates.insert(prioritizedState.state)
+      }
+    }
+
+    // 3. 新增 leadingState（如果還沒被包含）
+    allStates.insert(leadingState)
+
+    // 4. 對所有狀態進行清理，使用任一狀態作為起點來清理整個網路
+    // 由於所有狀態都可能互相參照，我們選擇任一狀態作為起點進行全域清理
+    if let anyState = allStates.first {
+      anyState.batchCleanSearchStateTree(allStates: allStates)
+    }
   }
 }
 
@@ -107,7 +159,7 @@ extension Megrez.Compositor {
     ///   - prev: 前一個狀態。
     ///   - distance: 到達此狀態的累計分數。
     init(
-      node: Megrez.Node,
+      node: Megrez.Node?,
       position: Int,
       prev: SearchState?,
       distance: Double = Double(Int.min)
@@ -120,15 +172,49 @@ extension Megrez.Compositor {
 
     // MARK: Internal
 
-    unowned let node: Megrez.Node // 當前節點
+    var node: Megrez.Node? // 當前節點
     let position: Int // 在輸入串中的位置
-    unowned let prev: SearchState? // 前一個狀態
+    var prev: SearchState? // 前一個狀態
     var distance: Double // 累計分數
 
     // MARK: - Hashable 協定實作
 
     static func == (lhs: SearchState, rhs: SearchState) -> Bool {
       lhs.node === rhs.node && lhs.position == rhs.position
+    }
+
+    /// 手動位址清理：對整個 SearchState 樹進行批次清理
+    /// 使用頂點方法清理所有 node 和 prev 參據以防止記憶體洩漏
+    func batchCleanSearchStateTree(allStates: Set<SearchState>? = nil) {
+      if let allStates = allStates {
+        // 清理所有提供的狀態
+        for state in allStates {
+          state.node = nil
+          state.prev = nil
+        }
+      } else {
+        // 原有的樹狀清理邏輯（向下相容）
+        var visited = Set<ObjectIdentifier>()
+        var stack = [self]
+
+        while !stack.isEmpty {
+          let current = stack.removeLast()
+          let identifier = ObjectIdentifier(current)
+
+          // 避免重複造訪同一個節點
+          guard !visited.contains(identifier) else { continue }
+          visited.insert(identifier)
+
+          // 將前一個狀態加入堆疊以進行清理
+          if let prev = current.prev {
+            stack.append(prev)
+          }
+
+          // 清理當前狀態的參據
+          current.node = nil
+          current.prev = nil
+        }
+      }
     }
 
     func hash(into hasher: inout Hasher) {

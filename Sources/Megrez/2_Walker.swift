@@ -73,6 +73,11 @@ extension Megrez.Compositor {
         bestScore[nextPos] = newScore
         openSet.enqueue(PrioritizedState(state: nextState))
       }
+
+      // 即時記憶體最佳化：當 visited 集合過大時進行部分清理
+      if visited.count > 1_000 { // 可調整的閾值
+        Self.partialCleanVisitedStates(visited: &visited, keepRecentCount: 500)
+      }
     }
 
     // 從最佳終止狀態重建路徑。
@@ -109,7 +114,29 @@ extension Megrez.Compositor {
     return walkedNodes
   }
 
-  /// 批次清理所有 SearchState 物件以防止記憶體洩漏
+  /// 部分清理已訪問狀態集合以控制記憶體使用
+  /// - Parameters:
+  ///   - visited: 已訪問的狀態集合
+  ///   - keepRecentCount: 要保留的最近狀態數量
+  private static func partialCleanVisitedStates(
+    visited: inout Set<SearchState>,
+    keepRecentCount: Int
+  ) {
+    guard visited.count > keepRecentCount else { return }
+
+    // 按距離排序，保留分數較高的狀態
+    let sortedStates = visited.sorted { $0.distance > $1.distance }
+    let statesToRemove = Array(sortedStates.dropFirst(keepRecentCount))
+
+    // 先從 Set 中移除，再清理參據（避免 hash 不一致）
+    for state in statesToRemove {
+      visited.remove(state)
+      state.node = nil
+      state.prev = nil
+    }
+  }
+
+  /// 即時清理策略：直接清理各個資料結構，避免額外的 Set 集合
   /// - Parameters:
   ///   - visited: 已訪問的狀態集合
   ///   - openSet: 優先序列中剩餘的狀態
@@ -119,29 +146,23 @@ extension Megrez.Compositor {
     openSet: inout HybridPriorityQueue<PrioritizedState>,
     leadingState: SearchState
   ) {
-    // 收集所有需要清理的 SearchState 物件
-    var allStates = Set<SearchState>()
-
-    // 1. 新增 visited set 中的所有狀態
+    // 策略1: 直接清理 visited set 中的所有狀態
     for state in visited {
-      allStates.insert(state)
+      state.node = nil
+      state.prev = nil
     }
 
-    // 2. 新增 openSet 中剩餘的所有狀態
+    // 策略2: 直接清理 openSet 中剩餘的所有狀態
     while !openSet.isEmpty {
       if let prioritizedState = openSet.dequeue() {
-        allStates.insert(prioritizedState.state)
+        prioritizedState.state.node = nil
+        prioritizedState.state.prev = nil
       }
     }
 
-    // 3. 新增 leadingState（如果還沒被包含）
-    allStates.insert(leadingState)
-
-    // 4. 對所有狀態進行清理，使用任一狀態作為起點來清理整個網路
-    // 由於所有狀態都可能互相參照，我們選擇任一狀態作為起點進行全域清理
-    if let anyState = allStates.first {
-      anyState.batchCleanSearchStateTree(allStates: allStates)
-    }
+    // 策略3: 清理 leadingState
+    leadingState.node = nil
+    leadingState.prev = nil
   }
 }
 
@@ -168,11 +189,14 @@ extension Megrez.Compositor {
       self.position = position
       self.prev = prev
       self.distance = distance
+      // 使用不可變的標識符來確保 hash 一致性
+      self.originalNodeRef = node
+      self.stableHash = Self.computeStableHash(node: node, position: position)
     }
 
     // MARK: Internal
 
-    var node: Megrez.Node? // 當前節點
+    var node: Megrez.Node? // 當前節點（可變，用於清理）
     let position: Int // 在輸入串中的位置
     var prev: SearchState? // 前一個狀態
     var distance: Double // 累計分數
@@ -180,46 +204,35 @@ extension Megrez.Compositor {
     // MARK: - Hashable 協定實作
 
     static func == (lhs: SearchState, rhs: SearchState) -> Bool {
-      lhs.node === rhs.node && lhs.position == rhs.position
+      lhs.originalNodeRef === rhs.originalNodeRef && lhs.position == rhs.position
     }
 
-    /// 手動位址清理：對整個 SearchState 樹進行批次清理
-    /// 使用頂點方法清理所有 node 和 prev 參據以防止記憶體洩漏
-    func batchCleanSearchStateTree(allStates: Set<SearchState>? = nil) {
-      if let allStates = allStates {
-        // 清理所有提供的狀態
-        for state in allStates {
-          state.node = nil
-          state.prev = nil
-        }
-      } else {
-        // 原有的樹狀清理邏輯（向下相容）
-        var visited = Set<ObjectIdentifier>()
-        var stack = [self]
-
-        while !stack.isEmpty {
-          let current = stack.removeLast()
-          let identifier = ObjectIdentifier(current)
-
-          // 避免重複造訪同一個節點
-          guard !visited.contains(identifier) else { continue }
-          visited.insert(identifier)
-
-          // 將前一個狀態加入堆疊以進行清理
-          if let prev = current.prev {
-            stack.append(prev)
-          }
-
-          // 清理當前狀態的參據
-          current.node = nil
-          current.prev = nil
-        }
-      }
+    /// 清理單一 SearchState 的參據
+    /// 注意：由於新的清理策略是直接清理各個集合，這個方法現在主要用於向下相容
+    func cleanState() {
+      node = nil
+      prev = nil
     }
 
     func hash(into hasher: inout Hasher) {
-      hasher.combine(node)
+      hasher.combine(stableHash)
+    }
+
+    // MARK: Private
+
+    // 用於穩定 hash 計算的不可變參據
+    private let originalNodeRef: Megrez.Node? // 原始節點參據（不可變）
+    private let stableHash: Int // 預計算的穩定 hash 值
+
+    private static func computeStableHash(node: Megrez.Node?, position: Int) -> Int {
+      var hasher = Hasher()
+      if let node = node {
+        hasher.combine(ObjectIdentifier(node))
+      } else {
+        hasher.combine(0) // 為 nil 節點使用固定值
+      }
       hasher.combine(position)
+      return hasher.finalize()
     }
   }
 

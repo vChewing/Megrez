@@ -143,7 +143,8 @@ extension Megrez {
     /// - Parameter separator: 給定的分隔符，預設值為 Compositor.theSeparator。
     /// - Returns: 已經銜接完畢的字串。
     public func joinedKey(by separator: String = Megrez.Compositor.theSeparator) -> String {
-      keyArray.joined(separator: separator)
+      // 使用快取優化頻繁的字串合併操作
+      StringJoinCache.shared.getCachedJoin(keyArray, separator: separator)
     }
 
     /// 置換掉該節點內的單元圖陣列資料。

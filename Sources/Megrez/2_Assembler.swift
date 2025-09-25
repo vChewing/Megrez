@@ -3,18 +3,18 @@
 // This code is released under the SPDX-License-Identifier: `LGPL-3.0-or-later`.
 
 extension Megrez.Compositor {
-  /// 爬軌函式，會以 Dijkstra 算法更新當前組字器的 walkedNodes。
+  /// 文字組句處理函式，採用 Dijkstra 路徑搜尋演算法更新當前組字器的 assembledNodes 結果。
   ///
-  /// 該算法會在圖中尋找具有最高分數的路徑，即最可能的字詞組合。
+  /// 此演算法在有向圖結構中搜尋具有最優評分的路徑，從而確定最合適的詞彙組合。
   ///
-  /// 該算法所依賴的 HybridPriorityQueue 針對 Sandy Bridge 經過最佳化處理，
-  /// 使得該算法在 Sandy Bridge CPU 的電腦上比 DAG 算法擁有更優的效能。
+  /// 演算法所依賴的 HybridPriorityQueue 資料結構經過針對 Sandy Bridge 架構的特殊最佳化處理，
+  /// 使得該演算法在 Sandy Bridge CPU 平台上相較於 DAG 演算法具備更優異的執行效能。
   ///
-  /// - Returns: 爬軌結果（已選字詞陣列）。
+  /// - Returns: 組句處理結果（已選定詞彙的節點陣列）。
   @discardableResult
-  public func walk() -> [Megrez.Node] {
-    walkedNodes.removeAll()
-    guard !spans.isEmpty else { return [] }
+  public func assemble() -> [Megrez.Node] {
+    assembledNodes.removeAll()
+    guard !segments.isEmpty else { return [] }
 
     // 初期化資料結構。
     var openSet = HybridPriorityQueue<PrioritizedState>(reversed: true)
@@ -54,7 +54,7 @@ extension Megrez.Compositor {
       }
 
       // 處理下一個可能的節點。
-      for (length, nextNode) in spans[current.position] {
+      for (length, nextNode) in segments[current.position] {
         let nextPos = current.position + length
 
         // 計算新的權重分數。
@@ -102,7 +102,7 @@ extension Megrez.Compositor {
       current = state.prev
       // 備註：此處不需要手動 ASAN，因為沒有參據循環（Retain Cycle）。
     }
-    walkedNodes = pathNodes.map(\.copy)
+    assembledNodes = pathNodes.map(\.copy)
 
     // 手動 ASAN：批次清理所有 SearchState 物件以防止記憶體洩漏
     // 包括 visited set 中的所有狀態、openSet 中剩餘的狀態，以及 leadingState
@@ -111,7 +111,7 @@ extension Megrez.Compositor {
       openSet: &openSet,
       leadingState: start
     )
-    return walkedNodes
+    return assembledNodes
   }
 
   /// 部分清理已訪問狀態集合以控制記憶體使用

@@ -12,7 +12,7 @@ extension Megrez {
   public final class Compositor {
     // MARK: Lifecycle
 
-    /// 建立組字引擎處理器實例。
+    /// 建立組字引擎處理器副本。
     /// - Parameter langModel: 指定要整合的語言模型介面。
     public init(with langModel: LangModelProtocol, separator: String = "-") {
       self.langModel = langModel
@@ -21,7 +21,7 @@ extension Megrez {
 
     /// 複製指定的組字引擎處理器。
     /// - Remark: 由於 Node 採用類別設計而非結構體，因此在 Compositor 複製過程中無法自動執行深層複製。
-    /// 這會導致複製後的 Composer 實例中的 Node 變更會影響到原始的 Composer 實例。
+    /// 這會導致複製後的 Composer 副本中的 Node 變更會影響到原始的 Composer 副本。
     /// 為了避免此類非預期的互動影響，特別提供此複製建構函數。
     public init(from target: Compositor) {
       self.config = target.config.hardCopy
@@ -47,9 +47,9 @@ extension Megrez {
     }
 
     /// 最近一次組句操作的執行結果。
-    public var assembledNodes: [Node] {
-      get { config.assembledNodes }
-      set { config.assembledNodes = newValue }
+    public var assembledSentence: [Megrez.GramInPath] {
+      get { config.assembledSentence }
+      set { config.assembledSentence = newValue }
     }
 
     /// 該組字器已經插入的的索引鍵，以陣列的形式存放。
@@ -195,10 +195,10 @@ extension Megrez {
       case .rear:
         if target == 0 { return false }
       }
-      guard let currentRegion = assembledNodes.cursorRegionMap[target] else { return false }
-      let guardedCurrentRegion = min(assembledNodes.count - 1, currentRegion)
+      guard let currentRegion = assembledSentence.cursorRegionMap[target] else { return false }
+      let guardedCurrentRegion = min(assembledSentence.count - 1, currentRegion)
       let aRegionForward = max(currentRegion - 1, 0)
-      let currentRegionBorderRear: Int = assembledNodes[0 ..< currentRegion].map(\.segLength)
+      let currentRegionBorderRear: Int = assembledSentence[0 ..< currentRegion].map(\.segLength)
         .reduce(
           0,
           +
@@ -208,18 +208,18 @@ extension Megrez {
         switch direction {
         case .front:
           target =
-            (currentRegion > assembledNodes.count)
-              ? keys.count : assembledNodes[0 ... guardedCurrentRegion].map(\.segLength).reduce(
+            (currentRegion > assembledSentence.count)
+              ? keys.count : assembledSentence[0 ... guardedCurrentRegion].map(\.segLength).reduce(
                 0,
                 +
               )
         case .rear:
-          target = assembledNodes[0 ..< aRegionForward].map(\.segLength).reduce(0, +)
+          target = assembledSentence[0 ..< aRegionForward].map(\.segLength).reduce(0, +)
         }
       default:
         switch direction {
         case .front:
-          target = currentRegionBorderRear + assembledNodes[guardedCurrentRegion].segLength
+          target = currentRegionBorderRear + assembledSentence[guardedCurrentRegion].segLength
         case .rear:
           target = currentRegionBorderRear
         }
@@ -358,7 +358,7 @@ extension Megrez.Compositor {
 extension Megrez {
   public struct CompositorConfig: Codable, Equatable, Hashable {
     /// 最近一次組句結果。
-    public var assembledNodes: [Node] = []
+    public var assembledSentence: [Megrez.GramInPath] = []
     /// 該組字器已經插入的的索引鍵，以陣列的形式存放。
     public var keys = [String]()
     /// 該組字器的幅節單元陣列。
@@ -399,7 +399,7 @@ extension Megrez {
     /// 這在某些情況下會造成意料之外的混亂情況，所以需要引入一個拷貝用的建構子。
     public var hardCopy: Self {
       var newCopy = self
-      newCopy.assembledNodes = assembledNodes.map(\.copy)
+      newCopy.assembledSentence = assembledSentence
       newCopy.segments = segments.map(\.hardCopy)
       return newCopy
     }
@@ -409,7 +409,7 @@ extension Megrez {
     /// 將已經被插入的索引鍵陣列與幅節單元陣列（包括其內的節點）全部清空。
     /// 最近一次的組句結果陣列也會被清空。游標跳轉換算表也會被清空。
     public mutating func clear() {
-      assembledNodes.removeAll()
+      assembledSentence.removeAll()
       keys.removeAll()
       segments.removeAll()
       cursor = 0

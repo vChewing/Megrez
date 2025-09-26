@@ -12,7 +12,7 @@ extension Megrez {
 extension Megrez.Segment {
   /// 區段管理單元的複製建構函數。
   /// - Remark: 由於 Node 採用類別設計而非結構體，因此在 Compositor 複製過程中無法自動執行深層複製。
-  /// 這會導致複製後的 Compositor 實例中的 Node 變更會影響到原始的 Compositor 實例。
+  /// 這會導致複製後的 Compositor 副本中的 Node 變更會影響到原始的 Compositor 副本。
   /// 為了避免此類非預期的互動影響，特別提供此複製功能。
   public init(segment target: Megrez.Segment) {
     self.init()

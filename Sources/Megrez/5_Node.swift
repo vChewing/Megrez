@@ -15,7 +15,7 @@ extension Megrez {
   public class Node: Equatable, Hashable, Codable {
     // MARK: Lifecycle
 
-    /// 建立新的節點物件實例。
+    /// 建立新的節點物件副本。
     ///
     /// 節點物件整合了讀音索引鍵序列、涵蓋範圍長度、以及對應的單元圖資料集合。涵蓋範圍長度
     /// 表示此節點在完整讀音序列中所佔據的位置數量。組字引擎會根據輸入序列自動產生
@@ -33,9 +33,9 @@ extension Megrez {
       self.currentOverrideType = .withNoOverrides
     }
 
-    /// 通過複製現有節點來建立新實例。
+    /// 通過複製現有節點來建立新副本。
     /// - Remark: 由於 Node 採用類別設計而非結構體，因此在 Compositor 複製過程中無法自動執行深層複製。
-    /// 這會導致複製後的 Composer 實例中的 Node 變更會影響到原始的 Composer 實例。
+    /// 這會導致複製後的 Composer 副本中的 Node 變更會影響到原始的 Composer 副本。
     /// 為了避免此類非預期的互動影響，特別提供此複製建構函數。
     public init(node: Node) {
       self.overridingScore = node.overridingScore
@@ -175,102 +175,5 @@ extension Megrez {
       }
       return false
     }
-  }
-}
-
-// MARK: - Array Extensions.
-
-extension Array where Element == Megrez.Node {
-  /// 從一個節點陣列當中取出目前的選字字串陣列。
-  public var values: [String] { map(\.value) }
-
-  /// 從一個節點陣列當中取出目前的索引鍵陣列。
-  public func joinedKeys(by separator: String = Megrez.Compositor.theSeparator) -> [String] {
-    map { $0.keyArray.lazy.joined(separator: separator) }
-  }
-
-  /// 從一個節點陣列當中取出目前的索引鍵陣列。
-  public var keyArrays: [[String]] { map(\.keyArray) }
-
-  /// 返回一連串的節點起點。結果為 (Result A, Result B) 字典陣列。
-  /// Result A 以索引查座標，Result B 以座標查索引。
-  private var nodeBorderPointDictPair: (regionCursorMap: [Int: Int], cursorRegionMap: [Int: Int]) {
-    // Result A 以索引查座標，Result B 以座標查索引。
-    var resultA = [Int: Int]()
-    var resultB: [Int: Int] = [-1: 0] // 防呆
-    var cursorCounter = 0
-    enumerated().forEach { nodeCounter, neta in
-      resultA[nodeCounter] = cursorCounter
-      neta.keyArray.forEach { _ in
-        resultB[cursorCounter] = nodeCounter
-        cursorCounter += 1
-      }
-    }
-    resultA[count] = cursorCounter
-    resultB[cursorCounter] = count
-    return (resultA, resultB)
-  }
-
-  /// 返回一個字典，以座標查索引。允許以游標位置查詢其屬於第幾個幅節座標（從 0 開始算）。
-  public var cursorRegionMap: [Int: Int] { nodeBorderPointDictPair.cursorRegionMap }
-
-  /// 總讀音單元數量。在絕大多數情況下，可視為總幅節長度。
-  public var totalKeyCount: Int { map(\.keyArray.count).reduce(0, +) }
-
-  /// 根據給定的游標，返回其前後最近的節點邊界。
-  /// - Parameter cursor: 給定的游標。
-  public func contextRange(ofGivenCursor cursor: Int) -> Range<Int> {
-    guard !isEmpty else { return 0 ..< 0 }
-    let frontestSegLength = reversed()[0].keyArray.count
-    var nilReturn = (totalKeyCount - frontestSegLength) ..< totalKeyCount
-    if cursor >= totalKeyCount { return nilReturn } // 防呆
-    let cursor = Swift.max(0, cursor) // 防呆
-    nilReturn = cursor ..< cursor
-    // 下文按道理來講不應該會出現 nilReturn。
-    let mapPair = nodeBorderPointDictPair
-    guard let rearNodeID = mapPair.cursorRegionMap[cursor] else { return nilReturn }
-    guard let rearIndex = mapPair.regionCursorMap[rearNodeID]
-    else { return nilReturn }
-    guard let frontIndex = mapPair.regionCursorMap[rearNodeID + 1]
-    else { return nilReturn }
-    return rearIndex ..< frontIndex
-  }
-
-  /// 在陣列內以給定游標位置找出對應的節點。
-  /// - Parameters:
-  ///   - cursor: 給定游標位置。
-  ///   - outCursorPastNode: 找出的節點的前端位置。
-  /// - Returns: 查找結果。
-  public func findNode(at cursor: Int, target outCursorPastNode: inout Int) -> Megrez.Node? {
-    guard !isEmpty else { return nil }
-    let cursor = Swift.max(0, Swift.min(cursor, totalKeyCount - 1)) // 防呆
-    let range = contextRange(ofGivenCursor: cursor)
-    outCursorPastNode = range.upperBound
-    guard let rearNodeID = nodeBorderPointDictPair.1[cursor] else { return nil }
-    return count - 1 >= rearNodeID ? self[rearNodeID] : nil
-  }
-
-  /// 在陣列內以給定游標位置找出對應的節點。
-  /// - Parameter cursor: 給定游標位置。
-  /// - Returns: 查找結果。
-  public func findNode(at cursor: Int) -> Megrez.Node? {
-    var useless = 0
-    return findNode(at: cursor, target: &useless)
-  }
-
-  /// 提供一組逐字的字音配對陣列（不使用 Megrez 的 KeyValuePaired 類型），但字音不匹配的節點除外。
-  public var smashedPairs: [(key: String, value: String)] {
-    var arrData = [(key: String, value: String)]()
-    forEach { node in
-      if node.isReadingMismatched, !node.keyArray.joined().isEmpty {
-        arrData.append((key: node.keyArray.joined(separator: "\t"), value: node.value))
-        return
-      }
-      let arrValueChars = node.value.map(\.description)
-      node.keyArray.enumerated().forEach { i, key in
-        arrData.append((key: key, value: arrValueChars[i]))
-      }
-    }
-    return arrData
   }
 }

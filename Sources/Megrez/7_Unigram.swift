@@ -9,7 +9,7 @@ extension Megrez {
   public struct Unigram: Equatable, CustomStringConvertible, Hashable, Codable {
     // MARK: Lifecycle
 
-    /// 建立語言模型基礎資料單位實例。基礎資料單位由詞彙內容與統計權重組成。
+    /// 建立語言模型基礎資料單位副本。基礎資料單位由詞彙內容與統計權重組成。
     /// - Parameters:
     ///   - value: 詞彙內容。
     ///   - score: 統計權重（雙精度浮點數）。

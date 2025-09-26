@@ -108,8 +108,7 @@ extension Megrez {
     }
 
     public func joinedKey(by separator: String = Megrez.Compositor.theSeparator) -> String {
-      // 使用快取優化頻繁的字串合併操作
-      StringJoinCache.shared.getCachedJoin(keyArray, separator: separator)
+      keyArray.joined(separator: separator)
     }
   }
 }

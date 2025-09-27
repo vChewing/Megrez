@@ -125,6 +125,18 @@ extension Megrez {
       return strOutput.description
     }
 
+    /// 創建所有節點的覆寫狀態鏡照。
+    /// - Returns: 包含所有節點 ID 到覆寫狀態映射的字典。
+    public func createNodeOverrideStatusMirror() -> [FIUUID: NodeOverrideStatus] {
+      config.createNodeOverrideStatusMirror()
+    }
+
+    /// 從節點覆寫狀態鏡照恢復所有節點的覆寫狀態。
+    /// - Parameter mirror: 包含節點 ID 到覆寫狀態映射的字典。
+    public func restoreFromNodeOverrideStatusMirror(_ mirror: [FIUUID: NodeOverrideStatus]) {
+      config.restoreFromNodeOverrideStatusMirror(mirror)
+    }
+
     /// 重置包括游標在內的各項參數，且清空各種由組字器生成的內部資料。
     ///
     /// 將已經被插入的索引鍵陣列與幅節單元陣列（包括其內的節點）全部清空。
@@ -422,6 +434,33 @@ extension Megrez {
         segments[currentPos].keys.forEach { currentSegLength in
           if currentSegLength > maxSegLength {
             segments[currentPos].removeValue(forKey: currentSegLength)
+          }
+        }
+      }
+    }
+
+    /// 創建所有節點的覆寫狀態鏡照。
+    /// - Returns: 包含所有節點 ID 到覆寫狀態映射的字典。
+    public func createNodeOverrideStatusMirror() -> [FIUUID: NodeOverrideStatus] {
+      var mirror: [FIUUID: NodeOverrideStatus] = [:]
+      segments.forEach { segment in
+        segment.values.forEach { node in
+          mirror[node.id] = node.overrideStatus
+        }
+      }
+      return mirror
+    }
+
+    /// 從節點覆寫狀態鏡照恢復所有節點的覆寫狀態。
+    /// - Parameter mirror: 包含節點 ID 到覆寫狀態映射的字典。
+    public mutating func restoreFromNodeOverrideStatusMirror(
+      _ mirror: [FIUUID: NodeOverrideStatus]
+    ) {
+      segments.indices.forEach { segmentIndex in
+        segments[segmentIndex].keys.forEach { segLength in
+          guard let node = segments[segmentIndex][segLength] else { return }
+          if let status = mirror[node.id] {
+            node.overrideStatus = status
           }
         }
       }

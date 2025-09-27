@@ -242,8 +242,9 @@ extension Megrez.Compositor {
           if anchor.node == overridden.node { return }
           let anchorNodeKeyJoined = anchor.node.joinedKey(by: "\t")
           let overriddenNodeKeyJoined = overridden.node.joinedKey(by: "\t")
-          if !overriddenNodeKeyJoined.has(string: anchorNodeKeyJoined) || !overridden.node.value
-            .has(string: anchor.node.value) {
+          let joinedKeyContained = overriddenNodeKeyJoined.has(string: anchorNodeKeyJoined)
+          let valueContained = overridden.node.value.has(string: anchor.node.value)
+          if !joinedKeyContained || !valueContained {
             anchor.node.reset()
             return
           }

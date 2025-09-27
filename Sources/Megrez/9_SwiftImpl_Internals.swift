@@ -71,3 +71,62 @@ extension StringProtocol {
     return result
   }
 }
+
+// MARK: - FIUUID
+
+/// A simple UUID v4 implementation without Foundation.
+/// Generates a random 128-bit UUID compliant with RFC 4122.
+public struct FIUUID: Hashable, Codable {
+  // MARK: Lifecycle
+
+  public init() {
+    var rng = SystemRandomNumberGenerator()
+    self.bytes = Self.randomBytes(count: 16, using: &rng)
+    // Set version to 4
+    bytes[6] = (bytes[6] & 0x0F) | 0x40
+    // Set variant to 1 (RFC 4122)
+    bytes[8] = (bytes[8] & 0x3F) | 0x80
+  }
+
+  // MARK: Public
+
+  /// Returns the UUID as a standard hyphenated string (e.g., "123e4567-e89b-12d3-a456-426614174000").
+  public func uuidString() -> String {
+    let hexDigits = bytes.map { byte in
+      let hex = String(byte, radix: 16)
+      return hex.count == 1 ? "0" + hex : hex
+    }
+    let hexString = hexDigits.joined()
+    let part1 = hexString.prefix(8)
+    let part2 = hexString.dropFirst(8).prefix(4)
+    let part3 = hexString.dropFirst(12).prefix(4)
+    let part4 = hexString.dropFirst(16).prefix(4)
+    let part5 = hexString.suffix(12)
+    return "\(part1)-\(part2)-\(part3)-\(part4)-\(part5)"
+  }
+
+  // MARK: Private
+
+  private var bytes: [UInt8]
+
+  private static func randomBytes(
+    count: Int,
+    using rng: inout SystemRandomNumberGenerator
+  )
+    -> [UInt8] {
+    var result = [UInt8](repeating: 0, count: count)
+    var offset = 0
+    while offset < count {
+      let randomValue = rng.next()
+      withUnsafeBytes(of: randomValue) { buffer in
+        let bytesToCopy = min(8, count - offset)
+        let byteCount = min(bytesToCopy, buffer.count)
+        for i in 0 ..< byteCount {
+          result[offset + i] = buffer[i]
+        }
+        offset += byteCount
+      }
+    }
+    return result
+  }
+}

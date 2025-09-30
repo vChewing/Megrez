@@ -169,18 +169,21 @@ extension Megrez.Compositor {
   ///   - candidate: 指定用來覆寫為的候選字（詞音鍵值配對）。
   ///   - location: 游標位置。
   ///   - overrideType: 指定覆寫行為。
+  ///   - perceptionKeyHandler: 當覆寫成功時呼叫的回呼，提供最多三個節點長度的組句尾端以供漸退記憶感知。
   /// - Returns: 該操作是否成功執行。
   @discardableResult
   public func overrideCandidate(
     _ candidate: Megrez.KeyValuePaired, at location: Int,
-    overrideType: Megrez.Node.OverrideType = .withHighScore
+    overrideType: Megrez.Node.OverrideType = .withHighScore,
+    perceptionKeyHandler: (([Megrez.GramInPath]) -> ())? = nil
   )
     -> Bool {
     overrideCandidateAgainst(
       keyArray: candidate.keyArray,
       at: location,
       value: candidate.value,
-      type: overrideType
+      type: overrideType,
+      perceptionKeyHandler: perceptionKeyHandler
     )
   }
 
@@ -191,14 +194,22 @@ extension Megrez.Compositor {
   ///   - candidate: 指定用來覆寫為的候選字（字串）。
   ///   - location: 游標位置。
   ///   - overrideType: 指定覆寫行為。
+  ///   - perceptionKeyHandler: 當覆寫成功時呼叫的回呼，提供最多三個節點長度的組句尾端以供漸退記憶感知。
   /// - Returns: 該操作是否成功執行。
   @discardableResult
   public func overrideCandidateLiteral(
     _ candidate: String,
-    at location: Int, overrideType: Megrez.Node.OverrideType = .withHighScore
+    at location: Int, overrideType: Megrez.Node.OverrideType = .withHighScore,
+    perceptionKeyHandler: (([Megrez.GramInPath]) -> ())? = nil
   )
     -> Bool {
-    overrideCandidateAgainst(keyArray: nil, at: location, value: candidate, type: overrideType)
+    overrideCandidateAgainst(
+      keyArray: nil,
+      at: location,
+      value: candidate,
+      type: overrideType,
+      perceptionKeyHandler: perceptionKeyHandler
+    )
   }
 
   // MARK: Internal implementations.
@@ -209,48 +220,109 @@ extension Megrez.Compositor {
   ///   - location: 游標位置。
   ///   - value: 資料值。
   ///   - type: 指定覆寫行為。
+  ///   - perceptionKeyHandler: 當覆寫成功時呼叫的回呼，提供最多三個節點長度的組句尾端以供漸退記憶感知。
   /// - Returns: 該操作是否成功執行。
   internal func overrideCandidateAgainst(
     keyArray: [String]?,
     at location: Int,
     value: String,
-    type: Megrez.Node.OverrideType
+    type: Megrez.Node.OverrideType,
+    perceptionKeyHandler: (([Megrez.GramInPath]) -> ())? = nil
   )
     -> Bool {
     let location = max(min(location, keys.count), 0) // 防呆
-    var arrOverlappedNodes: [(location: Int, node: Megrez.Node)] = fetchOverlappingNodes(at: min(
-      keys.count - 1,
-      location
-    ))
+    let effectiveLocation = min(keys.count - 1, location)
+
+    // 獲取重疊節點
+    let arrOverlappedNodes = fetchOverlappingNodes(at: effectiveLocation)
+
+    guard !arrOverlappedNodes.isEmpty else { return false }
+
+    // 尋找相符的節點
     var overridden: (location: Int, node: Megrez.Node)?
+    var overriddenGram: Megrez.Unigram?
+    var errorHappened = false
+
     for anchor in arrOverlappedNodes {
-      if keyArray != nil, anchor.node.keyArray != keyArray { continue }
-      if !anchor.node.selectOverrideUnigram(value: value, type: type) { continue }
-      overridden = anchor
-      break
+      // 如果提供了keyArray，確認該節點包含這個keyArray
+      if let keyArray, anchor.node.keyArray != keyArray {
+        continue
+      }
+
+      overrideTask: do {
+        let selectionSucceeded = anchor.node.selectOverrideUnigram(
+          value: value,
+          type: type
+        )
+        overriddenGram = anchor.node.currentUnigram
+        guard selectionSucceeded else {
+          errorHappened = true
+          break overrideTask
+        }
+        overridden = anchor
+        break
+      }
     }
 
-    guard let overridden = overridden else { return false } // 啥也不覆寫。
+    // 如果沒有找到相符的節點，拋出錯誤
+    guard !errorHappened, let overridden, let overriddenGram else {
+      return false
+    }
 
-    (overridden.location ..< min(segments.count, overridden.location + overridden.node.segLength))
-      .forEach { i in
-        /// 咱們還得弱化所有在相同的幅節座標的節點的複寫權重。舉例說之前組句的結果是「A BC」
-        /// 且 A 與 BC 都是被覆寫的結果，然後使用者現在在與 A 相同的幅節座標位置
-        /// 選了「DEF」，那麼 BC 的覆寫狀態就有必要重設（但 A 不用重設）。
-        arrOverlappedNodes = fetchOverlappingNodes(at: i)
-        arrOverlappedNodes.forEach { anchor in
-          if anchor.node == overridden.node { return }
-          let anchorNodeKeyJoined = anchor.node.joinedKey(by: "\t")
-          let overriddenNodeKeyJoined = overridden.node.joinedKey(by: "\t")
-          let joinedKeyContained = overriddenNodeKeyJoined.has(string: anchorNodeKeyJoined)
-          let valueContained = overridden.node.value.has(string: anchor.node.value)
-          if !joinedKeyContained || !valueContained {
-            anchor.node.reset()
-            return
-          }
+    defer {
+      // 捕獲感知結果並傳往給定的 perceptor API。
+      // 這裡不能用 .lastIndex，因為實證之後發現是無效的。
+      var assembledSentence = assemble()
+      prepare4Perception: if let perceptor = perceptionKeyHandler {
+        while assembledSentence.last?.gram !== overriddenGram {
+          assembledSentence.removeLast()
+        }
+        guard !assembledSentence.isEmpty else { break prepare4Perception }
+        perceptor(assembledSentence.suffix(3))
+      }
+    }
+
+    // 更新重疊節點的覆寫權重
+    let overriddenRange = overridden.location ..< min(
+      segments.count,
+      overridden.location + overridden.node.segLength
+    )
+
+    for i in overriddenRange {
+      let overlappingNodes = fetchOverlappingNodes(at: i)
+
+      for anchor in overlappingNodes where anchor.node != overridden.node {
+        // 檢查是否需要重設節點
+        let shouldReset = shouldResetNode(
+          anchor: anchor.node,
+          overriddenNode: overridden.node
+        )
+
+        if shouldReset {
+          anchor.node.reset()
+        } else {
           anchor.node.overridingScore /= 4
         }
       }
+    }
     return true
+  }
+
+  /// 判斷一個節點是否需要被重設
+  /// - Parameters:
+  ///   - anchor: 待檢查的節點
+  ///   - overriddenNode: 已覆寫的節點
+  /// - Returns: 是否需要重設
+  private func shouldResetNode(anchor: Megrez.Node, overriddenNode: Megrez.Node) -> Bool {
+    let anchorValue = anchor.value
+    let overriddenValue = overriddenNode.value
+
+    let anchorNodeKeyJoined = anchor.keyArray.joined(separator: "\t")
+    let overriddenNodeKeyJoined = overriddenNode.keyArray.joined(separator: "\t")
+
+    var shouldReset = !overriddenNodeKeyJoined.has(string: anchorNodeKeyJoined)
+    shouldReset = shouldReset || !overriddenValue.has(string: anchorValue)
+
+    return shouldReset
   }
 }

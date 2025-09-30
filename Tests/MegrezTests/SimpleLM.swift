@@ -54,9 +54,23 @@ class SimpleLM: LangModelProtocol {
       let col0 = String(linestream[0])
       let col1 = String(linestream[1])
       let col2 = Double(linestream[2]) ?? 0.0
-      let u = Megrez.Unigram(value: swapKeyValue ? col0 : col1, score: col2)
-      mutDatabase[swapKeyValue ? col1 : col0, default: []].append(u)
+      let key = swapKeyValue ? col1 : col0
+      let value = swapKeyValue ? col0 : col1
+      let keyArray = separatorComponents(from: key)
+      let u = Megrez.Unigram(keyArray: keyArray, value: value, score: col2)
+      mutDatabase[key, default: []].append(u)
     }
+  }
+
+  // MARK: Private
+
+  private func separatorComponents(from key: String) -> [String] {
+    if separator.isEmpty {
+      return key.map(\.description)
+    }
+    return key
+      .components(separatedBy: separator)
+      .filter { !$0.isEmpty }
   }
 }
 
@@ -64,7 +78,7 @@ class SimpleLM: LangModelProtocol {
 
 class MockLM: LangModelProtocol {
   func unigramsFor(keyArray: [String]) -> [Megrez.Unigram] {
-    [Megrez.Unigram(value: keyArray.joined(), score: -1)]
+    [Megrez.Unigram(keyArray: keyArray, value: keyArray.joined(), score: -1)]
   }
 
   func hasUnigramsFor(keyArray: [String]) -> Bool {

@@ -199,9 +199,10 @@ extension Megrez {
     ///   - direction: 指定方向（相對於文字輸入方向而言）。
     ///   - isMarker: 是否為標記游標。
     public func isCursorAtEdge(direction: TypingDirection, isMarker: Bool = false) -> Bool {
+      let pos = isMarker ? marker : cursor
       switch direction {
-      case .front: cursor == length
-      case .rear: cursor == 0
+      case .front: return pos == length
+      case .rear: return pos == 0
       }
     }
 
@@ -226,7 +227,7 @@ extension Megrez {
         return false
       }
       pos += delta
-      if isCursorCuttingChar(isMarker: true) {
+      if isCursorCuttingChar(isMarker: isMarker) {
         return jumpCursorBySegment(to: direction, isMarker: isMarker)
       }
       return true
@@ -353,12 +354,19 @@ extension Megrez {
     )
       -> [Megrez.Unigram] {
       if let cached = cache[keyArray] {
-        // 如果將來 Gram 變成 Class 的話，不要與之前的結果共用記憶體位置。
-        return cached
+        return cached.map(\.copy)
       }
-      return langModel.unigramsFor(keyArray: keyArray).sorted {
-        $0.score > $1.score
-      }
+      let canonical = langModel
+        .unigramsFor(keyArray: keyArray)
+        .map { source -> Megrez.Unigram in
+          if source.keyArray == keyArray {
+            return source.copy
+          }
+          return source.copy(withKeyArray: keyArray)
+        }
+        .sorted { $0.score > $1.score }
+      cache[keyArray] = canonical
+      return canonical.map(\.copy)
     }
   }
 }

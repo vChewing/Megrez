@@ -12,23 +12,21 @@ extension Megrez {
   public struct GramInPath: Codable, Hashable {
     // MARK: Lifecycle
 
-    public init(keyArray: [String], gram: Unigram, isOverridden: Bool) {
-      self.keyArray = keyArray
+    public init(gram: Unigram, isOverridden: Bool) {
       self.gram = gram
       self.isOverridden = isOverridden
-      self.isReadingMismatched = keyArray.count != gram.value.count
     }
 
     // MARK: Public
 
     public let gram: Unigram
     public let isOverridden: Bool
-    public let keyArray: [String]
-    public let isReadingMismatched: Bool
 
+    public var keyArray: [String] { gram.keyArray }
     public var value: String { gram.value }
     public var score: Double { gram.score }
-    public var segLength: Int { keyArray.count }
+    public var segLength: Int { gram.segLength }
+    public var isReadingMismatched: Bool { gram.isReadingMismatched }
 
     /// 該節點當前狀態所展示的鍵值配對。
     public var asCandidatePair: KeyValuePaired {
@@ -165,7 +163,7 @@ extension Array where Element == Megrez.GramInPath {
     }
     guard let perceptedGIP else { return nil }
     var arrGIPs = self
-    while arrGIPs.last?.gram != perceptedGIP.gram { arrGIPs.removeLast() }
+    while arrGIPs.last?.gram !== perceptedGIP.gram { arrGIPs.removeLast() }
     var isHead = true
     var outputCells = [String]()
     loopProc: while !arrGIPs.isEmpty, let frontendPair = arrGIPs.last {

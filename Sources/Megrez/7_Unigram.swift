@@ -44,7 +44,7 @@ extension Megrez {
 
     /// 將當前單元圖列印成一個字串。
     public var description: String {
-      "(" + value.description + "," + String(score) + ")"
+      "(\(keyArray.joined(separator: "-")),\(value),\(score))"
     }
 
     /// 單元圖的淺層複製品（保持相同的索引鍵陣列）。

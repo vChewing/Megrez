@@ -652,39 +652,54 @@ final class MegrezTestsAdvanced: XCTestCase {
   func test18_Composer_UOMMarginalCaseTest() throws {
     let lm = SimpleLM(input: MegrezTestComponents.strLMSampleData_SaisoukiNoGaika)
     let compositor = Megrez.Compositor(with: lm)
-    ["zai4", "chuang4", "shi4", "de5", "kai3", "ge1"].forEach {
+    let readingKeys = ["zai4", "chuang4", "shi4", "de5", "kai3", "ge1"]
+    readingKeys.forEach {
       _ = compositor.insertKey($0)
     }
     compositor.assemble()
     let assembledBefore = compositor.assembledSentence.map(\.value).joined(separator: " ")
     XCTAssertTrue("再 創 是的 凱歌" == assembledBefore)
+    // 測試此時生成的 keyForQueryingData 是否正確
+    let cursorShi = 2
+    let cursorShiDe = 3
+    let keyForQueryingDataAt2 = compositor.assembledSentence
+      .generateKeyForPerception(cursor: cursorShi)
+    XCTAssertEqual(keyForQueryingDataAt2?.ngramKey, "(zai4,再)&(chuang4,創)&(shi4-de5,是的)")
+    XCTAssertEqual(keyForQueryingDataAt2?.headReading, "shi4")
+    let keyForQueryingDataAt3 = compositor.assembledSentence
+      .generateKeyForPerception(cursor: cursorShiDe)
+    XCTAssertEqual(keyForQueryingDataAt3?.ngramKey, "(zai4,再)&(chuang4,創)&(shi4-de5,是的)")
+    XCTAssertEqual(keyForQueryingDataAt3?.headReading, "de5")
     // 應能提供『是的』『似的』『凱歌』等候選
     let pairsAtShiDeEnd = compositor.fetchCandidates(at: 4, filter: .endAt)
     XCTAssertTrue(pairsAtShiDeEnd.map(\.value).contains("是的"))
     XCTAssertTrue(pairsAtShiDeEnd.map(\.value).contains("似的"))
     // 模擬使用者把『是』改為『世』，再合成：觀測應為 shortToLong
     var obsCaptured: Megrez.PerceptionIntel?
-    let cursorShi = 2
     _ = compositor.overrideCandidate(
       .init(keyArray: ["shi4"], value: "世"),
-      at: cursorShi
-    ) {
-      obsCaptured = $0
-    }
+      at: cursorShi,
+      overrideType: .withHighScore,
+      enforceRetokenization: true,
+      perceptionHandler: { obsCaptured = $0 }
+    )
+    XCTAssertEqual(obsCaptured?.ngramKey, "(zai4,再)&(chuang4,創)&(shi4,世)")
     // compositor.assemble() <- 已經組句了。
     let assembledAfter = compositor.assembledSentence.map(\.value).joined(separator: " ")
     XCTAssertTrue("再 創 世 的 凱歌" == assembledAfter)
-    let cursorShiDe = 3
+    // ====
     let prevAssembly = compositor.assembledSentence
     obsCaptured = nil
     let overrideSucceeded = compositor.overrideCandidate(
       .init(keyArray: ["shi4", "de5"], value: "是的"),
-      at: cursorShiDe
-    ) {
-      obsCaptured = $0
-    }
+      at: cursorShiDe,
+      overrideType: .withHighScore,
+      enforceRetokenization: true,
+      perceptionHandler: { obsCaptured = $0 }
+    )
+    XCTAssertEqual(obsCaptured?.ngramKey, "(chuang4,創)&(shi4,世)&(de5,的)")
     XCTAssertTrue(overrideSucceeded)
-    let currentAssembly = compositor.assemble()
+    let currentAssembly = compositor.assembledSentence
     guard let afterHit = currentAssembly.findGram(at: cursorShiDe) else {
       XCTFail("Expected current gram at cursor \(cursorShiDe)")
       return
@@ -701,5 +716,27 @@ final class MegrezTestsAdvanced: XCTestCase {
     XCTAssertNotNil(obsCaptured)
     XCTAssertEqual(obsCaptured?.scenario, .shortToLong)
     XCTAssertEqual(obsCaptured?.candidate, "是的")
+
+    // 測試 POM 建議的候選覆寫
+    compositor.clear()
+    readingKeys.prefix(4).forEach {
+      _ = compositor.insertKey($0)
+    }
+
+    let pomSuggestedCandidate = Megrez.KeyValuePaired((["shi4"], "世", -0.07449307430679043))
+    let pomSuggestedCandidateOverrideCursor = 2
+    // let forceHighScoreOverride = false
+    // overrideType: forceHighScoreOverride ? .withHighScore : .withTopUnigramScore
+    compositor.overrideCandidate(
+      pomSuggestedCandidate,
+      at: pomSuggestedCandidateOverrideCursor,
+      overrideType: .withTopUnigramScore,
+      enforceRetokenization: true
+    )
+    compositor.assemble()
+    let assembledByPOM = compositor.assembledSentence
+      .map(\.value)
+      .joined(separator: " ")
+    XCTAssertEqual("再 創 世 的", assembledByPOM)
   }
 }

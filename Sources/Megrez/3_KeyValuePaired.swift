@@ -169,12 +169,14 @@ extension Megrez.Compositor {
   ///   - candidate: 指定用來覆寫為的候選字（詞音鍵值配對）。
   ///   - location: 游標位置。
   ///   - overrideType: 指定覆寫行為。
+  ///   - enforceRetokenization: 是否強制重新分詞，對所有重疊節點施作重置與降權，以避免殘留舊節點狀態。
   ///   - perceptionHandler: 覆寫成功後用於回傳觀測智慧的回呼。
   /// - Returns: 該操作是否成功執行。
   @discardableResult
   public func overrideCandidate(
     _ candidate: Megrez.KeyValuePaired, at location: Int,
     overrideType: Megrez.Node.OverrideType = .withHighScore,
+    enforceRetokenization: Bool = false,
     perceptionHandler: ((Megrez.PerceptionIntel) -> ())? = nil
   )
     -> Bool {
@@ -183,6 +185,7 @@ extension Megrez.Compositor {
       at: location,
       value: candidate.value,
       type: overrideType,
+      enforceRetokenization: enforceRetokenization,
       perceptionHandler: perceptionHandler
     )
   }
@@ -194,12 +197,14 @@ extension Megrez.Compositor {
   ///   - candidate: 指定用來覆寫為的候選字（字串）。
   ///   - location: 游標位置。
   ///   - overrideType: 指定覆寫行為。
+  ///   - enforceRetokenization: 是否強制重新分詞，對所有重疊節點施作重置與降權，以避免殘留舊節點狀態。
   ///   - perceptionHandler: 覆寫成功後用於回傳觀測智慧的回呼。
   /// - Returns: 該操作是否成功執行。
   @discardableResult
   public func overrideCandidateLiteral(
     _ candidate: String,
     at location: Int, overrideType: Megrez.Node.OverrideType = .withHighScore,
+    enforceRetokenization: Bool = false,
     perceptionHandler: ((Megrez.PerceptionIntel) -> ())? = nil
   )
     -> Bool {
@@ -208,6 +213,7 @@ extension Megrez.Compositor {
       at: location,
       value: candidate,
       type: overrideType,
+      enforceRetokenization: enforceRetokenization,
       perceptionHandler: perceptionHandler
     )
   }
@@ -220,6 +226,7 @@ extension Megrez.Compositor {
   ///   - location: 游標位置。
   ///   - value: 資料值。
   ///   - type: 指定覆寫行為。
+  ///   - enforceRetokenization: 是否強制重新分詞，對所有重疊節點施作重置與降權，以避免殘留舊節點狀態。
   ///   - perceptionHandler: 覆寫成功後用於回傳觀測智慧的回呼。
   /// - Returns: 該操作是否成功執行。
   internal func overrideCandidateAgainst(
@@ -227,6 +234,7 @@ extension Megrez.Compositor {
     at location: Int,
     value: String,
     type: Megrez.Node.OverrideType,
+    enforceRetokenization: Bool,
     perceptionHandler: ((Megrez.PerceptionIntel) -> ())? = nil
   )
     -> Bool {
@@ -296,20 +304,39 @@ extension Megrez.Compositor {
       overridden.location + overridden.node.segLength
     )
 
-    for i in overriddenRange {
-      let overlappingNodes = fetchOverlappingNodes(at: i)
+    if enforceRetokenization {
+      let overriddenNodeRef = overridden.node
+      let demotionScore = -Swift.max(1.0, Swift.abs(overriddenNodeRef.overridingScore))
+      for i in overriddenRange {
+        let overlappingNodes = fetchOverlappingNodes(at: i)
+        for anchor in overlappingNodes where anchor.node !== overriddenNodeRef
+          && anchor.location <= overridden.location {
+          if shouldResetNode(anchor: anchor.node, overriddenNode: overriddenNodeRef) {
+            anchor.node.reset()
+          }
+          anchor.node.overrideStatus = .init(
+            overridingScore: demotionScore,
+            currentOverrideType: .withHighScore,
+            currentUnigramIndex: anchor.node.currentUnigramIndex
+          )
+        }
+      }
+    } else {
+      for i in overriddenRange {
+        let overlappingNodes = fetchOverlappingNodes(at: i)
 
-      for anchor in overlappingNodes where anchor.node != overridden.node {
-        // 檢查是否需要重設節點
-        let shouldReset = shouldResetNode(
-          anchor: anchor.node,
-          overriddenNode: overridden.node
-        )
+        for anchor in overlappingNodes where anchor.node != overridden.node {
+          // 檢查是否需要重設節點
+          let shouldReset = shouldResetNode(
+            anchor: anchor.node,
+            overriddenNode: overridden.node
+          )
 
-        if shouldReset {
-          anchor.node.reset()
-        } else {
-          anchor.node.overridingScore /= 4
+          if shouldReset {
+            anchor.node.reset()
+          } else {
+            anchor.node.overridingScore /= 4
+          }
         }
       }
     }
@@ -403,7 +430,12 @@ extension Megrez {
 
     // 選擇用來形成觀測 key 的資料源：長→短使用 after，其他使用 before
     let keySource = isBreakingUp ? currentAssembled : previouslyAssembled
-    let keyCursor = afterHit.range.upperBound // 與現有 key 生成方法對齊
+    let keyCursorRaw = Swift.max(
+      afterHit.range.lowerBound,
+      Swift.min(cursor, afterHit.range.upperBound - 1)
+    )
+    guard keySource.totalKeyCount > 0 else { return nil }
+    let keyCursor = Swift.max(0, Swift.min(keyCursorRaw, keySource.totalKeyCount - 1))
 
     guard let keyGen = keySource.generateKeyForPerception(cursor: keyCursor) else { return nil }
 

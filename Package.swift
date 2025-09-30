@@ -24,7 +24,9 @@ let package = Package(
     ),
     .target(
       name: "MegrezTestComponents",
-      dependencies: []
+      dependencies: [
+        "Megrez",
+      ]
     ),
     .testTarget(
       name: "MegrezTests",

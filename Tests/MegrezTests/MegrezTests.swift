@@ -3,15 +3,18 @@
 // This code is released under the SPDX-License-Identifier: `LGPL-3.0-or-later`.
 
 import Foundation
+import Megrez
+import MegrezTestComponents
 import XCTest
 
-@testable import Megrez
+private typealias SimpleLM = MegrezTestComponents.SimpleLM
+private typealias MockLM = MegrezTestComponents.MockLM
 
 // MARK: - MegrezTestsBasic
 
 final class MegrezTestsBasic: XCTestCase {
   func test01_Segment() throws {
-    let langModel = SimpleLM(input: strLMSampleDataLitch)
+    let langModel = SimpleLM(input: MegrezTestComponents.strLMSampleDataLitch)
     var segment = Megrez.Segment()
     let n1 = Megrez.Node(
       keyArray: ["da4"],
@@ -254,7 +257,7 @@ final class MegrezTestsAdvanced: XCTestCase {
   /// 組字器的分詞功能測試，同時測試組字器的硬拷貝功能。
   func test08_Compositor_WordSegmentation() throws {
     let regexToFilter = try Regex(".* 能留 .*\n")
-    let rawData = strLMSampleDataHutao.replacing(regexToFilter, with: "")
+    let rawData = MegrezTestComponents.strLMSampleDataHutao.replacing(regexToFilter, with: "")
     let compositor = Megrez.Compositor(
       with: SimpleLM(input: rawData, swapKeyValue: true, separator: ""),
       separator: ""
@@ -271,7 +274,7 @@ final class MegrezTestsAdvanced: XCTestCase {
   /// 組字器的組字壓力測試。
   func test09_Compositor_StressBench() throws {
     NSLog("// Stress test preparation begins.")
-    let compositor = Megrez.Compositor(with: SimpleLM(input: strLMStressData))
+    let compositor = Megrez.Compositor(with: SimpleLM(input: MegrezTestComponents.strLMStressData))
     (0 ..< 1_919).forEach { _ in
       compositor.insertKey("sheng1")
     }
@@ -284,7 +287,7 @@ final class MegrezTestsAdvanced: XCTestCase {
 
   func test10_Compositor_UpdateUnigramData() throws {
     let readings: [Substring] = "shu4 xin1 feng1".split(separator: " ")
-    let newRawStringLM = strLMSampleDataEmoji + "\nshu4-xin1-feng1 樹新風 -9\n"
+    let newRawStringLM = MegrezTestComponents.strLMSampleDataEmoji + "\nshu4-xin1-feng1 樹新風 -9\n"
     let regexToFilter = try Regex(".*(樹|新|風) .*")
     let lm = SimpleLM(input: newRawStringLM.replacing(regexToFilter, with: ""))
     let compositor = Megrez.Compositor(with: lm)
@@ -303,7 +306,10 @@ final class MegrezTestsAdvanced: XCTestCase {
   /// `fetchCandidatesDeprecated` 這個方法在極端情況下（比如兩個連續讀音，等）會有故障，現已棄用。
   /// 目前這筆測試並不能曝露這個函式的問題，但卻能用來輔助測試其**繼任者**是否能完成一致的正確工作。
   func test11_Compositor_VerifyCandidateFetchResultsWithNewAPI() throws {
-    let theLM = SimpleLM(input: strLMSampleDataTechGuarden + "\n" + strLMSampleDataLitch)
+    let theLM = SimpleLM(
+      input: MegrezTestComponents.strLMSampleDataTechGuarden + "\n" + MegrezTestComponents
+        .strLMSampleDataLitch
+    )
     let rawReadings = "da4 qian2 tian1 zai5 ke1 ji4 gong1 yuan2 chao1 shang1"
     let compositor = Megrez.Compositor(with: theLM)
     rawReadings.split(separator: " ").forEach { key in
@@ -349,7 +355,7 @@ final class MegrezTestsAdvanced: XCTestCase {
     // 一號測試。
     do {
       let readings: [Substring] = "ke1 ji4 gong1 yuan2".split(separator: " ")
-      let mockLM = SimpleLM(input: strLMSampleDataTechGuarden)
+      let mockLM = SimpleLM(input: MegrezTestComponents.strLMSampleDataTechGuarden)
       let compositor = Megrez.Compositor(with: mockLM)
       readings.forEach {
         compositor.insertKey($0.description)
@@ -368,7 +374,10 @@ final class MegrezTestsAdvanced: XCTestCase {
     // 二號測試。
     do {
       let readings: [Substring] = "sheng1 sheng1".split(separator: " ")
-      let mockLM = SimpleLM(input: strLMStressData + "\n" + strLMSampleDataHutao)
+      let mockLM = SimpleLM(
+        input: MegrezTestComponents.strLMStressData + "\n" + MegrezTestComponents
+          .strLMSampleDataHutao
+      )
       let compositor = Megrez.Compositor(with: mockLM)
       readings.forEach {
         compositor.insertKey($0.description)
@@ -391,7 +400,7 @@ final class MegrezTestsAdvanced: XCTestCase {
   /// 組字器的組字功能測試（單元圖，完整輸入讀音與聲調，完全匹配）。
   func test13_Compositor_AssembleAndOverrideWithUnigramAndCursorJump() throws {
     let readings = "chao1 shang1 da4 qian2 tian1 wei2 zhi3 hai2 zai5 mai4 nai3 ji1"
-    let mockLM = SimpleLM(input: strLMSampleDataLitch)
+    let mockLM = SimpleLM(input: MegrezTestComponents.strLMSampleDataLitch)
     let compositor = Megrez.Compositor(with: mockLM)
     readings.split(separator: " ").forEach {
       compositor.insertKey($0.description)
@@ -468,7 +477,7 @@ final class MegrezTestsAdvanced: XCTestCase {
   /// 對此有需求者請洽其繼任者「libHoma（護摩）」。
   func test14_Compositor_AssembleAndOverride_AnotherTest() throws {
     let readings: [Substring] = "you1 die2 neng2 liu2 yi4 lv3 fang1".split(separator: " ")
-    let lm = SimpleLM(input: strLMSampleDataHutao)
+    let lm = SimpleLM(input: MegrezTestComponents.strLMSampleDataHutao)
     let compositor = Megrez.Compositor(with: lm)
     readings.forEach {
       compositor.insertKey($0.description)
@@ -511,7 +520,7 @@ final class MegrezTestsAdvanced: XCTestCase {
   /// 針對完全覆蓋的節點的專項覆寫測試。
   func test15_Compositor_ResettingFullyOverlappedNodesOnOverride() throws {
     let readings: [Substring] = "shui3 guo3 zhi1".split(separator: " ")
-    let lm = SimpleLM(input: strLMSampleDataFruitJuice)
+    let lm = SimpleLM(input: MegrezTestComponents.strLMSampleDataFruitJuice)
     let compositor = Megrez.Compositor(with: lm)
     readings.forEach {
       compositor.insertKey($0.description)
@@ -581,7 +590,7 @@ final class MegrezTestsAdvanced: XCTestCase {
   /// 針對不完全覆蓋的節點的專項覆寫測試。
   func test16_Compositor_ResettingPartiallyOverlappedNodesOnOverride() throws {
     let readings: [Substring] = "ke1 ji4 gong1 yuan2".split(separator: " ")
-    let rawData = strLMSampleDataTechGuarden + "\ngong1-yuan2 公猿 -9"
+    let rawData = MegrezTestComponents.strLMSampleDataTechGuarden + "\ngong1-yuan2 公猿 -9"
     let compositor = Megrez.Compositor(with: SimpleLM(input: rawData))
     readings.forEach {
       compositor.insertKey($0.description)
@@ -620,7 +629,7 @@ final class MegrezTestsAdvanced: XCTestCase {
   func test17_Compositor_CandidateDisambiguation() throws {
     let readings: [Substring] = "da4 shu4 xin1 de5 mi4 feng1".split(separator: " ")
     let regexToFilter = try Regex("\nshu4-xin1 .*")
-    let rawData = strLMSampleDataEmoji.replacing(regexToFilter, with: "")
+    let rawData = MegrezTestComponents.strLMSampleDataEmoji.replacing(regexToFilter, with: "")
     let compositor = Megrez.Compositor(with: SimpleLM(input: rawData))
     readings.forEach {
       compositor.insertKey($0.description)
@@ -641,7 +650,7 @@ final class MegrezTestsAdvanced: XCTestCase {
   }
 
   func test18_Composer_UOMMarginalCaseTest() throws {
-    let lm = SimpleLM(input: strLMSampleData_SaisoukiNoGaika)
+    let lm = SimpleLM(input: MegrezTestComponents.strLMSampleData_SaisoukiNoGaika)
     let compositor = Megrez.Compositor(with: lm)
     ["zai4", "chuang4", "shi4", "de5", "kai3", "ge1"].forEach {
       _ = compositor.insertKey($0)

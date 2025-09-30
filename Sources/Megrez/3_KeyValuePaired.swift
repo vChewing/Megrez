@@ -169,13 +169,13 @@ extension Megrez.Compositor {
   ///   - candidate: 指定用來覆寫為的候選字（詞音鍵值配對）。
   ///   - location: 游標位置。
   ///   - overrideType: 指定覆寫行為。
-  ///   - perceptionKeyHandler: 當覆寫成功時呼叫的回呼，提供最多三個節點長度的組句尾端以供漸退記憶感知。
+  ///   - perceptionHandler: 覆寫成功後用於回傳觀測智慧的回呼。
   /// - Returns: 該操作是否成功執行。
   @discardableResult
   public func overrideCandidate(
     _ candidate: Megrez.KeyValuePaired, at location: Int,
     overrideType: Megrez.Node.OverrideType = .withHighScore,
-    perceptionKeyHandler: (([Megrez.GramInPath]) -> ())? = nil
+    perceptionHandler: ((Megrez.PerceptionIntel) -> ())? = nil
   )
     -> Bool {
     overrideCandidateAgainst(
@@ -183,7 +183,7 @@ extension Megrez.Compositor {
       at: location,
       value: candidate.value,
       type: overrideType,
-      perceptionKeyHandler: perceptionKeyHandler
+      perceptionHandler: perceptionHandler
     )
   }
 
@@ -194,13 +194,13 @@ extension Megrez.Compositor {
   ///   - candidate: 指定用來覆寫為的候選字（字串）。
   ///   - location: 游標位置。
   ///   - overrideType: 指定覆寫行為。
-  ///   - perceptionKeyHandler: 當覆寫成功時呼叫的回呼，提供最多三個節點長度的組句尾端以供漸退記憶感知。
+  ///   - perceptionHandler: 覆寫成功後用於回傳觀測智慧的回呼。
   /// - Returns: 該操作是否成功執行。
   @discardableResult
   public func overrideCandidateLiteral(
     _ candidate: String,
     at location: Int, overrideType: Megrez.Node.OverrideType = .withHighScore,
-    perceptionKeyHandler: (([Megrez.GramInPath]) -> ())? = nil
+    perceptionHandler: ((Megrez.PerceptionIntel) -> ())? = nil
   )
     -> Bool {
     overrideCandidateAgainst(
@@ -208,7 +208,7 @@ extension Megrez.Compositor {
       at: location,
       value: candidate,
       type: overrideType,
-      perceptionKeyHandler: perceptionKeyHandler
+      perceptionHandler: perceptionHandler
     )
   }
 
@@ -220,14 +220,14 @@ extension Megrez.Compositor {
   ///   - location: 游標位置。
   ///   - value: 資料值。
   ///   - type: 指定覆寫行為。
-  ///   - perceptionKeyHandler: 當覆寫成功時呼叫的回呼，提供最多三個節點長度的組句尾端以供漸退記憶感知。
+  ///   - perceptionHandler: 覆寫成功後用於回傳觀測智慧的回呼。
   /// - Returns: 該操作是否成功執行。
   internal func overrideCandidateAgainst(
     keyArray: [String]?,
     at location: Int,
     value: String,
     type: Megrez.Node.OverrideType,
-    perceptionKeyHandler: (([Megrez.GramInPath]) -> ())? = nil
+    perceptionHandler: ((Megrez.PerceptionIntel) -> ())? = nil
   )
     -> Bool {
     let location = max(min(location, keys.count), 0) // 防呆
@@ -237,6 +237,11 @@ extension Megrez.Compositor {
     let arrOverlappedNodes = fetchOverlappingNodes(at: effectiveLocation)
 
     guard !arrOverlappedNodes.isEmpty else { return false }
+
+    // 用於觀測：覆寫生效前的 walk 與游標
+    let hasPerceptor = perceptionHandler != nil
+    let previouslyAssembled: [Megrez.GramInPath] = hasPerceptor ? assemble() : []
+    let beforeCursor = min(keys.count, location)
 
     // 尋找相符的節點
     var overridden: (location: Int, node: Megrez.Node)?
@@ -265,20 +270,23 @@ extension Megrez.Compositor {
     }
 
     // 如果沒有找到相符的節點，拋出錯誤
-    guard !errorHappened, let overridden, let overriddenGram else {
+    guard !errorHappened, let overridden, overriddenGram != nil else {
       return false
     }
 
     defer {
-      // 捕獲感知結果並傳往給定的 perceptor API。
-      // 這裡不能用 .lastIndex，因為實證之後發現是無效的。
-      var assembledSentence = assemble()
-      prepare4Perception: if let perceptor = perceptionKeyHandler {
-        while assembledSentence.last?.gram !== overriddenGram {
-          assembledSentence.removeLast()
+      // 覆寫後組句與觀測：
+      let currentAssembled = assemble()
+      if let perceptionHandler, !previouslyAssembled.isEmpty {
+        // 供新版觀測 API（前/後路徑比較 + 三情境分類）
+        let perceptedIntel = Megrez.makePerceptionObservation(
+          previouslyAssembled: previouslyAssembled,
+          currentAssembled: currentAssembled,
+          cursor: beforeCursor
+        )
+        if let perceptedIntel {
+          perceptionHandler(perceptedIntel)
         }
-        guard !assembledSentence.isEmpty else { break prepare4Perception }
-        perceptor(assembledSentence.suffix(3))
       }
     }
 
@@ -324,5 +332,88 @@ extension Megrez.Compositor {
     shouldReset = shouldReset || !overriddenValue.has(string: anchorValue)
 
     return shouldReset
+  }
+}
+
+// MARK: - Perception observation with pre/post walks
+
+extension Megrez {
+  /// 觀測上下文類型。
+  public enum POMObservationScenario: String, Codable {
+    /// 同長度更換。
+    case sameLenSwap
+    /// 短詞變長詞。
+    case shortToLong
+    /// 長詞變短詞。
+    case longToShort
+  }
+
+  /// 觀測上下文情形。
+  public struct PerceptionIntel: Codable, Hashable {
+    /// N-gram 索引鍵。
+    public let ngramKey: String
+    /// 候選字。
+    public let candidate: String
+    /// 頭部讀音。
+    public let headReading: String
+    /// 觀測場景。
+    public let scenario: POMObservationScenario
+    /// 強制高分覆寫。
+    public let forceHighScoreOverride: Bool
+    /// 語言模型分數。
+    public let scoreFromLM: Double
+  }
+
+  /// 根據候選字覆寫行為前後的組句結果，在指定游標位置得出觀測上下文之情形。
+  /// - Parameters:
+  ///   - previouslyAssembled: 候選字覆寫行為前的組句結果。
+  ///   - currentAssembled: 候選字覆寫行為後的組句結果。
+  ///   - cursor: 游標。
+  /// - Returns: 觀測上下文結果。
+  public static func makePerceptionObservation(
+    previouslyAssembled: [Megrez.GramInPath],
+    currentAssembled: [Megrez.GramInPath],
+    cursor: Int
+  )
+    -> PerceptionIntel? {
+    guard !previouslyAssembled.isEmpty, !currentAssembled.isEmpty else { return nil }
+
+    // 確認游標落在 currentAssembled 的有效節點
+    guard let afterHit = currentAssembled.findGram(at: cursor) else { return nil }
+    let current = afterHit.gram
+    let currentLen = current.segLength
+    if currentLen > 3 { return nil }
+
+    // 在 previouslyAssembled 中找到對應 head 的節點（使用 after 的節點區間上界 -1 作為內點）
+    let border1 = afterHit.range.upperBound - 1
+    let border2 = previouslyAssembled.totalKeyCount - 1
+    let innerIndex = Swift.max(0, Swift.min(border1, border2))
+    guard let beforeHit = previouslyAssembled.findGram(at: innerIndex) else { return nil }
+    let prevHead = beforeHit.gram
+    let prevLen = prevHead.segLength
+
+    let isBreakingUp = (currentLen == 1 && prevLen > 1)
+    let isShortToLong = (currentLen > prevLen)
+    let scenario: POMObservationScenario = switch (isBreakingUp, isShortToLong) {
+    case (true, _): .longToShort
+    case (false, true): .shortToLong
+    case (false, false): .sameLenSwap
+    }
+    let forceHSO = isShortToLong // 只有短→長時需要強推長詞
+
+    // 選擇用來形成觀測 key 的資料源：長→短使用 after，其他使用 before
+    let keySource = isBreakingUp ? currentAssembled : previouslyAssembled
+    let keyCursor = afterHit.range.upperBound // 與現有 key 生成方法對齊
+
+    guard let keyGen = keySource.generateKeyForPerception(cursor: keyCursor) else { return nil }
+
+    return .init(
+      ngramKey: keyGen.ngramKey,
+      candidate: current.value,
+      headReading: keyGen.headReading,
+      scenario: scenario,
+      forceHighScoreOverride: forceHSO,
+      scoreFromLM: afterHit.gram.score
+    )
   }
 }

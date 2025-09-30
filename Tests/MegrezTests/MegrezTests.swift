@@ -2,7 +2,7 @@
 // ====================
 // This code is released under the SPDX-License-Identifier: `LGPL-3.0-or-later`.
 
-import AppKit
+import Foundation
 import XCTest
 
 @testable import Megrez
@@ -14,10 +14,13 @@ final class MegrezTestsBasic: XCTestCase {
     let langModel = SimpleLM(input: strLMSampleDataLitch)
     var segment = Megrez.Segment()
     let n1 = Megrez.Node(
-      keyArray: ["da4"], segLength: 1, unigrams: langModel.unigramsFor(keyArray: ["da4"])
+      keyArray: ["da4"],
+      segLength: 1,
+      unigrams: langModel.unigramsFor(keyArray: ["da4"])
     )
     let n3 = Megrez.Node(
-      keyArray: ["da4", "qian2", "tian1"], segLength: 3,
+      keyArray: ["da4", "qian2", "tian1"],
+      segLength: 3,
       unigrams: langModel.unigramsFor(keyArray: ["da4-qian2-tian1"])
     )
     XCTAssertEqual(segment.maxLength, 0)
@@ -475,17 +478,23 @@ final class MegrezTestsAdvanced: XCTestCase {
     XCTAssert(assembledSentence == ["幽蝶", "能", "留意", "呂方"])
     // 測試覆寫「留」以試圖打斷「留意」。
     compositor.overrideCandidate(
-      .init((["liu2"], "留")), at: 3, overrideType: .withHighScore
+      .init((["liu2"], "留")),
+      at: 3,
+      overrideType: .withHighScore
     )
     // 測試覆寫「一縷」以打斷「留意」與「呂方」。
     compositor.overrideCandidate(
-      .init((["yi4", "lv3"], "一縷")), at: 4, overrideType: .withHighScore
+      .init((["yi4", "lv3"], "一縷")),
+      at: 4,
+      overrideType: .withHighScore
     )
     assembledSentence = compositor.assemble().map(\.value)
     XCTAssertEqual(assembledSentence, ["幽蝶", "能", "留", "一縷", "方"])
     // 對位置 7 這個最前方的座標位置使用節點覆寫。會在此過程中自動糾正成對位置 6 的覆寫。
     compositor.overrideCandidate(
-      .init((["fang1"], "芳")), at: 7, overrideType: .withHighScore
+      .init((["fang1"], "芳")),
+      at: 7,
+      overrideType: .withHighScore
     )
     assembledSentence = compositor.assemble().map(\.value)
     XCTAssert(assembledSentence == ["幽蝶", "能", "留", "一縷", "芳"])
@@ -522,7 +531,8 @@ final class MegrezTestsAdvanced: XCTestCase {
       do {
         XCTAssertTrue(
           compositor.overrideCandidate(
-            .init(keyArray: ["shui3", "guo3", "zhi1"], value: "水果汁"), at: 1
+            .init(keyArray: ["shui3", "guo3", "zhi1"], value: "水果汁"),
+            at: 1
           )
         )
         assembledSentence = compositor.assemble().map(\.value)
@@ -558,7 +568,8 @@ final class MegrezTestsAdvanced: XCTestCase {
         XCTAssertTrue(
           // 再覆寫回來。
           compositor.overrideCandidate(
-            .init(keyArray: ["shui3", "guo3", "zhi1"], value: "水果汁"), at: 3
+            .init(keyArray: ["shui3", "guo3", "zhi1"], value: "水果汁"),
+            at: 3
           )
         )
         assembledSentence = compositor.assemble().map(\.value)
@@ -578,21 +589,30 @@ final class MegrezTestsAdvanced: XCTestCase {
     var result = compositor.assemble()
     XCTAssertEqual(result.values, ["科技", "公園"])
 
-    XCTAssertTrue(compositor.overrideCandidate(
-      .init(keyArray: ["ji4", "gong1"], value: "濟公"), at: 1
-    ))
+    XCTAssertTrue(
+      compositor.overrideCandidate(
+        .init(keyArray: ["ji4", "gong1"], value: "濟公"),
+        at: 1
+      )
+    )
     result = compositor.assemble()
     XCTAssertEqual(result.values, ["顆", "濟公", "元"])
 
-    XCTAssertTrue(compositor.overrideCandidate(
-      .init(keyArray: ["gong1", "yuan2"], value: "公猿"), at: 2
-    ))
+    XCTAssertTrue(
+      compositor.overrideCandidate(
+        .init(keyArray: ["gong1", "yuan2"], value: "公猿"),
+        at: 2
+      )
+    )
     result = compositor.assemble()
     XCTAssertEqual(result.values, ["科技", "公猿"])
 
-    XCTAssertTrue(compositor.overrideCandidate(
-      .init(keyArray: ["ke1", "ji4"], value: "科際"), at: 0
-    ))
+    XCTAssertTrue(
+      compositor.overrideCandidate(
+        .init(keyArray: ["ke1", "ji4"], value: "科際"),
+        at: 0
+      )
+    )
     result = compositor.assemble()
     XCTAssertEqual(result.values, ["科際", "公猿"])
   }
@@ -618,5 +638,59 @@ final class MegrezTestsAdvanced: XCTestCase {
     )
     result = compositor.assemble()
     XCTAssertEqual(result.values, ["大樹", "🆕", "蜜蜂"])
+  }
+
+  func test18_Composer_UOMMarginalCaseTest() throws {
+    let lm = SimpleLM(input: strLMSampleData_SaisoukiNoGaika)
+    let compositor = Megrez.Compositor(with: lm)
+    ["zai4", "chuang4", "shi4", "de5", "kai3", "ge1"].forEach {
+      _ = compositor.insertKey($0)
+    }
+    compositor.assemble()
+    let assembledBefore = compositor.assembledSentence.map(\.value).joined(separator: " ")
+    XCTAssertTrue("再 創 是的 凱歌" == assembledBefore)
+    // 應能提供『是的』『似的』『凱歌』等候選
+    let pairsAtShiDeEnd = compositor.fetchCandidates(at: 4, filter: .endAt)
+    XCTAssertTrue(pairsAtShiDeEnd.map(\.value).contains("是的"))
+    XCTAssertTrue(pairsAtShiDeEnd.map(\.value).contains("似的"))
+    // 模擬使用者把『是』改為『世』，再合成：觀測應為 shortToLong
+    var obsCaptured: Megrez.PerceptionIntel?
+    let cursorShi = 2
+    _ = compositor.overrideCandidate(
+      .init(keyArray: ["shi4"], value: "世"),
+      at: cursorShi
+    ) {
+      obsCaptured = $0
+    }
+    // compositor.assemble() <- 已經組句了。
+    let assembledAfter = compositor.assembledSentence.map(\.value).joined(separator: " ")
+    XCTAssertTrue("再 創 世 的 凱歌" == assembledAfter)
+    let cursorShiDe = 3
+    let prevAssembly = compositor.assembledSentence
+    obsCaptured = nil
+    let overrideSucceeded = compositor.overrideCandidate(
+      .init(keyArray: ["shi4", "de5"], value: "是的"),
+      at: cursorShiDe
+    ) {
+      obsCaptured = $0
+    }
+    XCTAssertTrue(overrideSucceeded)
+    let currentAssembly = compositor.assemble()
+    guard let afterHit = currentAssembly.findGram(at: cursorShiDe) else {
+      XCTFail("Expected current gram at cursor \(cursorShiDe)")
+      return
+    }
+    let border1 = afterHit.range.upperBound - 1
+    let border2 = prevAssembly.totalKeyCount - 1
+    let innerIndex = Swift.max(0, Swift.min(border1, border2))
+    guard let prevHit = prevAssembly.findGram(at: innerIndex) else {
+      XCTFail("Expected previous gram at cursor \(innerIndex)")
+      return
+    }
+    XCTAssertEqual(afterHit.gram.segLength, 2)
+    XCTAssertEqual(prevHit.gram.segLength, 1)
+    XCTAssertNotNil(obsCaptured)
+    XCTAssertEqual(obsCaptured?.scenario, .shortToLong)
+    XCTAssertEqual(obsCaptured?.candidate, "是的")
   }
 }

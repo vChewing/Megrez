@@ -147,12 +147,16 @@ extension Array where Element == Megrez.GramInPath {
     return arrData
   }
 
-  /// 生成用以洞察使用者覆寫行為的複元圖索引鍵，最多支援 3-gram。
+  /// 生成用以洞察使用者覆寫行為的複元圖索引鍵，最多支援指定長度的 n-gram（預設 3-gram）。
   ///
   /// - Remark: 除非有專門指定游標，否則身為 `[GramInPath]` 自身的
   /// 「陣列最尾端」（也就是打字方向上最前方）的那個 Gram 會被當成 Head。
+  /// - Parameters:
+  ///   - cursor: 指定用於當作 head 的游標位置；若為 nil 則取陣列尾端。
+  ///   - maxContext: 最多向前取用的上下文節點數（含 head），預設 3。
   public func generateKeyForPerception(
-    cursor: Int? = nil
+    cursor: Int? = nil,
+    maxContext: Int = 3
   )
     -> (ngramKey: String, candidate: String, headReading: String)? {
     let perceptedGIP: Megrez.GramInPath?
@@ -182,7 +186,7 @@ extension Array where Element == Megrez.GramInPath {
 
       guard let keyCellStr = makeNGramKeyCell(isHead: isHead) else { break loopProc }
       outputCells.insert(keyCellStr, at: 0)
-      if outputCells.count >= 3 { break loopProc }
+      if outputCells.count >= maxContext { break loopProc }
       if isHead { isHead = false }
     }
     guard !outputCells.isEmpty else { return nil }

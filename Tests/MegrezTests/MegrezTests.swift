@@ -292,7 +292,7 @@ final class MegrezTestsAdvanced: XCTestCase {
     let oldResult = compositor.assemble().values
     XCTAssertEqual(oldResult, ["樹心", "封"])
     lm.reinit(input: newRawStringLM)
-    compositor.update(updateExisting: true)
+    compositor.assignNodes(updateExisting: true)
     let newResult = compositor.assemble().values
     XCTAssertEqual(newResult, ["樹新風"])
   }

@@ -489,13 +489,13 @@ final class MegrezTestsAdvanced: XCTestCase {
     compositor.overrideCandidate(
       .init((["liu2"], "留")),
       at: 3,
-      overrideType: .withHighScore
+      overrideType: .withSpecified
     )
     // 測試覆寫「一縷」以打斷「留意」與「呂方」。
     compositor.overrideCandidate(
       .init((["yi4", "lv3"], "一縷")),
       at: 4,
-      overrideType: .withHighScore
+      overrideType: .withSpecified
     )
     assembledSentence = compositor.assemble().map(\.value)
     XCTAssertEqual(assembledSentence, ["幽蝶", "能", "留", "一縷", "方"])
@@ -503,7 +503,7 @@ final class MegrezTestsAdvanced: XCTestCase {
     compositor.overrideCandidate(
       .init((["fang1"], "芳")),
       at: 7,
-      overrideType: .withHighScore
+      overrideType: .withSpecified
     )
     assembledSentence = compositor.assemble().map(\.value)
     XCTAssert(assembledSentence == ["幽蝶", "能", "留", "一縷", "芳"])
@@ -679,7 +679,7 @@ final class MegrezTestsAdvanced: XCTestCase {
     _ = compositor.overrideCandidate(
       .init(keyArray: ["shi4"], value: "世"),
       at: cursorShi,
-      overrideType: .withHighScore,
+      overrideType: .withSpecified,
       enforceRetokenization: true,
       perceptionHandler: { obsCaptured = $0 }
     )
@@ -693,7 +693,7 @@ final class MegrezTestsAdvanced: XCTestCase {
     let overrideSucceeded = compositor.overrideCandidate(
       .init(keyArray: ["shi4", "de5"], value: "是的"),
       at: cursorShiDe,
-      overrideType: .withHighScore,
+      overrideType: .withSpecified,
       enforceRetokenization: true,
       perceptionHandler: { obsCaptured = $0 }
     )
@@ -730,7 +730,7 @@ final class MegrezTestsAdvanced: XCTestCase {
     compositor.overrideCandidate(
       pomSuggestedCandidate,
       at: pomSuggestedCandidateOverrideCursor,
-      overrideType: .withTopUnigramScore,
+      overrideType: .withTopGramScore,
       enforceRetokenization: true
     )
     compositor.assemble()

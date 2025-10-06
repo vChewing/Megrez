@@ -175,7 +175,7 @@ extension Megrez.Compositor {
   @discardableResult
   public func overrideCandidate(
     _ candidate: Megrez.KeyValuePaired, at location: Int,
-    overrideType: Megrez.Node.OverrideType = .withHighScore,
+    overrideType: Megrez.Node.OverrideType = .withSpecified,
     enforceRetokenization: Bool = false,
     perceptionHandler: ((Megrez.PerceptionIntel) -> ())? = nil
   )
@@ -203,7 +203,7 @@ extension Megrez.Compositor {
   @discardableResult
   public func overrideCandidateLiteral(
     _ candidate: String,
-    at location: Int, overrideType: Megrez.Node.OverrideType = .withHighScore,
+    at location: Int, overrideType: Megrez.Node.OverrideType = .withSpecified,
     enforceRetokenization: Bool = false,
     perceptionHandler: ((Megrez.PerceptionIntel) -> ())? = nil
   )
@@ -316,7 +316,7 @@ extension Megrez.Compositor {
           }
           anchor.node.overrideStatus = .init(
             overridingScore: demotionScore,
-            currentOverrideType: .withHighScore,
+            currentOverrideType: .withSpecified,
             currentUnigramIndex: anchor.node.currentUnigramIndex
           )
         }

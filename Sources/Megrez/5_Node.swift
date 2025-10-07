@@ -54,6 +54,7 @@ extension Megrez {
     /// - withTopGramScore: 專用於雙元圖的自動選取功能，但效力低於 withSpecified 模式。
     /// 該覆寫行為無法防止其它節點被組句函式所支配。這種情況下就需要用到 overridingScore。
     /// - withSpecified: 將該節點權重覆寫為 overridingScore，使其被組句函式所青睞。
+    /// 但是這個選項也可以允許搭配過低的 overridingScore 來起到 demote 的效果。
     public enum OverrideType: Int, Codable {
       case withTopGramScore = 1
       case withSpecified = 2
@@ -195,6 +196,9 @@ extension Megrez {
         if value != gram.value { continue }
         currentUnigramIndex = i
         currentOverrideType = type
+        if overridingScore < 114_514 {
+          overridingScore = 114_514
+        }
         return true
       }
       return false

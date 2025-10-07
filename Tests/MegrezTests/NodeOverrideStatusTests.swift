@@ -10,6 +10,8 @@ import XCTest
 private typealias SimpleLM = MegrezTestComponents.SimpleLM
 private typealias MockLM = MegrezTestComponents.MockLM
 
+private let baselineOverrideScore: Double = 114_514
+
 // MARK: - NodeOverrideStatusTests
 
 final class NodeOverrideStatusTests: XCTestCase {
@@ -83,7 +85,7 @@ final class NodeOverrideStatusTests: XCTestCase {
 
     // 驗證通過 overrideStatus 能正確讀取
     let modifiedStatus = node1.overrideStatus
-    XCTAssertEqual(modifiedStatus.overridingScore, 200.0)
+    XCTAssertEqual(modifiedStatus.overridingScore, baselineOverrideScore)
     XCTAssertEqual(modifiedStatus.currentOverrideType, .withSpecified)
     XCTAssertEqual(modifiedStatus.currentUnigramIndex, 0)
 
@@ -168,12 +170,12 @@ final class NodeOverrideStatusTests: XCTestCase {
 
     // 驗證狀態被正確恢復
     if let node = compositor.segments[0][1] {
-      XCTAssertEqual(node.overridingScore, 500.0)
+      XCTAssertEqual(node.overridingScore, baselineOverrideScore)
       XCTAssertEqual(node.currentOverrideType, .withSpecified)
     }
 
     if let node = compositor.segments[1][2] {
-      XCTAssertEqual(node.overridingScore, 600.0)
+      XCTAssertEqual(node.overridingScore, baselineOverrideScore)
       XCTAssertEqual(node.currentOverrideType, .withTopGramScore)
     }
   }
@@ -210,7 +212,7 @@ final class NodeOverrideStatusTests: XCTestCase {
     // 鏡照應該包含所有修改的狀態
     for (_, status) in mirror {
       XCTAssertEqual(status.currentOverrideType, .withSpecified)
-      XCTAssertTrue(status.overridingScore >= 100 && status.overridingScore <= 1_000)
+      XCTAssertEqual(status.overridingScore, baselineOverrideScore)
     }
 
     // 現在清空原始 compositor 的狀態

@@ -276,10 +276,14 @@ extension Megrez.Compositor {
           errorHappened = true
           break overrideTask
         }
-        if let specifiedScore, anchor.node.score < specifiedScore,
-           anchor.node.currentOverrideType != .withTopGramScore {
+        if type == .withSpecified {
+          let baselineOverrideScore = 114_514.0
+          let desiredScore = specifiedScore ?? Swift.max(
+            anchor.node.overridingScore,
+            baselineOverrideScore
+          )
           anchor.node.overrideStatus = .init(
-            overridingScore: specifiedScore,
+            overridingScore: desiredScore,
             currentOverrideType: .withSpecified,
             currentUnigramIndex: anchor.node.currentUnigramIndex
           )

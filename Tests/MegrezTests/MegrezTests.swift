@@ -649,7 +649,7 @@ final class MegrezTestsAdvanced: XCTestCase {
     XCTAssertEqual(result.values, ["大樹", "🆕", "蜜蜂"])
   }
 
-  func test18_Composer_UOMMarginalCaseTest() throws {
+  func test18_Composer_UOMMarginalCaseTest_SaisoukiNoGaika() throws {
     let lm = SimpleLM(input: MegrezTestComponents.strLMSampleData_SaisoukiNoGaika)
     let compositor = Megrez.Compositor(with: lm)
     let readingKeys = ["zai4", "chuang4", "shi4", "de5", "kai3", "ge1"]
@@ -738,5 +738,64 @@ final class MegrezTestsAdvanced: XCTestCase {
       .map(\.value)
       .joined(separator: " ")
     XCTAssertEqual("再 創 世 的", assembledByPOM)
+  }
+
+  func test19_Composer_UOMMarginalCaseTest_BusinessEnglishSession() throws {
+    let lm = SimpleLM(input: MegrezTestComponents.strLMSampleData_BusinessEnglishSession)
+    let compositor = Megrez.Compositor(with: lm)
+    // 測試用句「再創世的凱歌」。
+    let readingKeys = ["shang1", "wu4", "ying1", "yu3", "hui4", "hua4"]
+    readingKeys.forEach { compositor.insertKey($0) }
+    compositor.assemble()
+    let assembledBefore = compositor.assembledSentence.map(\.value).joined(separator: " ")
+    XCTAssertTrue("商務 英語 繪畫" == assembledBefore)
+    // 測試此時生成的 keyForQueryingData 是否正確
+    let cursorHua = 5
+    let keyForQueryingDataAt5 = compositor.assembledSentence
+      .generateKeyForPerception(cursor: cursorHua)
+    XCTAssertEqual(keyForQueryingDataAt5?.ngramKey, "(shang1-wu4,商務)&(ying1-yu3,英語)&(hui4-hua4,繪畫)")
+    XCTAssertEqual(keyForQueryingDataAt5?.headReading, "hua4")
+    // 應能提供『是的』『似的』『凱歌』等候選
+    let pairsAtHuiHuaEnd = compositor.fetchCandidates(at: 6, filter: .endAt)
+    XCTAssertTrue(pairsAtHuiHuaEnd.map(\.value).contains("繪畫"))
+    XCTAssertTrue(pairsAtHuiHuaEnd.map(\.value).contains("會話"))
+    // 模擬使用者把『是』改為『世』，再合成：觀測應為 shortToLong
+    var obsCaptured: Megrez.PerceptionIntel?
+    let overrideSucceeded = compositor.overrideCandidate(
+      .init(keyArray: ["hui4", "hua4"], value: "會話"),
+      at: cursorHua,
+      enforceRetokenization: true
+    ) {
+      obsCaptured = $0
+    }
+    XCTAssertTrue(overrideSucceeded)
+    XCTAssertEqual(obsCaptured?.ngramKey, "(shang1-wu4,商務)&(ying1-yu3,英語)&(hui4-hua4,會話)")
+    // compositor.assemble() <- 已經組句了。
+    let assembledAfter = compositor.assembledSentence.map(\.value).joined(separator: " ")
+    XCTAssertTrue("商務 英語 會話" == assembledAfter)
+
+    // 測試 POM 建議的候選覆寫
+    compositor.clear()
+    readingKeys.forEach {
+      _ = compositor.insertKey($0)
+    }
+
+    let pomSuggestedCandidate = Megrez.KeyValuePaired(
+      (["hui4", "hua4"], "會話", -0.074493074227700559)
+    )
+    let pomSuggestedCandidateOverrideCursor = 4
+    // let forceHighScoreOverride = false
+    // overrideType: forceHighScoreOverride ? .withHighScore : .withTopUnigramScore
+    compositor.overrideCandidate(
+      pomSuggestedCandidate,
+      at: pomSuggestedCandidateOverrideCursor,
+      overrideType: .withTopGramScore,
+      enforceRetokenization: true
+    )
+    compositor.assemble()
+    let assembledByPOM = compositor.assembledSentence
+      .map(\.value)
+      .joined(separator: " ")
+    XCTAssertEqual("商務 英語 會話", assembledByPOM)
   }
 }

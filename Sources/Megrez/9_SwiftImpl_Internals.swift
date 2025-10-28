@@ -76,7 +76,7 @@ extension StringProtocol {
 
 /// A simple UUID v4 implementation without Foundation.
 /// Generates a random 128-bit UUID compliant with RFC 4122.
-public struct FIUUID: Hashable, Codable {
+public struct FIUUID: Hashable, Codable, Sendable {
   // MARK: Lifecycle
 
   public init() {

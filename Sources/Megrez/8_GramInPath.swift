@@ -122,6 +122,9 @@ extension Array where Element == Megrez.GramInPath {
     return !isBound && rawResult
   }
 
+  /// 偵測游標是否切斷區域。
+  ///
+  /// 此處不需要針對 cursor 做邊界檢查。
   public func isCursorCuttingRegion(cursor: Int) -> Bool {
     let index = cursor
     var isBound = (index == contextRange(ofGivenCursor: index).lowerBound)

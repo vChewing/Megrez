@@ -12,15 +12,18 @@ extension Megrez {
   public struct GramInPath: Codable, Hashable {
     // MARK: Lifecycle
 
-    public init(gram: Unigram, isOverridden: Bool) {
+    public init(
+      gram: Unigram,
+      isExplicit: Bool
+    ) {
       self.gram = gram
-      self.isOverridden = isOverridden
+      self.isExplicit = isExplicit
     }
 
     // MARK: Public
 
     public let gram: Unigram
-    public let isOverridden: Bool
+    public let isExplicit: Bool
 
     public var keyArray: [String] { gram.keyArray }
     public var value: String { gram.value }

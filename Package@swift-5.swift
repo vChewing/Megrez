@@ -1,4 +1,4 @@
-// swift-tools-version: 6.2
+// swift-tools-version: 5.7
 import PackageDescription
 
 let package = Package(
@@ -23,13 +23,6 @@ let package = Package(
       name: "MegrezTestComponents",
       dependencies: [
         "Megrez",
-      ]
-    ),
-    .testTarget(
-      name: "MegrezTests",
-      dependencies: [
-        "Megrez",
-        "MegrezTestComponents",
       ]
     ),
   ]

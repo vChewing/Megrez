@@ -69,13 +69,11 @@ extension Megrez.Compositor {
   ) {
     guard !node.keyArray.joined().isEmpty else { return }
     let anchor = (location: location, node: node)
-    for i in 0 ... targetContainer.count {
-      guard !targetContainer.isEmpty else { break }
+    for i in 0 ..< targetContainer.count {
       guard targetContainer[i].node.segLength <= anchor.node.segLength else { continue }
       targetContainer.insert(anchor, at: i)
       return
     }
-    guard targetContainer.isEmpty else { return }
     targetContainer.append(anchor)
   }
 }
